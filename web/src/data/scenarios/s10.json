@@ -1,0 +1,27 @@
+{
+  "version": "s10",
+  "title": "Instructions & AGENTS.md",
+  "description": "The system instructions are assembled at runtime from AGENTS.md, config.toml, and built-ins, then cached by a deterministic key.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "sources={AGENTS.md:\"project instructions\", config.toml:{model:\"gpt-5-codex\",approval_policy:\"on-request\"}, built_ins:[shell, apply_patch]}",
+      "annotation": "Instruction inputs are explicit runtime data, not a hardcoded string."
+    },
+    {
+      "type": "system_event",
+      "content": "cache miss -> assemble_instructions(AGENTS.md, config.toml, built_ins)",
+      "annotation": "A new key causes the sections to be selected and joined."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I follow the AGENTS.md guidance, the active model and approval policy, and the built-in tool instructions.",
+      "annotation": "The model sees the assembled instructions, not a static prompt."
+    },
+    {
+      "type": "system_event",
+      "content": "same key -> reuse cached instructions",
+      "annotation": "Repeated turns avoid rebuilding identical instruction text."
+    }
+  ]
+}

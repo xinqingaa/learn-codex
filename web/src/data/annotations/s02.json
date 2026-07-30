@@ -1,0 +1,35 @@
+{
+  "version": "s02",
+  "decisions": [
+    {
+      "id": "four-tools-not-twenty",
+      "title": "Why a Handful of Tools, Not Twenty",
+      "description": "The registry holds shell, read_file, write_file, apply_patch, and list_dir. Together they cover roughly 95% of coding tasks. Shell handles execution and arbitrary commands. read_file provides precise file reading. write_file creates or overwrites files. apply_patch does surgical edits, and list_dir orients the model in the tree. More tools would increase the model's cognitive load -- it has to decide which tool to use, and more options means more chances of picking the wrong one. Fewer tools also means fewer tool schemas to maintain and fewer edge cases to handle.",
+      "alternatives": "We could add specialized tools (search_files, http_request, git helpers), and later chapters do. But at this stage, shell already covers those use cases. The split from s01's single tool to s02's small registry is specifically about giving the model structured I/O for file operations, where shell quoting and escaping often trips up the model.",
+      "zh": {
+        "title": "为什么只有少数几个工具，而不是二十个",
+        "description": "注册表里有 shell、read_file、write_file、apply_patch 和 list_dir，覆盖了大约 95% 的编程任务。Shell 处理执行和任意命令；read_file 提供精确的文件读取；write_file 创建或覆盖文件；apply_patch 做精确编辑，list_dir 帮模型在目录树中定位。工具越多，模型的认知负担越重——它必须在更多选项中做选择，选错的概率也随之增加。更少的工具也意味着更少的 schema 需要维护、更少的边界情况需要处理。"
+      }
+    },
+    {
+      "id": "model-as-agent",
+      "title": "The Model IS the Agent",
+      "description": "The core agent loop is trivially simple: loop forever, call the model on the Responses API; if it returns function_call items then execute them and feed each result back as a function_call_output, if it returns only a message then stop. There is no router, no decision tree, no workflow engine. The model itself decides what to do, when to stop, and how to recover from errors. The code is just plumbing that connects the model to tools. This is a philosophical stance: agent behavior emerges from the model, not from the framework.",
+      "alternatives": "Many agent frameworks add elaborate orchestration layers: ReAct loops with explicit Thought/Action/Observation parsing, chain-of-responsibility pipelines, goal-decomposition planners. These frameworks assume the model needs scaffolding to behave as an agent. Our approach assumes the model already knows how to be an agent -- it just needs tools to act on the world.",
+      "zh": {
+        "title": "模型本身就是代理",
+        "description": "核心 agent 循环极其简单：无限循环，在 Responses API 上调用模型；如果返回 function_call 项就执行并把每个结果作为 function_call_output 回传，如果只返回 message 就停止。没有路由器，没有决策树，没有工作流引擎。模型自己决定做什么、何时停止、如何从错误中恢复。代码只是连接模型和工具的管道。这是一种设计哲学：agent 行为从模型中涌现，而非由框架定义。"
+      }
+    },
+    {
+      "id": "explicit-tool-schemas",
+      "title": "JSON Schemas for Every Tool",
+      "description": "Each tool defines a strict JSON schema for its input parameters. For example, write_file requires path and content as exact values, not free-form text. This eliminates an entire class of bugs: the model can't pass malformed input because the API validates against the schema before execution. It also makes the model's intent unambiguous -- when it calls apply_patch with a specific patch, there's no parsing ambiguity about what it wants to change.",
+      "alternatives": "Some agent systems let the model output free-form text that gets parsed with regex or heuristics (e.g., extracting code from markdown blocks). This is fragile -- the model might format output slightly differently and break the parser. JSON schemas trade flexibility for reliability.",
+      "zh": {
+        "title": "每个工具都有 JSON Schema",
+        "description": "每个工具都为输入参数定义了严格的 JSON schema。例如，write_file 要求 path 和 content 是精确的值，而非自由文本。这消除了一整类错误：模型无法传递格式错误的输入，因为 API 会在执行前校验 schema。这也使模型的意图变得明确——当它用特定的 patch 调用 apply_patch 时，不存在关于它想修改什么的解析歧义。"
+      }
+    }
+  ]
+}

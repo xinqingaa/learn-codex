@@ -1,0 +1,20 @@
+{
+  "name": "learn-codex",
+  "version": "1.0.0",
+  "description": "Learn how a Codex-style coding agent harness works by rebuilding it, one mechanism at a time, in TypeScript.",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "s01": "tsx s01_agent_loop/code.ts",
+    "test": "tsx scripts/run-all.ts"
+  },
+  "dependencies": {
+    "openai": "^5.12.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.7.0"
+  }
+}

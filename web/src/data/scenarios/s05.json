@@ -1,0 +1,40 @@
+{
+  "version": "s05",
+  "title": "The Plan Tool",
+  "description": "The update_plan tool makes the agent's intended work visible and keeps long tasks from drifting.",
+  "steps": [
+    {
+      "type": "user_message",
+      "content": "Refactor the parser and add a regression test.",
+      "annotation": "The task has multiple steps, so the plan should become visible."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "update_plan",
+      "content": "{\"plan\":[{\"step\":\"Inspect parser\",\"status\":\"in_progress\"},{\"step\":\"Refactor parsing branch\",\"status\":\"pending\"},{\"step\":\"Add regression test\",\"status\":\"pending\"}]}",
+      "annotation": "The model records a plan before acting."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "update_plan",
+      "content": "Plan updated.",
+      "annotation": "The current plan is kept by the harness and shown to the user."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "shell",
+      "content": "cat parser.ts",
+      "annotation": "Normal tools continue through the same dispatch table."
+    },
+    {
+      "type": "system_event",
+      "content": "<reminder>3 rounds without update_plan; refresh the plan if any step completed.</reminder>",
+      "annotation": "A nag reminder keeps the plan fresh during long work."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I inspected the parser and will mark the first step completed before making the code change.",
+      "annotation": "The plan state guides the next turn."
+    }
+  ]
+}

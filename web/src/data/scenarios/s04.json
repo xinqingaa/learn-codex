@@ -1,0 +1,51 @@
+{
+  "version": "s04",
+  "title": "Sandbox",
+  "description": "sandbox_mode decides what a command may touch before the OS ever runs it.",
+  "steps": [
+    {
+      "type": "user_message",
+      "content": "Patch src/app.ts to fix the typo, then clean up /etc/hosts.",
+      "annotation": "One request with two writes: one inside the workspace, one outside it."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "apply_patch",
+      "content": "*** Begin Patch\n*** Update File: src/app.ts\n@@\n-recieve\n+receive\n*** End Patch",
+      "annotation": "The model proposes an in-workspace edit first."
+    },
+    {
+      "type": "system_event",
+      "content": "sandbox_mode=workspace-write: src/app.ts is inside the workspace -> allowed",
+      "annotation": "workspace-write confines writes to the working directory; this one stays in bounds."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "apply_patch",
+      "content": "The file src/app.ts has been edited.",
+      "annotation": "Allowed writes run normally."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "shell",
+      "content": "echo 127.0.0.1 x >> /etc/hosts",
+      "annotation": "The second write targets a path outside the workspace."
+    },
+    {
+      "type": "system_event",
+      "content": "sandbox_mode=workspace-write: /etc/hosts is outside the workspace -> denied (Seatbelt/Landlock)",
+      "annotation": "The OS enforces the boundary in the kernel, so the model cannot talk its way past it."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "shell",
+      "content": "Error: operation not permitted (sandbox denied the write outside the workspace)",
+      "annotation": "The command is refused before it runs."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I fixed src/app.ts, but the sandbox blocked the /etc/hosts write because it escapes the workspace. I would need danger-full-access for that.",
+      "annotation": "The agent reports the boundary instead of silently bypassing it."
+    }
+  ]
+}

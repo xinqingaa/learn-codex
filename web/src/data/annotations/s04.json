@@ -1,0 +1,35 @@
+{
+  "version": "s04",
+  "decisions": [
+    {
+      "id": "os-enforced-boundary",
+      "title": "The Sandbox Is an OS Boundary, Not a Suggestion",
+      "description": "sandbox_mode is enforced by the operating system -- Seatbelt on macOS, Landlock on Linux -- not by asking the model to behave. Because the check lives in the kernel below the process, a compromised or over-eager model cannot talk its way past it. The agent loop stays unchanged; only the environment the command runs in is constrained.",
+      "alternatives": "Prompt-level guardrails ('please don't write outside the repo') are cheaper to add, but they fail the moment the model is wrong or adversarial. Kernel enforcement holds regardless of what the model emits.",
+      "zh": {
+        "title": "沙箱是 OS 边界，不是建议",
+        "description": "sandbox_mode 由操作系统强制执行——macOS 用 Seatbelt，Linux 用 Landlock——而不是靠模型自觉。由于检查位于进程之下的内核层，即使模型出错或被诱导也无法越过。agent 循环保持不变，被约束的只是命令运行的环境。"
+      }
+    },
+    {
+      "id": "three-modes",
+      "title": "Three Modes Trade Safety for Capability",
+      "description": "read-only freezes the filesystem so the agent can read and reason but never write. workspace-write makes the working directory writable while everything outside it stays out of bounds, with the network off. danger-full-access removes the walls entirely and runs with the user's full permissions. The harness picks a mode per run; the same command is then allowed or denied by whichever mode is active.",
+      "alternatives": "A single always-on lockdown would be simplest, but it would block legitimate builds that must write. Three modes let the user dial the boundary to the task instead of choosing between 'blocked' and 'unsandboxed'.",
+      "zh": {
+        "title": "三种模式在安全与能力之间取舍",
+        "description": "read-only 冻结文件系统，agent 只能读与推理、不能写；workspace-write 只放开工作目录，目录之外一律越界，且网络关闭；danger-full-access 完全拆除边界，以用户全部权限运行。harness 按运行选择模式，同一条命令能否执行取决于当前处于哪种模式。"
+      }
+    },
+    {
+      "id": "approval-vs-sandbox",
+      "title": "Approval Asks the User, the Sandbox Asks the OS",
+      "description": "Approval (s03) and the sandbox answer different questions. Approval is a harness decision point that pauses and asks the user before a command runs. The sandbox is a hard boundary the OS enforces while the command runs. A command can be user-approved yet still be contained by workspace-write, so the two layers compose instead of replacing each other.",
+      "alternatives": "Relying on approval alone makes the user the sandbox -- they would have to catch every out-of-bounds write by hand. Letting the OS hold the line means an approved command still cannot exceed its boundary.",
+      "zh": {
+        "title": "审批问用户，沙箱问操作系统",
+        "description": "审批（s03）与沙箱回答的是不同问题。审批是 harness 的决策点，在命令运行前暂停并询问用户；沙箱是命令运行时由 OS 强制执行的硬边界。一条命令即使获得用户批准，也仍受 workspace-write 约束，因此两层是叠加而非互相替代。"
+      }
+    }
+  ]
+}

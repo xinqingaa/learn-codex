@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/>
+    </marker>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="720" height="540" fill="#fafbfc" rx="8"/>
+  <rect x="0" y="0" width="720" height="48" fill="url(#header)" rx="8"/>
+  <rect x="0" y="40" width="720" height="8" fill="url(#header)"/>
+  <text x="360" y="30" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">Shared Task Board — the dependency graph decides what runs</text>
+
+  <!-- Model -->
+  <rect x="50" y="84" width="150" height="54" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
+  <text x="125" y="106" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">Model</text>
+  <text x="125" y="124" fill="#93c5fd" font-size="11" text-anchor="middle">reads &amp; writes</text>
+
+  <!-- Task board panel -->
+  <rect x="252" y="76" width="418" height="252" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="461" y="100" fill="#334155" font-size="13" font-weight="700" text-anchor="middle">TaskBoard  (create / list / claim / complete)</text>
+
+  <!-- t1 ready -->
+  <rect x="272" y="116" width="180" height="46" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="362" y="136" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">t1 schema · pending</text>
+  <text x="362" y="152" fill="#059669" font-size="10" text-anchor="middle">no deps → can start</text>
+
+  <!-- t2 blocked by t1 -->
+  <rect x="472" y="116" width="180" height="46" rx="8" fill="#fff7ed" stroke="#d97706" stroke-width="2"/>
+  <text x="562" y="136" fill="#92400e" font-size="12" font-weight="600" text-anchor="middle">t2 api · blocked</text>
+  <text x="562" y="152" fill="#b45309" font-size="10" text-anchor="middle">needs t1</text>
+
+  <!-- t3 blocked by t2 -->
+  <rect x="472" y="182" width="180" height="46" rx="8" fill="#fff7ed" stroke="#d97706" stroke-width="2"/>
+  <text x="562" y="202" fill="#92400e" font-size="12" font-weight="600" text-anchor="middle">t3 tests · blocked</text>
+  <text x="562" y="218" fill="#b45309" font-size="10" text-anchor="middle">needs t2</text>
+
+  <!-- t4 blocked by t1 -->
+  <rect x="472" y="248" width="180" height="46" rx="8" fill="#fff7ed" stroke="#d97706" stroke-width="2"/>
+  <text x="562" y="268" fill="#92400e" font-size="12" font-weight="600" text-anchor="middle">t4 docs · blocked</text>
+  <text x="562" y="284" fill="#b45309" font-size="10" text-anchor="middle">needs t1</text>
+
+  <!-- dependency arrows t1 -> t2, t1 -> t4, t2 -> t3 -->
+  <line x1="452" y1="139" x2="470" y2="139" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <line x1="452" y1="150" x2="492" y2="246" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <line x1="562" y1="162" x2="562" y2="180" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+
+  <!-- model to board -->
+  <line x1="200" y1="111" x2="250" y2="111" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- claim gate -->
+  <polygon points="150,360 226,404 150,448 74,404" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+  <text x="150" y="400" fill="#92400e" font-size="12" font-weight="600" text-anchor="middle">claim_task</text>
+  <text x="150" y="416" fill="#92400e" font-size="11" text-anchor="middle">deps done?</text>
+
+  <!-- gate: allow -->
+  <rect x="292" y="378" width="180" height="52" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
+  <text x="382" y="400" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">yes → in_progress</text>
+  <text x="382" y="416" fill="#059669" font-size="11" text-anchor="middle">set owner, do work</text>
+
+  <!-- gate: refuse -->
+  <rect x="500" y="378" width="180" height="52" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="590" y="400" fill="#7f1d1d" font-size="12" font-weight="600" text-anchor="middle">no → refuse</text>
+  <text x="590" y="416" fill="#dc2626" font-size="11" text-anchor="middle">"blocked by unfinished [..]"</text>
+
+  <line x1="226" y1="404" x2="290" y2="404" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <line x1="150" y1="448" x2="150" y2="404" stroke="none"/>
+  <path d="M 226 408 C 260 440 460 440 498 406" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+
+  <!-- model down to gate -->
+  <path d="M 125 138 L 125 360 L 148 360" fill="none" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- complete unlock note -->
+  <path d="M 382 430 C 382 480 560 480 562 300" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-green)"/>
+  <text x="500" y="470" fill="#16a34a" font-size="11" font-weight="600" text-anchor="middle">complete_task unblocks dependents</text>
+
+  <!-- footer note -->
+  <rect x="60" y="470" width="380" height="52" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="250" y="492" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">update_plan = a note; task board = a rule.</text>
+  <text x="250" y="510" fill="#64748b" font-size="11" text-anchor="middle">s12 · Task System</text>
+</svg>

@@ -1,0 +1,35 @@
+{
+  "version": "s05",
+  "decisions": [
+    {
+      "id": "plan-as-tool",
+      "title": "update_plan Is a Tool, Not a Hidden Planner",
+      "description": "Planning enters the same tool dispatch path as shell or apply_patch. This keeps the plan visible and lets the model decide when to update it. The harness stores the current checklist; the model rewrites it as work progresses.",
+      "alternatives": "An automatic planner could write the plan behind the scenes, but the user would not see when the model's intent changed.",
+      "zh": {
+        "title": "update_plan 是工具，不是隐藏规划器",
+        "description": "规划通过和 shell、apply_patch 相同的工具分发路径进入系统。这样计划状态可见，模型也能决定何时更新。harness 保存当前清单，模型随工作推进重写它。"
+      }
+    },
+    {
+      "id": "nag-reminder",
+      "title": "A Lightweight Reminder Prevents Plan Drift",
+      "description": "After several rounds without an update_plan call, the runtime injects a reminder. The reminder nudges the model without taking over the plan.",
+      "alternatives": "Forcing a plan update every turn would be noisy and slow down simple tasks.",
+      "zh": {
+        "title": "轻量提醒防止计划漂移",
+        "description": "多个回合没有调用 update_plan 后，运行时会注入提醒。它只提醒模型，不接管计划。"
+      }
+    },
+    {
+      "id": "in-memory-current-work",
+      "title": "The Plan Stays Session-Local",
+      "description": "update_plan is for the current session's working plan, not durable project management. Later task systems handle persistent work.",
+      "alternatives": "Persisting every step immediately would blur the difference between a scratch plan and a durable task graph.",
+      "zh": {
+        "title": "计划保持会话内状态",
+        "description": "update_plan 面向当前会话的工作计划，不是持久项目管理。后面的任务系统负责持久工作。"
+      }
+    }
+  ]
+}

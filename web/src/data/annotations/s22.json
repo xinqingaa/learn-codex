@@ -1,0 +1,35 @@
+{
+  "version": "s22",
+  "decisions": [
+    {
+      "id": "layered-precedence",
+      "title": "One Resolver, Layered Precedence",
+      "description": "Codex does not scatter config reads across the codebase. It layers sources -- built-in defaults, then the user file ~/.codex/config.toml, then a trusted project file .codex/config.toml, then the selected --profile overlay, then per-invocation overrides from -c key=value and flags -- and folds them into a single effective Config. Each later layer overrides the one beneath it, so the resolution order is the whole story. The agent loop and every tool then read only this resolved value, never the raw files, which keeps run-time behavior deterministic and easy to audit.",
+      "alternatives": "Letting each subsystem read its own keys from disk would seem flexible, but it makes precedence inconsistent and hard to test, and lets the effective config drift mid-session. A single resolver run once at startup is simpler and far easier to reason about.",
+      "zh": {
+        "title": "一个解析器，分层优先级",
+        "description": "Codex 不会把配置读取散落在代码各处。它把来源分层——内置默认值，然后是用户文件 ~/.codex/config.toml，然后是受信任的项目文件 .codex/config.toml，然后是所选 --profile 覆盖层，最后是 -c key=value 和命令行标志的逐次覆盖——并把它们折叠成单一的有效 Config。越靠后的层优先级越高，因此解析顺序就是全部规则。agent 循环和每个工具随后只读取这个解析结果，绝不重读原始文件，从而让运行时行为确定且易于审计。"
+      }
+    },
+    {
+      "id": "project-config-is-sandboxed",
+      "title": "Project Config Is Deliberately Sandboxed",
+      "description": "A project-local .codex/config.toml is loaded only when you trust the project, and even then it cannot override the sensitive keys: model_provider, model_providers, profile, profiles, auth, and telemetry routing are all ignored at project scope. This is a security boundary, not an inconvenience -- otherwise checking out a malicious repository could silently repoint your model traffic, steal credentials, or change where telemetry goes. Machine-local and host-owned settings stay under the user's control.",
+      "alternatives": "Codex could let project config override everything for maximum per-repo customization. That would turn every clone into a supply-chain risk. Restricting project scope to non-sensitive knobs (model choice, reasoning effort, sandbox, network) keeps repos useful without handing them the keys.",
+      "zh": {
+        "title": "项目级配置被刻意隔离",
+        "description": "项目内的 .codex/config.toml 只有在你信任该项目时才会加载，即便如此也不能覆盖敏感键：model_provider、model_providers、profile、profiles、auth 以及遥测路由在项目作用域内都会被忽略。这是一条安全边界，而非不便——否则检出一个恶意仓库就可能悄悄改道你的模型流量、窃取凭证或改变遥测去向。机器级和宿主导的设置始终掌握在用户手中。"
+      }
+    },
+    {
+      "id": "providers-profiles-wire-api",
+      "title": "Providers, Profiles, and the Wire API",
+      "description": "Model access is abstracted behind provider ids in the model_providers table; model_provider (or a --profile) selects which one is active, and model_providers.<id>.wire_api declares the protocol, with \"responses\" as the supported value. Profiles are named overlays stored next to config.toml as $CODEX_HOME/<name>.config.toml and chosen with --profile, so a 'ci' profile can pin a provider and wire_api without touching the base file. Companion tables like sandbox_workspace_write (writable_roots, network_access) then refine the selected sandbox_mode.",
+      "alternatives": "Hardcoding a single OpenAI endpoint would be less to configure, but it would lock out self-hosted and local providers and make CI vs. laptop differences a manual edit each time. The provider/profile split keeps one config file serving many environments.",
+      "zh": {
+        "title": "Providers、Profiles 与 Wire API",
+        "description": "模型访问被抽象到 model_providers 表中的 provider id 之后；model_provider（或 --profile）决定启用哪一个，而 model_providers.<id>.wire_api 声明协议，受支持的取值是 \"responses\"。Profile 是存放在 config.toml 旁边、名为 $CODEX_HOME/<name>.config.toml 的覆盖层，用 --profile 选择，因此一个 'ci' profile 可以在不改动基础文件的情况下固定 provider 和 wire_api。配合 sandbox_workspace_write（writable_roots、network_access）等子表，进一步细化所选的 sandbox_mode。"
+      }
+    }
+  ]
+}

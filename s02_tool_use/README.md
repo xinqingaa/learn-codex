@@ -1,0 +1,187 @@
+# s02: Tool Use — 加一个工具，只加一行
+
+[中文](README.md) · [English](README.en.md)
+
+`s01` → `s02` → [s03](../s03_approval/) → s04 → ... → s20
+> *"Add a tool, add a line"* —— 循环不动，新工具注册进 dispatch map 就能用。
+>
+> **Harness 层**：工具分发 —— 扩展模型能触达的边界。
+
+---
+
+## 问题
+
+s01 的 Agent 只有一个 `shell` 工具。想读文件，模型得拼出 `cat path/to/file`；想写文件，得拼 `echo "..." > file`；想改一行，得拼 `sed -i 's/old/new/'`。
+
+模型脑子里想的是「读这个文件」，却被迫先翻译成一条 shell 字符串。多了一层翻译：浪费 token、容易拼错、引号转义一地鸡毛，而且 harness 拿到的是一团字符串，没法做类型校验、没法知道它要碰哪个路径。
+
+更糟的是，模型常常「一次性想做几件事」——读 a、读 b、再列一下目录。如果每件事都要先编成 shell，再逐条发，既慢又容易丢上下文。
+
+---
+
+## 解决方案
+
+![Tool Use](images/tool-use.svg)
+
+给模型一组**结构化工具**，再用一张 **dispatch map** 按名字路由。模型不再拼 shell，而是直接说「调用 `read_file`，参数 `{path: "a.ts"}`」；harness 收到 `function_call`，查表、调对应函数、把结果喂回去。
+
+加一个工具只需两处改动：在 `TOOLS` 里加一条 schema（告诉模型「我能做什么」），在 `TOOL_HANDLERS` 里加一行映射（告诉 harness「怎么做」）。循环本身一行不动。
+
+本章注册的 5 个工具：
+
+| 工具 | 作用 | 为什么是结构化更好 |
+|------|------|--------------------|
+| `read_file` | 读文件（可只读前 N 行） | 参数是带类型的 `path`，不用拼 `cat`，结果干净 |
+| `write_file` | 写文件（自动建父目录） | 不用操心引号转义和重定向 |
+| `apply_patch` | 增 / 改 / 删文件（Codex 风格补丁） | 一次提交多处修改，语义明确、可审查 |
+| `list_dir` | 列目录 | 不用解析 `ls` 的自由文本输出 |
+| `shell` | 跑任意命令 | 保留为「兜底逃生舱」，但不再是唯一选择 |
+
+模型还可以在**同一轮**返回多个 `function_call`——「读 a、读 b、列目录」一次说完，harness 逐个分发，这就是 fan-out。
+
+---
+
+## 工作原理
+
+s01 的循环完整保留，唯一的变化在「执行工具」那一步：从硬编码 `runShell()` 变成查表分发。
+
+**第 1 步**：定义工具 schema——模型看到的「菜单」。每个工具都是一个 Responses API function tool。
+
+```ts
+const TOOLS = [
+  { type: "function", name: "read_file",  /* parameters: { path, limit? } */ },
+  { type: "function", name: "write_file", /* parameters: { path, content } */ },
+  { type: "function", name: "apply_patch",/* parameters: { patch } */ },
+  { type: "function", name: "list_dir",   /* parameters: { path } */ },
+  { type: "function", name: "shell",      /* parameters: { command } */ },
+];
+```
+
+**第 2 步**：每个工具对应一个实现函数。参数是带类型的，不再是自由字符串。
+
+```ts
+function runReadFile(p: string, limit?: number): string {
+  const lines = fs.readFileSync(resolvePath(p), "utf8").split("\n");
+  return (limit ? lines.slice(0, limit) : lines).join("\n");
+}
+```
+
+**第 3 步**：注册进 dispatch map——工具名到处理函数的映射。加一个工具 = 加一行。
+
+```ts
+const TOOL_HANDLERS: Record<string, (a: Args) => string> = {
+  read_file:  (a) => runReadFile(String(a.path), a.limit),
+  write_file: (a) => runWriteFile(String(a.path), String(a.content)),
+  apply_patch:(a) => runApplyPatch(String(a.patch)),
+  list_dir:   (a) => runListDir(String(a.path)),
+  shell:      (a) => runShell(String(a.command)),
+};
+```
+
+**第 4 步**：分发——按名字查表、解析参数、调用。未知工具返回错误，而不是崩溃。
+
+```ts
+function dispatch(name: string, argsJson: string): string {
+  const handler = TOOL_HANDLERS[name];
+  if (!handler) return `Error: unknown tool '${name}'`;
+  return handler(JSON.parse(argsJson));
+}
+```
+
+**第 5 步**：循环里把硬编码的 `runShell(...)` 换成 `dispatch(...)`。模型一轮返回几个调用，就逐个分发几个——这就是 fan-out。
+
+```ts
+for (const call of calls) {                 // 一轮可能有好几个 function_call
+  const result = dispatch(call.name, call.arguments);   // ← 唯一改动的那行
+  input.push({ type: "function_call_output", call_id: call.call_id, output: result });
+}
+```
+
+组装的完整循环和 s01 一字不差，只有执行那一行变了。这就是结构化工具的真正威力：**循环保持通用，能力靠注册扩张**。模型负责挑工具、填参数；harness 负责路由、执行、喂回。后面所有章节（审批、沙箱、计划）都是在这张分发表的前后再加一层，表本身不动。
+
+---
+
+## 试一下
+
+> **教学 demo 提示**：代码会在当前目录创建 `agent_scratch/` 并读写里面的文件。建议在临时测试目录里运行，避免碰真实项目。s03/s04 会给它加上审批和沙箱。
+
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，内置的离线脚本模型会在**同一轮** fan-out 出 3 个工具调用（两次），让你清楚看到 dispatch map 按名字路由每个调用。
+
+**准备**（首次运行）：
+
+```sh
+npm install
+cp .env.example .env        # 想跑真实模型就填入 OPENAI_API_KEY 和 MODEL_ID
+```
+
+**运行**：
+
+```sh
+npx tsx s02_tool_use/code.ts                # 离线 demo 模型
+OPENAI_API_KEY=sk-... npx tsx s02_tool_use/code.ts   # 真实模型
+```
+
+试试这些 prompt：
+
+1. `Create two files a.md and b.md, then list the directory`（一轮 fan-out 多个调用）
+2. `Read README.md and summarize this project in a new file SUMMARY.md`（read + write）
+3. `Use a patch to add a "Usage" section to SUMMARY.md`（apply_patch）
+
+观察重点：模型什么时候只调一个工具、什么时候一轮调多个？每个调用是怎么被按名字路由到对应函数的？
+
+---
+
+## 接下来
+
+现在模型手里有 5 个工具，`write_file`、`apply_patch`、`shell` 想写就写、想删就删。让它「清理一下项目」，它可能真把东西删了。
+
+s03 Approval → 在工具执行前加一道审批门：这次操作要不要先问过用户？`approval_policy` 的四种模式各有什么区别？
+
+<details>
+<summary>深入 Codex 源码</summary>
+
+> 以下内容基于 OpenAI 开源的 [`openai/codex`](https://github.com/openai/codex) 仓库（`codex-rs`，Rust 实现）的整体架构。教学版的「schema 数组 + dispatch map」就是 Codex 工具系统的最小骨架；差异全在生产级的健壮性与安全性上。
+
+**教学版的 `TOOL_HANDLERS` ≈ Codex 把模型的 function call 路由到具体工具实现的那一层。** 下面是真实实现里的几个关键点。
+
+<details>
+<summary>一、工具是一等公民，apply_patch 尤其特殊</summary>
+
+Codex 给模型的工具集里，`apply_patch` 不是「锦上添花」，而是修改文件的**首选方式**。模型被明确要求用结构化的 patch（`*** Begin Patch ... *** Add/Update/Delete File ...`）来改代码，而不是 `echo >` 或 `sed`。教学版实现了一个极简的 Add/Update/Delete 解析器；真实仓库里有一套完整的 patch 语法解析与校验（专用 grammar），能处理上下文匹配、移动文件等情况，并且 patch 会先经过审批与沙箱才落盘（见 s03/s04）。
+
+</details>
+
+<details>
+<summary>二、分发不是查 HashMap 这么简单，而是事件流里的路由</summary>
+
+教学版在一轮结束后遍历 `calls` 数组逐个 `dispatch`。Codex 的核心循环消费的是一条**事件流**：模型边生成边发 `ResponseItem`，harness 一旦看到完整的 function call 就取出来，交给对应工具的处理逻辑执行，而不是等整轮结束。这让独立的工具调用可以更早起跑、并行执行（只读的工具之间没有依赖，可以同时跑），执行结果再作为 `function_call_output` 回到上下文。fan-out 在真实实现里是「真并发」，教学版是「顺序逐个」，概念一致。
+
+</details>
+
+<details>
+<summary>三、每个工具调用都要过校验与策略管线</summary>
+
+教学版的 `dispatch` 只做「解析参数 + 调用」。Codex 在真正执行一个工具前，会先做参数校验、再叠加两层策略：
+
+| 层 | 作用 | 对应章节 |
+|----|------|---------|
+| 参数 / schema 校验 | 参数类型、必填项是否合法 | s02（教学版用 JSON Schema 兜底） |
+| `approval_policy` | 这次调用要不要先问用户 | s03 |
+| `sandbox_mode` + OS 隔离 | 这次调用实际能碰到哪些资源 | s04 |
+
+教学版这一章只有最上面一层，下面两层在 s03/s04 逐个加回，分发表本身始终不变。
+
+</details>
+
+<details>
+<summary>四、工具集可以扩展：内置工具之外还有 MCP</summary>
+
+Codex 的内置工具（读、写、patch、shell 等）之外，还能通过 `mcp_servers` 接入外部工具——它们的 schema 会被一并列给模型，调用时桥接到对应的 MCP server。对模型而言，内置工具和 MCP 工具长得一模一样，分发层统一处理。s19 会专门讲 MCP 桥接。
+
+</details>
+
+**一句话**：Codex 的工具系统，核心仍是「模型按名字挑工具、harness 路由执行、结果喂回」。真实实现把这一层放进事件流、加上并发与策略管线。先把「注册 + 分发」吃透，后面的审批与沙箱都是在这张表的前后再加一层。
+
+</details>
+
+<!-- translation-sync: zh@v1, en@v1 -->

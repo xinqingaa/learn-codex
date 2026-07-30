@@ -1,0 +1,89 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/>
+    </marker>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="720" height="540" fill="#fafbfc" rx="8"/>
+  <rect x="0" y="0" width="720" height="48" fill="url(#header)" rx="8"/>
+  <rect x="0" y="40" width="720" height="8" fill="url(#header)"/>
+  <text x="360" y="30" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">sandbox_mode — a hard boundary at execution</text>
+
+  <!-- function_call -->
+  <rect x="40" y="88" width="150" height="54" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
+  <text x="115" y="110" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">function_call</text>
+  <text x="115" y="128" fill="#93c5fd" font-size="11" text-anchor="middle">write_file ../x</text>
+
+  <!-- sandbox layer -->
+  <rect x="240" y="88" width="190" height="54" rx="8" fill="#f0f4ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="335" y="110" fill="#1e3a5f" font-size="13" font-weight="700" text-anchor="middle">sandbox layer</text>
+  <text x="335" y="128" fill="#2563eb" font-size="11" font-weight="600" text-anchor="middle">sandboxCheck(call)</text>
+
+  <!-- verdict diamond -->
+  <polygon points="560,76 660,115 560,154 460,115" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+  <text x="560" y="111" fill="#92400e" font-size="12" font-weight="700" text-anchor="middle">allow or</text>
+  <text x="560" y="127" fill="#92400e" font-size="12" font-weight="700" text-anchor="middle">refuse?</text>
+
+  <!-- arrows: call -> sandbox -> verdict -->
+  <line x1="190" y1="115" x2="238" y2="115" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <line x1="430" y1="115" x2="458" y2="115" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+
+  <!-- three modes -->
+  <rect x="40" y="180" width="200" height="62" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="140" y="204" fill="#1e3a5f" font-size="12" font-weight="700" text-anchor="middle">read-only</text>
+  <text x="140" y="224" fill="#475569" font-size="11" text-anchor="middle">refuse every write</text>
+
+  <rect x="260" y="180" width="200" height="62" rx="8" fill="#f0f4ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="360" y="204" fill="#1e3a5f" font-size="12" font-weight="700" text-anchor="middle">workspace-write</text>
+  <text x="360" y="224" fill="#2563eb" font-size="11" text-anchor="middle">writes stay inside the root</text>
+
+  <rect x="480" y="180" width="200" height="62" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="580" y="204" fill="#1e3a5f" font-size="12" font-weight="700" text-anchor="middle">danger-full-access</text>
+  <text x="580" y="224" fill="#475569" font-size="11" text-anchor="middle">no boundary at all</text>
+
+  <!-- workspace boundary -->
+  <rect x="60" y="272" width="380" height="152" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2" stroke-dasharray="5 4"/>
+  <text x="250" y="296" fill="#065f46" font-size="12" font-weight="700" text-anchor="middle">workspace (writable root)</text>
+
+  <!-- inside write allowed -->
+  <rect x="90" y="316" width="230" height="58" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="205" y="340" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">write INSIDE workspace</text>
+  <text x="205" y="358" fill="#059669" font-size="11" text-anchor="middle">allowed — call runs</text>
+
+  <!-- the wall: right edge of the workspace -->
+  <line x1="440" y1="272" x2="440" y2="424" stroke="#16a34a" stroke-width="3"/>
+
+  <!-- outside write refused -->
+  <rect x="470" y="316" width="190" height="58" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
+  <text x="565" y="340" fill="#7f1d1d" font-size="12" font-weight="600" text-anchor="middle">write OUTSIDE ../</text>
+  <text x="565" y="358" fill="#dc2626" font-size="11" text-anchor="middle">refused — error item</text>
+
+  <!-- verdict -> outcomes -->
+  <path d="M 520 150 C 380 210 250 270 208 314" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="330" y="240" fill="#16a34a" font-size="11" font-weight="600" text-anchor="middle">allow</text>
+  <path d="M 320 345 L 468 345" fill="none" stroke="#dc2626" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-red)"/>
+  <text x="394" y="334" fill="#dc2626" font-size="11" font-weight="600" text-anchor="middle">escape blocked</text>
+  <text x="440" y="352" fill="#dc2626" font-size="16" font-weight="700" text-anchor="middle">✗</text>
+
+  <path d="M 600 150 C 640 220 620 280 590 314" fill="none" stroke="#dc2626" stroke-width="2" marker-end="url(#arrow-red)"/>
+  <text x="652" y="240" fill="#dc2626" font-size="11" font-weight="600" text-anchor="middle">refuse</text>
+
+  <!-- footer note -->
+  <rect x="60" y="470" width="600" height="52" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="360" y="492" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">Approval decides whether to ask; the sandbox decides what a call can touch. Real backend: Seatbelt / Landlock.</text>
+  <text x="360" y="510" fill="#64748b" font-size="11" text-anchor="middle">s04 · Sandbox</text>
+</svg>

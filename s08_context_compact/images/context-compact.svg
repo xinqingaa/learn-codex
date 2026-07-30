@@ -1,0 +1,86 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="720" height="540" fill="#fafbfc" rx="8"/>
+  <rect x="0" y="0" width="720" height="48" fill="url(#header)" rx="8"/>
+  <rect x="0" y="40" width="720" height="8" fill="url(#header)"/>
+  <text x="360" y="30" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">Auto-Compaction — old turns collapse into one summary item</text>
+
+  <!-- BEFORE: thread grows every turn -->
+  <rect x="30" y="150" width="180" height="220" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="120" y="172" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">before · thread grows</text>
+  <rect x="46" y="188" width="96" height="24" rx="5" fill="#f0f4ff" stroke="#2563eb"/>
+  <text x="94" y="204" fill="#1e3a5f" font-size="11" text-anchor="middle">user 1</text>
+  <rect x="46" y="216" width="96" height="24" rx="5" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="94" y="232" fill="#475569" font-size="11" text-anchor="middle">turn 1</text>
+  <rect x="46" y="244" width="96" height="24" rx="5" fill="#f0f4ff" stroke="#2563eb"/>
+  <text x="94" y="260" fill="#1e3a5f" font-size="11" text-anchor="middle">user 2</text>
+  <rect x="46" y="272" width="96" height="24" rx="5" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="94" y="288" fill="#475569" font-size="11" text-anchor="middle">turn 2</text>
+  <rect x="46" y="300" width="96" height="24" rx="5" fill="#f0f4ff" stroke="#2563eb"/>
+  <text x="94" y="316" fill="#1e3a5f" font-size="11" text-anchor="middle">user 3 …</text>
+  <!-- token meter (before) -->
+  <rect x="162" y="188" width="16" height="136" rx="3" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <rect x="162" y="198" width="16" height="126" rx="3" fill="#f59e0b"/>
+  <line x1="158" y1="232" x2="182" y2="232" stroke="#dc2626" stroke-width="2" stroke-dasharray="3 2"/>
+  <text x="150" y="228" fill="#dc2626" font-size="9" text-anchor="end">budget</text>
+  <text x="170" y="338" fill="#64748b" font-size="9" text-anchor="middle">tokens</text>
+
+  <!-- decision diamond -->
+  <polygon points="290,196 358,238 290,280 222,238" fill="#fff7ed" stroke="#f59e0b" stroke-width="2"/>
+  <text x="290" y="234" fill="#92400e" font-size="12" font-weight="600" text-anchor="middle">over</text>
+  <text x="290" y="250" fill="#92400e" font-size="12" font-weight="600" text-anchor="middle">budget?</text>
+
+  <!-- before -> diamond -->
+  <line x1="210" y1="238" x2="220" y2="238" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <!-- no: keep looping -->
+  <path d="M 290 196 C 290 120 170 112 150 146" fill="none" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="212" y="118" fill="#555" font-size="11" font-weight="600" text-anchor="middle">no · run the loop as-is</text>
+
+  <!-- SUMMARIZE -->
+  <rect x="420" y="196" width="180" height="84" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="510" y="228" fill="#1e3a5f" font-size="13" font-weight="600" text-anchor="middle">summarize old turns</text>
+  <text x="510" y="250" fill="#2563eb" font-size="12" text-anchor="middle">→ ONE compact item</text>
+
+  <!-- yes: diamond -> summarize -->
+  <line x1="358" y1="238" x2="418" y2="238" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="388" y="228" fill="#2563eb" font-size="11" font-weight="600" text-anchor="middle">yes</text>
+
+  <!-- AFTER: compacted thread -->
+  <rect x="420" y="310" width="240" height="150" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
+  <text x="540" y="332" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">after · small again</text>
+  <rect x="436" y="346" width="132" height="34" rx="6" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="502" y="367" fill="#065f46" font-size="11" font-weight="600" text-anchor="middle">compact summary</text>
+  <rect x="436" y="390" width="132" height="24" rx="5" fill="#f0f4ff" stroke="#2563eb"/>
+  <text x="502" y="406" fill="#1e3a5f" font-size="11" text-anchor="middle">latest user turn</text>
+  <rect x="436" y="420" width="132" height="24" rx="5" fill="#f8fafc" stroke="#94a3b8"/>
+  <text x="502" y="436" fill="#475569" font-size="11" text-anchor="middle">latest reply</text>
+  <!-- token meter (after) -->
+  <rect x="600" y="346" width="16" height="98" rx="3" fill="#f1f5f9" stroke="#cbd5e1"/>
+  <rect x="600" y="412" width="16" height="32" rx="3" fill="#16a34a"/>
+  <text x="608" y="456" fill="#64748b" font-size="9" text-anchor="middle">tokens</text>
+
+  <!-- summarize -> after -->
+  <line x1="510" y1="280" x2="510" y2="306" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="586" y="298" fill="#16a34a" font-size="11" font-weight="600" text-anchor="middle">swap in, drop originals</text>
+
+  <!-- footer note -->
+  <rect x="60" y="478" width="600" height="48" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="360" y="498" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">Check the budget before each model call. Split at the LAST user message —</text>
+  <text x="360" y="515" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">never separate a function_call from its output.   ·   s08 Context Compaction</text>
+</svg>

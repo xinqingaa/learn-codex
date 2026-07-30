@@ -1,0 +1,62 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="720" height="540" fill="#fafbfc" rx="8"/>
+  <rect x="0" y="0" width="720" height="48" fill="url(#header)" rx="8"/>
+  <rect x="0" y="40" width="720" height="8" fill="url(#header)"/>
+  <text x="360" y="30" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">Subagents — delegate to a child loop with a fresh context</text>
+
+  <!-- Parent loop -->
+  <rect x="50" y="96" width="230" height="250" rx="8" fill="#f0f4ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="165" y="122" fill="#1e3a5f" font-size="14" font-weight="700" text-anchor="middle">Parent agent loop</text>
+  <text x="165" y="141" fill="#64748b" font-size="11" text-anchor="middle">thread grows with every lookup</text>
+  <!-- cluttered context stack -->
+  <rect x="70" y="156" width="190" height="22" rx="4" fill="#e2e8f0"/>
+  <rect x="70" y="184" width="190" height="22" rx="4" fill="#e2e8f0"/>
+  <rect x="70" y="212" width="190" height="22" rx="4" fill="#e2e8f0"/>
+  <rect x="70" y="240" width="190" height="22" rx="4" fill="#e2e8f0"/>
+  <rect x="70" y="268" width="190" height="22" rx="4" fill="#cbd5e1"/>
+  <text x="165" y="316" fill="#475569" font-size="11" text-anchor="middle">tools: shell · task</text>
+  <text x="165" y="333" fill="#94a3b8" font-size="10" text-anchor="middle">attention dilutes as context grows</text>
+
+  <!-- Child loop -->
+  <rect x="440" y="96" width="230" height="250" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="555" y="122" fill="#065f46" font-size="14" font-weight="700" text-anchor="middle">Sub-agent loop</text>
+  <text x="555" y="141" fill="#059669" font-size="11" text-anchor="middle">input = [ task ]  (fresh)</text>
+  <!-- one clean context item -->
+  <rect x="460" y="156" width="190" height="22" rx="4" fill="#bbf7d0" stroke="#16a34a"/>
+  <text x="555" y="171" fill="#065f46" font-size="11" text-anchor="middle">the delegated task</text>
+  <text x="555" y="222" fill="#475569" font-size="11" text-anchor="middle">runs its own loop</text>
+  <text x="555" y="240" fill="#475569" font-size="11" text-anchor="middle">intermediate turns discarded</text>
+  <text x="555" y="316" fill="#475569" font-size="11" text-anchor="middle">tools: shell only</text>
+  <text x="555" y="333" fill="#b91c1c" font-size="10" text-anchor="middle">no task tool → cannot recurse</text>
+
+  <!-- spawn arrow: parent -> child -->
+  <line x1="280" y1="170" x2="436" y2="170" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="359" y="158" fill="#2563eb" font-size="11" font-weight="600" text-anchor="middle">spawn task(desc)</text>
+
+  <!-- return arrow: child -> parent -->
+  <line x1="440" y1="300" x2="284" y2="300" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-green)"/>
+  <text x="359" y="290" fill="#16a34a" font-size="11" font-weight="600" text-anchor="middle">only the conclusion</text>
+  <text x="359" y="318" fill="#16a34a" font-size="10" text-anchor="middle">(function_call_output)</text>
+
+  <!-- footer note -->
+  <rect x="60" y="392" width="600" height="56" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="360" y="414" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">The child is a full agent loop — same code, clean input array, no task tool.</text>
+  <text x="360" y="432" fill="#64748b" font-size="11" text-anchor="middle">Its digging never touches the parent thread; only the summary re-enters as a tool result.</text>
+  <text x="360" y="470" fill="#94a3b8" font-size="11" text-anchor="middle">s06 · Subagents</text>
+</svg>

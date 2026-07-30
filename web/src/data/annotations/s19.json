@@ -1,0 +1,35 @@
+{
+  "version": "s19",
+  "decisions": [
+    {
+      "id": "normalized-mcp-namespace",
+      "title": "MCP Tools Use a Normalized Namespace",
+      "description": "Discovered tools are exposed as mcp__server__tool. The prefix makes the source explicit and avoids collisions with built-in tools or tools from another server.",
+      "alternatives": "Using the raw tool name is shorter, but search from two servers could overwrite each other.",
+      "zh": {
+        "title": "MCP 工具使用规范化命名空间",
+        "description": "发现到的工具会暴露为 mcp__server__tool。前缀让工具来源明确，也避免和内置工具或其他服务器工具冲突。"
+      }
+    },
+    {
+      "id": "dynamic-tool-pool",
+      "title": "Tool Discovery Updates the Active Tool Pool",
+      "description": "After connecting to a server, the runtime assembles a new tool pool for the next LLM call. The model can only use MCP tools after discovery has made them visible.",
+      "alternatives": "Preloading every possible MCP tool would create a huge prompt and expose capabilities the user did not request.",
+      "zh": {
+        "title": "工具发现会更新活动工具池",
+        "description": "连接服务器后，运行时会为下一次 LLM 调用组装新的工具池。模型只有在发现阶段让 MCP 工具可见之后，才能调用它们。"
+      }
+    },
+    {
+      "id": "external-results-append-like-tools",
+      "title": "External Results Reuse the Tool Result Path",
+      "description": "MCP responses are appended to the conversation like ordinary tool results. This keeps the agent loop unchanged while still letting external systems participate.",
+      "alternatives": "A separate external-response channel would make MCP feel special and require extra loop logic.",
+      "zh": {
+        "title": "外部结果复用 Tool Result 路径",
+        "description": "MCP 响应会像普通 tool result 一样追加到对话中。这样 agent 循环无需改变，同时外部系统仍然可以参与。"
+      }
+    }
+  ]
+}

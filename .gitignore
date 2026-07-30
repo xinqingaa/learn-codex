@@ -1,0 +1,17 @@
+# dependencies
+node_modules/
+
+# build output
+web/out/
+web/.next/
+web/src/data/generated/
+web/public/course-assets/
+
+# env / secrets
+.env
+.env.local
+
+# os / editor
+.DS_Store
+*.log
+dist/

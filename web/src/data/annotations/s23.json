@@ -1,0 +1,35 @@
+{
+  "version": "s23",
+  "decisions": [
+    {
+      "id": "review-is-a-stance",
+      "title": "Review Is a Stance, Not a New Engine",
+      "description": "codex review does not ship a separate analysis engine. It starts the same agent loop with two changes: the input is a diff (for example git diff main...HEAD) instead of a chat turn, and the instructions put the model in a reviewer stance -- prioritize correctness, flag risky patterns, avoid nitpicks. Because it reuses the loop, review gets the same tools, sandbox, and model, and it can inspect the repo to ground its judgments rather than reading the patch cold.",
+      "alternatives": "A dedicated static-analyzer-style reviewer would be faster and deterministic, but it could not reason about intent or read surrounding code the way the loop can. Reusing the agent trades a little determinism for far deeper, context-aware findings.",
+      "zh": {
+        "title": "审查是一种姿态，而非新引擎",
+        "description": "codex review 并没有搭载独立的分析引擎。它启动同一个 agent 循环，只有两处变化：输入是一个 diff（例如 git diff main...HEAD）而不是一轮对话，指令把模型置于审查者姿态——优先正确性、标记高风险模式、避免吹毛求疵。由于复用了循环，review 拥有相同的工具、沙箱和模型，并且能检查仓库来支撑其判断，而不是凭空读补丁。"
+      }
+    },
+    {
+      "id": "structured-findings-for-ci",
+      "title": "Structured Findings Make Review Machine-Readable",
+      "description": "The point of headless review is that something downstream consumes it. So review mode serializes its output as JSON -- a findings array with title, priority, file, and line, plus an overall verdict -- instead of prose. A CI job can run codex review (or codex exec with a review prompt) and gate a merge on the parsed result: fail on any high-priority finding, post the rest as comments. The loop is unchanged; only the output sink is shaped for automation.",
+      "alternatives": "Emitting natural-language review text is friendlier to read but forces CI to scrape prose, which is brittle. A stable JSON schema is the contract that lets the same loop plug into pipelines, bots, and dashboards without parsing heuristics.",
+      "zh": {
+        "title": "结构化 findings 让审查可被机器消费",
+        "description": "无头审查的意义在于有下游来消费它。因此 review 模式把输出序列化为 JSON——一个包含 title、priority、file、line 的 findings 数组，外加总体结论——而不是散文。CI 任务可以运行 codex review（或用 codex exec 带审查提示），并基于解析结果门禁合并：出现高优先级 finding 就失败，其余作为评论发布。循环不变，只是输出端被塑造成适合自动化的形态。"
+      }
+    },
+    {
+      "id": "cloud-is-a-hosted-loop",
+      "title": "Cloud and CI Are the Loop, Hosted Elsewhere",
+      "description": "codex exec in CI and Codex Cloud tasks are the same harness running without a human at the keyboard. exec runs unattended because approval_policy and the sandbox are resolved up front, so nothing blocks waiting for a keypress; Codex Cloud runs the loop on hosted infrastructure against a repo and returns a result you can pull down with codex apply. The laptop is just one place the loop can run -- the mechanism (config -> loop -> tools -> result) is identical locally, in CI, and in the cloud.",
+      "alternatives": "A separate cloud agent with its own runtime could be optimized for hosting, but it would fork behavior between local and remote runs and double the maintenance. Keeping one loop everywhere is what makes a local dry run a faithful preview of a cloud task.",
+      "zh": {
+        "title": "云与 CI 是同一循环，只是托管在别处",
+        "description": "CI 中的 codex exec 与 Codex Cloud 任务，都是同一个 harness 在没有人工值守下运行。exec 之所以能无人值守，是因为 approval_policy 和沙箱在开始前就已解析好，不会卡在等待按键上；Codex Cloud 则在托管基础设施上针对仓库运行循环，并返回可用 codex apply 拉取下来的结果。笔记本只是循环可运行的位置之一——其机制（config -> 循环 -> 工具 -> 结果）在本地、CI 和云端完全一致。"
+      }
+    }
+  ]
+}

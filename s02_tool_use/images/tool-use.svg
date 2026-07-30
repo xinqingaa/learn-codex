@@ -1,0 +1,77 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 540" font-family="system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#555"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+    <linearGradient id="header" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#111827"/>
+      <stop offset="100%" stop-color="#2563eb"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="720" height="540" fill="#fafbfc" rx="8"/>
+  <rect x="0" y="0" width="720" height="48" fill="url(#header)" rx="8"/>
+  <rect x="0" y="40" width="720" height="8" fill="url(#header)"/>
+  <text x="360" y="30" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">Tool Registry &amp; Dispatch Map — one turn, many tools</text>
+
+  <!-- Model -->
+  <rect x="46" y="220" width="168" height="90" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
+  <text x="130" y="252" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">Model</text>
+  <text x="130" y="272" fill="#93c5fd" font-size="11" text-anchor="middle">one turn emits</text>
+  <text x="130" y="290" fill="#93c5fd" font-size="11" text-anchor="middle">3 function_calls</text>
+
+  <!-- Dispatch map -->
+  <rect x="282" y="196" width="190" height="138" rx="8" fill="#f0f4ff" stroke="#2563eb" stroke-width="2"/>
+  <text x="377" y="222" fill="#1e3a5f" font-size="13" font-weight="700" text-anchor="middle">TOOL_HANDLERS</text>
+  <text x="377" y="244" fill="#2563eb" font-size="11" font-weight="600" text-anchor="middle">dispatch map</text>
+  <text x="377" y="266" fill="#334155" font-size="11" text-anchor="middle">handler = map[name]</text>
+  <text x="377" y="286" fill="#334155" font-size="11" text-anchor="middle">output = handler(args)</text>
+  <text x="377" y="310" fill="#64748b" font-size="10" text-anchor="middle">add a tool = +1 line</text>
+
+  <!-- Tool boxes (fan out on the right) -->
+  <rect x="540" y="92" width="150" height="46" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="615" y="112" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">read_file</text>
+  <text x="615" y="128" fill="#059669" font-size="10" text-anchor="middle">typed path arg</text>
+
+  <rect x="540" y="152" width="150" height="46" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="615" y="172" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">write_file</text>
+  <text x="615" y="188" fill="#059669" font-size="10" text-anchor="middle">mkdir + write</text>
+
+  <rect x="540" y="212" width="150" height="46" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="615" y="232" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">apply_patch</text>
+  <text x="615" y="248" fill="#059669" font-size="10" text-anchor="middle">add/update/delete</text>
+
+  <rect x="540" y="272" width="150" height="46" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="615" y="292" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">list_dir</text>
+  <text x="615" y="308" fill="#059669" font-size="10" text-anchor="middle">typed path arg</text>
+
+  <rect x="540" y="332" width="150" height="46" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="615" y="352" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">shell</text>
+  <text x="615" y="368" fill="#059669" font-size="10" text-anchor="middle">escape hatch</text>
+
+  <!-- arrows: model -> dispatch -->
+  <line x1="214" y1="265" x2="280" y2="265" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="247" y="255" fill="#2563eb" font-size="11" font-weight="600" text-anchor="middle">by name</text>
+
+  <!-- arrows: dispatch -> each tool -->
+  <path d="M 472 230 C 510 210 510 130 538 116" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <path d="M 472 248 C 505 240 505 185 538 176" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <line x1="472" y1="265" x2="538" y2="238" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <line x1="472" y1="282" x2="538" y2="296" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <path d="M 472 300 C 505 312 505 348 538 356" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+
+  <!-- results fed back -->
+  <path d="M 615 378 C 615 460 130 460 130 312" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-green)"/>
+  <text x="372" y="452" fill="#16a34a" font-size="11" font-weight="600" text-anchor="middle">each result returns as a function_call_output — loop continues</text>
+
+  <!-- footer note -->
+  <rect x="60" y="470" width="600" height="52" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="360" y="492" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">The model picks tools by name; the dispatch map routes each call. The loop never changes.</text>
+  <text x="360" y="510" fill="#64748b" font-size="11" text-anchor="middle">s02 · Tool Use</text>
+</svg>

@@ -1,0 +1,54 @@
+{
+  "version": "s23",
+  "title": "Review, CI & Cloud",
+  "description": "codex review, codex exec in CI, and Codex Cloud run the same agent loop unattended on real work; review mode emits structured JSON findings.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "argv = [codex, review, --base, main]   (non-interactive)",
+      "annotation": "codex review starts the same loop in a reviewer stance, pointed at a diff instead of a chat turn."
+    },
+    {
+      "type": "system_event",
+      "content": "collect change: git diff main...HEAD -> build the review prompt with the diff as context",
+      "annotation": "The harness gathers the change and primes the reviewer before the first model call."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I'll check correctness, test coverage, and risky patterns in this diff.",
+      "annotation": "The model adopts the review goal, not an open-ended coding task."
+    },
+    {
+      "type": "tool_call",
+      "content": "git diff --stat main...HEAD && git diff main...HEAD -- src/auth/token.ts",
+      "toolName": "shell",
+      "annotation": "The loop inspects the change with ordinary tools, just as in interactive mode."
+    },
+    {
+      "type": "tool_result",
+      "content": "src/auth/token.ts +48 -6 ; refresh path no longer checks expiry",
+      "toolName": "shell",
+      "annotation": "The result is appended; the model reasons over the actual diff."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Found a real regression: the refresh path dropped the expiry check.",
+      "annotation": "Review mode optimizes for high-signal findings, not edits."
+    },
+    {
+      "type": "system_event",
+      "content": "stdout (JSON): { \"findings\": [ { \"title\": \"Missing expiry check on refresh\", \"priority\": 1, \"file\": \"src/auth/token.ts\", \"line\": 88 } ], \"overall_correct\": false }",
+      "annotation": "Review mode serializes findings as JSON so CI and other tools can gate on them."
+    },
+    {
+      "type": "system_event",
+      "content": "same loop, other doors: codex exec --json in CI (headless), codex cloud (hosted tasks), codex apply (pull the diff locally)",
+      "annotation": "exec / review / cloud are one harness run unattended; only the front door and output sink differ."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Review complete: 1 blocking finding. The same loop runs locally, in CI, or in the cloud.",
+      "annotation": "The harness leaves your laptop but keeps a single agent loop."
+    }
+  ]
+}

@@ -1,0 +1,46 @@
+{
+  "version": "s02",
+  "title": "Tool Use",
+  "description": "Agent with a shell tool for execution and apply_patch for structured edits",
+  "steps": [
+    {
+      "type": "user_message",
+      "content": "Add a function called greet(name) to hello.ts",
+      "annotation": "User requests a code modification"
+    },
+    {
+      "type": "assistant_text",
+      "content": "Let me read the current file first.",
+      "annotation": "The model chooses the shell tool to inspect the file"
+    },
+    {
+      "type": "tool_call",
+      "content": "cat hello.ts",
+      "toolName": "shell",
+      "annotation": "The shell tool handles execution and arbitrary commands"
+    },
+    {
+      "type": "tool_result",
+      "content": "console.log(\"Hello, World!\")",
+      "toolName": "shell",
+      "annotation": "File contents returned to the model"
+    },
+    {
+      "type": "tool_call",
+      "content": "*** Begin Patch\n*** Update File: hello.ts\n@@\n console.log(\"Hello, World!\")\n+function greet(name: string) {\n+  console.log(`Hello, ${name}!`);\n+}\n+greet(\"World\");\n*** End Patch",
+      "toolName": "apply_patch",
+      "annotation": "apply_patch makes a structured, reviewable edit instead of an opaque rewrite"
+    },
+    {
+      "type": "tool_result",
+      "content": "The file hello.ts has been edited.",
+      "toolName": "apply_patch",
+      "annotation": "Patch applied"
+    },
+    {
+      "type": "assistant_text",
+      "content": "I've updated hello.ts with a greet(name) function that takes a name parameter.",
+      "annotation": "A small, focused toolset beats one giant tool: each capability has a clear purpose"
+    }
+  ]
+}

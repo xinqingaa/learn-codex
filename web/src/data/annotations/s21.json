@@ -1,0 +1,35 @@
+{
+  "version": "s21",
+  "decisions": [
+    {
+      "id": "one-binary-many-doors",
+      "title": "One Binary, Many Doors",
+      "description": "The codex binary exposes exec, resume, review, cloud, login, mcp, and more as subcommands, but they all converge on a single agent loop. Each subcommand is a thin wrapper: it parses argv, resolves a Config, and starts the same harness with a different front end -- the interactive TUI for a bare `codex`, a headless runner for `codex exec`, a diff-primed reviewer for `codex review`. Because there is only one loop, every improvement to tools, sandboxing, or the model applies to every door at once, and behavior stays consistent no matter how you enter.",
+      "alternatives": "Codex could have shipped separate binaries per mode (a reviewer, a runner, a TUI). That would drift: each would grow its own flag set, its own config handling, and its own loop bugs. One binary with a dispatch layer keeps the loop the single source of truth and makes the CLI easy to reason about.",
+      "zh": {
+        "title": "一个二进制，多个入口",
+        "description": "codex 二进制把 exec、resume、review、cloud、login、mcp 等暴露为子命令，但它们最终都汇聚到同一个 agent 循环。每个子命令都是一层薄包装：解析 argv、解析出 Config，然后用不同的前端启动同一个 harness——裸 `codex` 用交互式 TUI，`codex exec` 用无头运行器，`codex review` 用以 diff 为上下文的审查者。因为只有一个循环，对工具、沙箱或模型的任何改进都会同时作用于所有入口，无论从哪扇门进入，行为都保持一致。"
+      }
+    },
+    {
+      "id": "slash-commands-stay-local",
+      "title": "Slash Commands Never Reach the Model",
+      "description": "Inside the TUI, text that starts with \"/\" is intercepted by the composer and dispatched to a local command -- /model, /compact, /diff, /mcp, /status and friends -- instead of becoming a user turn. These commands mutate session state or render local information, so they are instant and cost no tokens. Only plain text is forwarded into the agent loop as a message. This mirrors the subcommand layer: both are dispatch steps that decide whether input is handled locally or fed to the loop.",
+      "alternatives": "Commands could be routed through the model (let the LLM interpret \"/compact\"). That would be nondeterministic, slow, and token-hungry for what are really UI and session operations. Keeping them local makes the command surface fast, free, and predictable.",
+      "zh": {
+        "title": "斜杠命令永远不会到达模型",
+        "description": "在 TUI 中，以 \"/\" 开头的文本会被输入框拦截并分发到本地命令——/model、/compact、/diff、/mcp、/status 等——而不是成为一轮用户消息。这些命令要么修改会话状态，要么渲染本地信息，因此即时且不消耗 token。只有纯文本才会作为消息进入 agent 循环。这与子命令层相呼应：两者都是分发步骤，决定输入是本地处理还是送入循环。"
+      }
+    },
+    {
+      "id": "exec-is-the-same-loop",
+      "title": "exec Is Not a Separate Product",
+      "description": "codex exec is the interactive loop with the TUI removed and output structured (line-delimited JSON events with --json). codex resume continues a persisted session rollout; codex review primes the same loop with a diff and a reviewer instruction. None of them re-implement the agent. They share config resolution, the tool set, the sandbox, and the model client, so scripting Codex in CI behaves exactly like driving it by hand -- just without the chrome.",
+      "alternatives": "A lighter-weight 'script mode' that skips the loop and calls the model directly would be simpler to build but far less capable: it would lose tool use, sandboxing, approvals, and multi-turn reasoning. Reusing the one loop is what makes headless Codex actually useful.",
+      "zh": {
+        "title": "exec 不是一个独立产品",
+        "description": "codex exec 就是去掉了 TUI、并把输出结构化（--json 时输出逐行 JSON 事件）的交互式循环。codex resume 继续一个已持久化的会话；codex review 用 diff 和审查者指令来启动同一个循环。它们都没有重新实现 agent，而是共享配置解析、工具集、沙箱和模型客户端，因此在 CI 里脚本化 Codex 与手动驱动它的行为完全一致——只是去掉了外壳。"
+      }
+    }
+  ]
+}

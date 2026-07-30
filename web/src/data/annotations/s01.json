@@ -1,0 +1,35 @@
+{
+  "version": "s01",
+  "decisions": [
+    {
+      "id": "one-tool-sufficiency",
+      "title": "Why a Single Shell Tool Is Enough",
+      "description": "A shell can read files, write files, run arbitrary programs, pipe data between processes, and manage the filesystem. Any additional tool (read_file, write_file, etc.) would be a strict subset of what the shell already provides. Adding more tools doesn't unlock new capabilities -- it just adds surface area for confusion. The model has to learn fewer tool schemas, and the implementation stays small. This is the minimal viable agent: one tool, one loop over the Responses API.",
+      "alternatives": "We could have started with a richer toolset (file I/O, HTTP, apply_patch), but that would obscure the core insight: a model with a shell is already a general-purpose agent. Starting minimal also makes it obvious what each subsequent chapter actually adds.",
+      "zh": {
+        "title": "为什么仅靠一个 Shell 工具就够了",
+        "description": "Shell 能读写文件、运行任意程序、在进程间传递数据、管理文件系统。任何额外的工具（read_file、write_file 等）都只是 shell 已有能力的子集。增加工具并不会解锁新能力，只会增加模型需要理解的接口。模型只需学习一个工具的 schema，实现代码保持精简。这就是最小可行 agent：一个工具，一个跑在 Responses API 上的循环。"
+      }
+    },
+    {
+      "id": "process-as-subagent",
+      "title": "Recursive Process Spawning as Subagent Mechanism",
+      "description": "When the agent runs `tsx code.ts \"subtask\"`, it spawns a completely new Node process with a fresh model context. This child process is effectively a subagent: it has its own instructions, its own conversation history, and its own task focus. When it finishes, the parent gets the stdout result. This is subagent delegation without any framework -- just Unix process semantics. Each child process naturally isolates concerns because it literally cannot see the parent's context.",
+      "alternatives": "A harness-level subagent system (like s06's dedicated sub-agent loop) gives more control over what tools the subagent can access and how results are returned. But at s01, the point is to show that process spawning is the most primitive form of agent delegation -- no shared memory, no message passing, just stdin/stdout.",
+      "zh": {
+        "title": "用递归进程创建实现子代理机制",
+        "description": "当 agent 执行 `tsx code.ts \"subtask\"` 时，它会创建一个全新的 Node 进程，拥有全新的模型上下文。这个子进程实际上就是一个子代理：有自己的指令、对话历史和任务焦点。子进程完成后，父进程通过 stdout 获取结果。这就是不依赖任何框架的子代理委派——纯粹的 Unix 进程语义。每个子进程天然隔离关注点，因为它根本看不到父进程的上下文。"
+      }
+    },
+    {
+      "id": "model-drives-everything",
+      "title": "No Planning Framework -- The Model Decides",
+      "description": "There is no planner, no task queue, no state machine. The instructions tell the model how to approach problems, and the model decides what shell command to run next based on the conversation so far. This is intentional: at this level, adding a planning layer would be premature abstraction. The model's reasoning IS the plan. The agent loop just keeps asking the model what to do until it stops requesting tools.",
+      "alternatives": "Later chapters (s05) add explicit planning via the update_plan tool. But s01 proves that implicit planning through the model's reasoning is sufficient for many tasks. The planning framework only becomes necessary when you need external visibility into the agent's intentions.",
+      "zh": {
+        "title": "没有规划框架——由模型自行决策",
+        "description": "没有规划器，没有任务队列，没有状态机。指令告诉模型如何处理问题，模型根据对话历史决定下一步执行什么 shell 命令。这是有意为之的：在这个层级，添加规划层属于过早抽象。模型的推理本身就是计划。agent 循环只是不断询问模型下一步做什么，直到模型不再请求工具为止。"
+      }
+    }
+  ]
+}

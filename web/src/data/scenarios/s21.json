@@ -1,0 +1,59 @@
+{
+  "version": "s21",
+  "title": "The Codex CLI Surface",
+  "description": "One codex binary, many doors: subcommands like exec/resume/review/cloud and TUI slash commands all dispatch onto the same agent loop.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "argv = [codex, exec, --json, \"fix the flaky login test\"]",
+      "annotation": "The single codex binary parses argv and dispatches on the subcommand before any model call."
+    },
+    {
+      "type": "system_event",
+      "content": "dispatch(exec) -> run_headless: resolve Config, then start the SAME agent loop the TUI uses",
+      "annotation": "exec / resume / review / cloud are thin wrappers that configure and launch one shared harness."
+    },
+    {
+      "type": "user_message",
+      "content": "fix the flaky login test",
+      "annotation": "In exec mode the task is an argument; in the TUI it is a typed turn. The loop sees the same user message either way."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I'll reproduce the flake, then patch the race.",
+      "annotation": "The model plans against the task, identical to an interactive turn."
+    },
+    {
+      "type": "tool_call",
+      "content": "npx jest login --runsEach=20",
+      "toolName": "shell",
+      "annotation": "The loop emits a shell function call; headless mode runs it under the resolved sandbox policy."
+    },
+    {
+      "type": "tool_result",
+      "content": "1 failed intermittently: read of token returned null",
+      "toolName": "shell",
+      "annotation": "The result is appended back into the conversation, exactly as in the TUI."
+    },
+    {
+      "type": "assistant_text",
+      "content": "The read races the write; I'll await the store before asserting.",
+      "annotation": "No function_call in the previous response would break the loop; here it continues."
+    },
+    {
+      "type": "system_event",
+      "content": "meanwhile, in the TUI: \"/model gpt-5-codex high\" starts with \"/\" -> intercepted as a slash command",
+      "annotation": "Composer text that starts with \"/\" is dispatched to a local command and is never sent to the model."
+    },
+    {
+      "type": "system_event",
+      "content": "dispatch(/model) -> set session { model, reasoning_effort }; /compact /diff /mcp /status resolve the same way",
+      "annotation": "Slash commands and subcommands share one dispatch layer over the harness."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Patched and re-run: 20/20 green.",
+      "annotation": "The loop ends with a user-facing result; exec prints it (as JSON events with --json)."
+    }
+  ]
+}

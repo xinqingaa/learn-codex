@@ -1,0 +1,54 @@
+{
+  "version": "s22",
+  "title": "config.toml in Depth",
+  "description": "One resolver folds defaults, user config, trusted project config, the selected profile, and CLI overrides into a single effective Config.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "sources (low -> high precedence): built-in defaults < ~/.codex/config.toml < .codex/config.toml (trusted) < --profile < -c key=value / flags",
+      "annotation": "Codex layers configuration from several sources; the later a source, the higher its precedence."
+    },
+    {
+      "type": "system_event",
+      "content": "user ~/.codex/config.toml: model=\"gpt-5-codex\", approval_policy=\"on-request\", sandbox_mode=\"workspace-write\"",
+      "annotation": "The user-level file sets the baseline for every session on this machine."
+    },
+    {
+      "type": "system_event",
+      "content": "project .codex/config.toml (trusted): model_reasoning_effort=\"high\", sandbox_workspace_write.network_access=true",
+      "annotation": "A trusted project may override non-sensitive keys; provider, auth, profile, and telemetry keys are ignored here."
+    },
+    {
+      "type": "system_event",
+      "content": "flag --profile ci -> load $CODEX_HOME/ci.config.toml: model_provider=\"openai\", model_providers.openai.wire_api=\"responses\"",
+      "annotation": "A profile is a named overlay; model_providers.<id>.wire_api selects the wire protocol (\"responses\")."
+    },
+    {
+      "type": "system_event",
+      "content": "resolve precedence: CLI / -c  >  --profile  >  project (trusted)  >  user  >  defaults",
+      "annotation": "A single resolver walks the layers from lowest to highest and lets each override the last."
+    },
+    {
+      "type": "system_event",
+      "content": "effective Config = { model:\"gpt-5-codex\", reasoning_effort:\"high\", approval_policy:\"on-request\", sandbox_mode:\"workspace-write\", network_access:true, wire_api:\"responses\" }",
+      "annotation": "The agent loop reads only the resolved Config; it never re-opens the raw files at run time."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Running under the resolved policy: on-request approvals, workspace-write sandbox, network on.",
+      "annotation": "Every tool call in the loop is gated by the one effective Config."
+    },
+    {
+      "type": "tool_call",
+      "content": "npm test",
+      "toolName": "shell",
+      "annotation": "The command executes inside the resolved sandbox; approval comes from the resolved approval_policy."
+    },
+    {
+      "type": "tool_result",
+      "content": "48 passed",
+      "toolName": "shell",
+      "annotation": "The loop proceeds under a single, deterministic configuration."
+    }
+  ]
+}
