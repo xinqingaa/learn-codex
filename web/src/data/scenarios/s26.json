@@ -1,0 +1,54 @@
+{
+  "version": "s26",
+  "title": "Local Models & Custom Providers",
+  "description": "--oss and --local-provider (ollama|lmstudio) point the same harness at a local model, and the model_providers table with its wire_api swaps the endpoint without touching the loop.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "argv = [codex, --oss, --local-provider, ollama, -m, qwen3-coder, \"add input validation\"]",
+      "annotation": "--oss selects an open-source provider; --local-provider picks ollama or lmstudio. Without --oss it falls back to the config default or prompts to choose."
+    },
+    {
+      "type": "system_event",
+      "content": "resolve Config: model_provider = \"ollama\"; look up model_providers.ollama in config.toml",
+      "annotation": "Provider selection is config resolution: a provider id is chosen, then its entry in the model_providers table is read."
+    },
+    {
+      "type": "system_event",
+      "content": "model_providers.ollama -> { base_url = \"http://localhost:11434/v1\", wire_api = ... }",
+      "annotation": "Each provider entry declares where to send traffic (base_url) and which protocol to speak (wire_api); the loop only sees a resolved client."
+    },
+    {
+      "type": "user_message",
+      "content": "add input validation",
+      "annotation": "The task is identical to one run against OpenAI; the harness does not change because the endpoint did."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I'll find the handler and add schema validation.",
+      "annotation": "The local model plans against the same tools, sandbox, and instructions."
+    },
+    {
+      "type": "tool_call",
+      "content": "rg -n \"app.post\" src/ ",
+      "toolName": "shell",
+      "annotation": "Tool calls run under the same resolved sandbox policy regardless of which provider produced them."
+    },
+    {
+      "type": "tool_result",
+      "content": "src/api/users.ts:42  app.post('/users', ...)",
+      "toolName": "shell",
+      "annotation": "Results feed back into the loop exactly as with a hosted model."
+    },
+    {
+      "type": "system_event",
+      "content": "same mechanism, other doors: -m picks the model, -p/--profile layers $CODEX_HOME/<name>.config.toml to pin a provider per environment",
+      "annotation": "-m overrides the model for one run; a named profile can fix a provider and wire_api for CI vs. laptop without editing the base file."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Validation added and tests pass -- all served by the local Ollama model.",
+      "annotation": "Swapping the provider and wire_api reroutes the model traffic; the agent loop is untouched."
+    }
+  ]
+}

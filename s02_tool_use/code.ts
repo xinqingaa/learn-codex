@@ -22,6 +22,22 @@
  * Adding a tool = one entry in TOOLS (the schema the model sees) + one entry in
  * TOOL_HANDLERS (the function the harness runs). The agent loop never changes.
  *
+ * The star of the registry is apply_patch. Codex steers the model to edit files
+ * with a structured patch instead of `sed`/`echo`, because a patch is one
+ * reviewable, atomic, all-or-nothing unit:
+ *
+ *     *** Begin Patch
+ *     *** Update File: a.md        (optional) *** Move to: b.md
+ *     @@                            hunk header — anchors the change
+ *      context / -removed / +added  lines prefixed by space / - / +
+ *     *** Add File: c.md           the following +lines become the file
+ *     *** Delete File: d.md
+ *     *** End Patch
+ *
+ * The whole patch is parsed before a single byte is written, and every update is
+ * matched against the file's current content before commit — so it either applies
+ * cleanly or fails with a precise error, never a half-written file.
+ *
  * Run it:
  *     npm install
  *     npx tsx s02_tool_use/code.ts          # offline demo model (no key needed)
@@ -80,7 +96,19 @@ const TOOLS = [
   {
     type: "function" as const,
     name: "apply_patch",
-    description: "Apply a Codex-style patch to add, update or delete files.",
+    // We expose apply_patch as an ordinary function tool (a JSON {patch} string).
+    // The real Codex instead exposes it as a *freeform* custom tool whose raw body
+    // is grammar-constrained to this exact format, so the model cannot emit a
+    // malformed patch. That behavior used to sit behind the `apply_patch_freeform`
+    // feature flag; in current Codex (v0.144.x) `codex features list` shows that
+    // flag as "removed" — the grammar-constrained freeform form has graduated to
+    // be the standard behavior. See runApplyPatch for the grammar.
+    description:
+      "Edit files with a Codex-style patch. Grammar: '*** Begin Patch', then one " +
+      "or more of '*** Add File: <path>' (following '+' lines are the content), " +
+      "'*** Delete File: <path>', '*** Update File: <path>' (optional '*** Move to: " +
+      "<path>', then '@@' hunk headers and lines prefixed ' '/'-'/'+' for context / " +
+      "removed / added, '*** End of File' anchors at EOF), and finally '*** End Patch'.",
     parameters: {
       type: "object",
       properties: {
@@ -145,49 +173,130 @@ function runListDir(p: string): string {
   return names.join("\n") || "(empty directory)";
 }
 
-// A minimal Codex-style apply_patch: supports Add / Update / Delete File hunks.
-function runApplyPatch(patch: string): string {
+// ── NEW in s02: a faithful Codex-style apply_patch ─────────────────────────
+// The real grammar (codex-rs `apply-patch`) is a tiny line-oriented DSL. Two
+// properties matter more than the syntax: the whole patch is PARSED before any
+// byte is written, and every update is matched against the file's current content
+// BEFORE commit — so a patch is reviewable, atomic, and fails cleanly.
+interface FileOp {
+  kind: "add" | "delete" | "update";
+  path: string;
+  moveTo?: string;
+  added: string[]; // add: the new file's lines
+  hunks: { old: string[]; new: string[] }[]; // update: context-anchored edits
+}
+
+const isFileMark = (l: string): boolean =>
+  l.startsWith("*** Add File: ") ||
+  l.startsWith("*** Update File: ") ||
+  l.startsWith("*** Delete File: ") ||
+  l.startsWith("*** End Patch");
+
+// Phase 0: turn the patch text into structured ops. A malformed line rejects the
+// WHOLE patch — nothing is written. (This is the "grammar" the freeform tool
+// constrains the model to emit.)
+function parsePatch(patch: string): FileOp[] {
   const lines = patch.split("\n");
-  const isMark = (s: string): boolean => s.startsWith("*** ");
-  const done: string[] = [];
-  let i = 0;
+  const ops: FileOp[] = [];
+  let i = lines[0]?.trim() === "*** Begin Patch" ? 1 : 0;
   while (i < lines.length) {
     const line = lines[i];
+    if (line.startsWith("*** End Patch")) break;
     if (line.startsWith("*** Add File: ")) {
-      const file = line.slice("*** Add File: ".length).trim();
-      const body: string[] = [];
-      for (i++; i < lines.length && !isMark(lines[i]); i++) {
-        if (lines[i].startsWith("+")) body.push(lines[i].slice(1));
+      const path = line.slice("*** Add File: ".length).trim();
+      const added: string[] = [];
+      for (i++; i < lines.length && !lines[i].startsWith("*** "); i++) {
+        if (lines[i].startsWith("+")) added.push(lines[i].slice(1));
+        else if (lines[i].trim() !== "") throw new Error(`Add File ${path}: content lines must start with '+'`);
       }
-      runWriteFile(file, body.join("\n") + "\n");
-      done.push(`added ${file}`);
+      ops.push({ kind: "add", path, added, hunks: [] });
       continue;
     }
     if (line.startsWith("*** Delete File: ")) {
-      const file = line.slice("*** Delete File: ".length).trim();
-      fs.rmSync(resolvePath(file));
-      done.push(`deleted ${file}`);
+      ops.push({ kind: "delete", path: line.slice("*** Delete File: ".length).trim(), added: [], hunks: [] });
       i++;
       continue;
     }
     if (line.startsWith("*** Update File: ")) {
-      const file = line.slice("*** Update File: ".length).trim();
-      const oldLines: string[] = [];
-      const newLines: string[] = [];
-      for (i++; i < lines.length && !isMark(lines[i]); i++) {
-        if (lines[i].startsWith("-")) oldLines.push(lines[i].slice(1));
-        else if (lines[i].startsWith("+")) newLines.push(lines[i].slice(1));
+      const op: FileOp = { kind: "update", path: line.slice("*** Update File: ".length).trim(), added: [], hunks: [] };
+      i++;
+      if ((lines[i] ?? "").startsWith("*** Move to: ")) {
+        op.moveTo = lines[i].slice("*** Move to: ".length).trim();
+        i++;
       }
-      const text = fs.readFileSync(resolvePath(file), "utf8");
-      const oldBlock = oldLines.join("\n");
-      if (!text.includes(oldBlock)) return `Error: context not found in ${file}`;
-      fs.writeFileSync(resolvePath(file), text.replace(oldBlock, newLines.join("\n")));
-      done.push(`updated ${file}`);
+      let cur = { old: [] as string[], new: [] as string[] };
+      const flush = (): void => {
+        if (cur.old.length || cur.new.length) op.hunks.push(cur);
+        cur = { old: [], new: [] };
+      };
+      for (; i < lines.length && !isFileMark(lines[i]); i++) {
+        const l = lines[i];
+        if (l.startsWith("*** End of File") || l.startsWith("@@")) { flush(); continue; } // hunk boundary / EOF anchor
+        if (l.startsWith("-")) cur.old.push(l.slice(1));
+        else if (l.startsWith("+")) cur.new.push(l.slice(1));
+        else if (l === "" || l.startsWith(" ")) { const c = l === "" ? "" : l.slice(1); cur.old.push(c); cur.new.push(c); } // context
+        else throw new Error(`Update File ${op.path}: bad hunk line '${l}'`);
+      }
+      flush();
+      ops.push(op);
       continue;
     }
-    i++;
+    if (line.trim() === "") { i++; continue; } // tolerate blank lines between ops
+    throw new Error(`unrecognized patch line '${line}'`);
   }
-  return done.length ? `Patch applied: ${done.join(", ")}` : "Error: empty patch";
+  return ops;
+}
+
+function runApplyPatch(patch: string): string {
+  let ops: FileOp[];
+  try {
+    ops = parsePatch(patch);
+  } catch (err) {
+    return `Error: ${err instanceof Error ? err.message : err}`; // rejected wholesale — nothing written
+  }
+  if (ops.length === 0) return "Error: empty patch";
+
+  // Phase 1: compute every file's fate in memory; bail on the first bad op.
+  const writes = new Map<string, string | null>(); // null → delete
+  const done: string[] = [];
+  for (const op of ops) {
+    if (op.kind === "add") {
+      if (fs.existsSync(resolvePath(op.path))) return `Error: already exists ${op.path}`;
+      writes.set(op.path, op.added.join("\n") + "\n");
+      done.push(`added ${op.path}`);
+      continue;
+    }
+    let text: string;
+    try {
+      text = fs.readFileSync(resolvePath(op.path), "utf8");
+    } catch {
+      return `Error: cannot read ${op.path}`;
+    }
+    if (op.kind === "delete") {
+      writes.set(op.path, null);
+      done.push(`deleted ${op.path}`);
+      continue;
+    }
+    for (const h of op.hunks) {
+      const oldBlock = h.old.join("\n");
+      if (oldBlock === "") text = text.replace(/\n?$/, `\n${h.new.join("\n")}\n`); // pure insertion → append
+      else if (!text.includes(oldBlock)) return `Error: context not found in ${op.path}`;
+      else text = text.replace(oldBlock, h.new.join("\n"));
+    }
+    if (op.moveTo) {
+      writes.set(op.path, null);
+      done.push(`moved ${op.path} -> ${op.moveTo}`);
+    }
+    writes.set(op.moveTo ?? op.path, text);
+    done.push(`updated ${op.moveTo ?? op.path}`);
+  }
+
+  // Phase 2: every op validated — only now touch disk.
+  for (const [p, content] of writes) {
+    if (content === null) fs.rmSync(resolvePath(p));
+    else runWriteFile(p, content);
+  }
+  return `Patch applied: ${done.join(", ")}`;
 }
 
 function runShell(command: string): string {
@@ -247,8 +356,9 @@ async function callModel(input: unknown[]): Promise<OutputItem[]> {
   return offlineModel(input);
 }
 
-// Offline scripted model: it fans out THREE tool calls in a single turn, twice,
-// so you can watch the dispatch map route each call by name.
+// Offline scripted model: it fans out several tool calls in a single turn, twice,
+// so you can watch the dispatch map route each call by name. The second turn shows
+// one patch that commits and one whose stale context is rejected atomically.
 function offlineModel(input: unknown[]): OutputItem[] {
   const ran = input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
   const call = (id: string, name: string, args: Record<string, unknown>): OutputItem => ({
@@ -268,13 +378,34 @@ function offlineModel(input: unknown[]): OutputItem[] {
   }
   if (ran === 3) {
     return [
+      // A structured patch using the real grammar: envelope, @@ hunk header, a
+      // context line (space prefix), added lines (+), and an Add File op.
       call("c4", "apply_patch", {
         patch:
-          "*** Begin Patch\n*** Update File: agent_scratch/alpha.md\n@@\n" +
-          "-# Alpha\n+# Alpha (patched)\n*** End Patch",
+          "*** Begin Patch\n" +
+          "*** Update File: agent_scratch/alpha.md\n" +
+          "@@\n" +
+          " # Alpha\n" +
+          "+\n" +
+          "+Patched by apply_patch.\n" +
+          "*** Add File: agent_scratch/usage.md\n" +
+          "+# Usage\n" +
+          "*** End Patch",
       }),
-      call("c5", "read_file", { path: "agent_scratch/beta.md" }),
-      call("c6", "list_dir", { path: "agent_scratch" }),
+      // A patch whose context does NOT match the file: the WHOLE patch is
+      // rejected before any byte is written — atomicity / failure recovery.
+      call("c5", "apply_patch", {
+        patch:
+          "*** Begin Patch\n" +
+          "*** Update File: agent_scratch/alpha.md\n" +
+          "@@\n" +
+          " this line is not in the file\n" +
+          "-# Alpha\n" +
+          "+# ALPHA\n" +
+          "*** End Patch",
+      }),
+      call("c6", "read_file", { path: "agent_scratch/alpha.md" }),
+      call("c7", "list_dir", { path: "agent_scratch" }),
     ];
   }
   return [
@@ -284,9 +415,15 @@ function offlineModel(input: unknown[]): OutputItem[] {
         {
           type: "output_text",
           text:
-            `[offline demo] One turn produced 3 tool calls at once, twice — the dispatch ` +
-            `map routed each by name (write_file/shell, then apply_patch/read_file/list_dir). ` +
-            `Set OPENAI_API_KEY for a real model; the loop and dispatch stay the same.`,
+            `[offline demo] One turn produced several tool calls at once, twice — the ` +
+            `dispatch map routed each by name (write_file/shell, then apply_patch x2 / ` +
+            `read_file / list_dir). The first apply_patch used the real '*** Begin Patch ... ` +
+            `*** End Patch' grammar (an @@-anchored update + an Add File) and committed ` +
+            `atomically. The second apply_patch had context that did not match alpha.md, so ` +
+            `the WHOLE patch was rejected before a single byte was written — the read above ` +
+            `shows alpha.md still intact. That is why Codex prefers a structured patch: ` +
+            `reviewable, atomic, and it fails cleanly. Set OPENAI_API_KEY for a real model; ` +
+            `the loop and dispatch stay the same.`,
         },
       ],
     },

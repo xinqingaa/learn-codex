@@ -1,0 +1,35 @@
+{
+  "version": "s28",
+  "decisions": [
+    {
+      "id": "session-lifecycle",
+      "title": "Sessions Are Durable, Forkable Records",
+      "description": "A session is a persisted rollout under $CODEX_HOME, not a process you lose when the terminal closes. codex resume continues one (picker by default, --last for the most recent); codex fork branches a prior session into a new one instead of overwriting it; and archive / unarchive / delete manage the saved records by id or name. Forking is what makes it safe to explore a risky direction: you keep the original rollout intact and iterate on a copy.",
+      "alternatives": "Sessions could be ephemeral, tied to the lifetime of the TUI. Persisting them as addressable records enables resume, fork, and review-after-the-fact -- turning a chat into an artifact you can branch and revisit.",
+      "zh": {
+        "title": "会话是持久的、可分叉的记录",
+        "description": "会话是持久化在 $CODEX_HOME 下的一份 rollout，而不是终端一关就丢失的进程。codex resume 继续一个会话（默认弹出选择器，--last 选最近的一个）；codex fork 把先前的会话分叉成一个新会话而不是覆盖它；archive / unarchive / delete 则按 id 或名称管理这些已存记录。分叉让探索高风险方向变得安全：你保留原始 rollout 不动，在一个副本上迭代。"
+      }
+    },
+    {
+      "id": "sandbox-and-add-dir",
+      "title": "The Sandbox Is a Boundary, --add-dir a Controlled Widening",
+      "description": "sandbox_mode (-s read-only | workspace-write | danger-full-access) draws the line for what model-generated shell commands may touch, and it is enforced by the OS (seatbelt on macOS) -- not by trusting the model. --add-dir widens that line for specific extra directories without jumping to full access. codex sandbox [COMMAND] runs a command directly inside the same Codex-provided sandbox, which is exactly how the loop isolates tool calls. The boundary is checked before a command runs, so a denied write never happens.",
+      "alternatives": "Safety could rely on prompting the model to be careful, or on a single on/off switch. A graded boundary plus targeted --add-dir exceptions gives least-privilege by default with an explicit, auditable way to grant more.",
+      "zh": {
+        "title": "沙箱是边界，--add-dir 是受控的放宽",
+        "description": "sandbox_mode（-s read-only | workspace-write | danger-full-access）为模型生成的 shell 命令能触及的范围划出界线，并且由操作系统强制执行（macOS 上是 seatbelt）——而不是依赖信任模型。--add-dir 在不跳到完全访问的前提下，为特定的额外目录放宽这条线。codex sandbox [COMMAND] 把一条命令直接运行在 Codex 提供的同一个沙箱中，这正是循环隔离工具调用的方式。边界在命令运行前就会被检查，因此被拒绝的写入根本不会发生。"
+      }
+    },
+    {
+      "id": "approval-trust-and-bypass",
+      "title": "Approval, Trust, and Bypass Are Separate Dials",
+      "description": "Codex splits safety into independent knobs. The approval policy (-a untrusted | on-request | never) decides when the model must ask before running a command, and guardian_approval (stable/on) can escalate risky steps. Per-project trust ([projects.\"<path>\"]) decides whether a repo-local config loads at all, so a checkout cannot grant itself privileges. At the extreme, --dangerously-bypass-approvals-and-sandbox removes the rails entirely and --dangerously-bypass-hook-trust skips hook trust -- both intended only for environments that are already sandboxed from the outside. codex features list shows which of these gates are on.",
+      "alternatives": "A single 'safe vs. yolo' toggle would be simpler but blunt: it could not express 'trust this repo, sandbox writes, but let me approve risky commands.' Independent dials let autonomy be tuned per axis, with the bypass flags reserved as explicit, dangerous escape hatches.",
+      "zh": {
+        "title": "审批、信任与绕过是相互独立的旋钮",
+        "description": "Codex 把安全性拆成若干独立的旋钮。审批策略（-a untrusted | on-request | never）决定模型在运行命令前何时必须请示，guardian_approval（稳定开启）能升级高风险步骤。项目级信任（[projects.\"<path>\"]）决定一个仓库级配置是否会被加载，因此一次检出无法为自己授予权限。在极端情况下，--dangerously-bypass-approvals-and-sandbox 会完全移除护栏，--dangerously-bypass-hook-trust 会跳过钩子信任——两者都仅供那些已经从外部做了沙箱隔离的环境使用。codex features list 会显示这些开关中哪些是开启的。"
+      }
+    }
+  ]
+}

@@ -118,7 +118,12 @@
     "s20": "The Full Harness",
     "s21": "The Codex CLI Surface",
     "s22": "config.toml in Depth",
-    "s23": "Review, CI & Cloud"
+    "s23": "Review, CI & Cloud",
+    "s24": "Plugins, Apps & Hooks",
+    "s25": "Tools Beyond the Shell",
+    "s26": "Local Models & Custom Providers",
+    "s27": "Codex as a Service & the Other Surfaces",
+    "s28": "Sessions, Sandbox & Safety in Depth"
   },
   "layer_labels": {
     "tools": "Tools & Execution",
@@ -151,6 +156,11 @@
     "s20": "The Full Harness Turn",
     "s21": "Command Dispatch",
     "s22": "The Config Resolver",
-    "s23": "Unattended Runs"
+    "s23": "Unattended Runs",
+    "s24": "The Extension Surfaces",
+    "s25": "More Than a Shell",
+    "s26": "Swap the Provider",
+    "s27": "One Engine, Many Frontends",
+    "s28": "The Autonomy Dial"
   }
 }

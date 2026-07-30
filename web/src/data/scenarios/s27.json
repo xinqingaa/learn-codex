@@ -1,0 +1,59 @@
+{
+  "version": "s27",
+  "title": "Codex as a Service & the Other Surfaces",
+  "description": "One Codex engine drives the CLI/TUI, a desktop app, an IDE extension, a remote app-server, and the hosted ChatGPT/GitHub surfaces; mcp-server, app-server, and exec-server expose it as a service.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "surface 1: argv = [codex]  ->  interactive TUI on the local engine",
+      "annotation": "The default door is the terminal UI running the agent loop in-process. --no-alt-screen runs it inline, preserving scrollback."
+    },
+    {
+      "type": "system_event",
+      "content": "surface 2: argv = [codex, app]  ->  launch the Codex desktop app on the same workspace",
+      "annotation": "codex app opens the desktop app (or its installer) pointed at a workspace path -- a different frontend over the same engine."
+    },
+    {
+      "type": "system_event",
+      "content": "surface 3: argv = [codex, mcp-server]  ->  serve the engine as MCP tools over stdio",
+      "annotation": "codex mcp-server turns Codex into a tool another agent can call through the standard protocol."
+    },
+    {
+      "type": "system_event",
+      "content": "surface 4: argv = [codex, app-server] (experimental)  ->  run the app-server daemon; codex --remote ws://host:port connects a TUI to it",
+      "annotation": "app-server is experimental: it hosts the engine behind a socket so a thin client (TUI, IDE, remote-control) attaches over --remote with a bearer token."
+    },
+    {
+      "type": "user_message",
+      "content": "refactor the retry logic (sent from the IDE panel)",
+      "annotation": "From the user's side the frontend differs; the engine receives the same user turn and starts the same loop."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I'll locate the retry path and extract a backoff helper.",
+      "annotation": "Whichever surface submitted the turn, the loop plans and calls tools identically."
+    },
+    {
+      "type": "tool_call",
+      "content": "rg -n \"retry|backoff\" src/ ",
+      "toolName": "shell",
+      "annotation": "Tool dispatch and sandboxing live in the shared engine, so every frontend inherits the same behavior."
+    },
+    {
+      "type": "tool_result",
+      "content": "src/net/client.ts:117  for (let attempt...) ",
+      "toolName": "shell",
+      "annotation": "Results stream back to whichever frontend is attached, formatted for that surface."
+    },
+    {
+      "type": "system_event",
+      "content": "other doors: codex exec-server (experimental standalone service), codex cloud tasks, and the hosted ChatGPT/GitHub integrations",
+      "annotation": "exec-server, cloud, and the ChatGPT/GitHub surfaces run the same engine hosted elsewhere; only transport and hosting differ."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Refactor complete -- same engine, whichever frontend you drove it from.",
+      "annotation": "The CLI, desktop app, IDE, remote app-server, and hosted surfaces are frontends over one Codex engine."
+    }
+  ]
+}

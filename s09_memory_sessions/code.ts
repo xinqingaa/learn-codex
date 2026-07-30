@@ -1,35 +1,47 @@
 #!/usr/bin/env tsx
 /**
- * s09_memory_sessions/code.ts — Rollout Persistence & Resume (Codex-style, in TypeScript)
+ * s09_memory_sessions/code.ts — Session Lifecycle: resume, fork, archive, delete
  *
  * s01's thread lives only in memory: kill the process and the whole session is
- * gone. Codex instead records every session to disk as it happens, so you can
- * close it and come back — `codex resume` rebuilds the exact thread.
+ * gone. Codex instead writes every session to disk as it happens, so a session
+ * has a *lifecycle* that outlives any single process:
  *
- * The trick is an append-only, write-through log:
+ *      new session ──write-through──▶ rollout-<id>.jsonl   (one item per line)
+ *           │
+ *           ├─ codex resume   <id>   read lines → rebuild thread → keep going
+ *           ├─ codex fork     <id>   copy the file under a NEW id → branch it
+ *           ├─ codex archive  <id>   move it aside → hidden from the picker
+ *           ├─ codex unarchive <id>  bring it back into the picker
+ *           └─ codex delete   <id>   remove the file for good
  *
- *     each time the thread grows (user msg, tool call, tool output, answer):
- *         append the new items as JSON lines to rollout.jsonl
+ *      in-memory thread:  [u1][a1][u2][a2]...        (dies with the process)
+ *      rollout-<id>.jsonl: {u1}\n{a1}\n{u2}\n{a2}...  (survives → the lifecycle)
  *
- *     on start, with --resume:
- *         read the file back, replay every line into a fresh thread
- *         continue exactly where the last session stopped
+ * Real Codex keeps these under $CODEX_HOME (~/.codex/sessions/, layered by date)
+ * and drives them with `codex resume|fork|archive|unarchive|delete`. This chapter
+ * models that whole store in TypeScript: write-through append, replay-to-resume,
+ * copy-to-fork, and a directory layout that archive/delete operate on.
  *
- *     in-memory thread:      [u1][a1][u2][a2]...        (dies with the process)
- *     rollout.jsonl on disk: {u1}\n{a1}\n{u2}\n{a2}...  (survives)
- *     codex resume:          read lines -> rebuild thread -> keep going
- *
- * Run it:
+ * Run it (offline, no key needed — a scripted model drives the loop):
  *     npm install
- *     npx tsx s09_memory_sessions/code.ts                       # offline demo (no key)
- *     npx tsx s09_memory_sessions/code.ts --resume              # resume the saved rollout
- *     OPENAI_API_KEY=sk-... npx tsx s09_memory_sessions/code.ts # real model
+ *     npx tsx s09_memory_sessions/code.ts                  # narrated lifecycle demo
+ *     npx tsx s09_memory_sessions/code.ts --resume         # resume the most recent session
+ *     OPENAI_API_KEY=sk-... npx tsx s09_memory_sessions/code.ts   # real model
  */
 
 import OpenAI from "openai";
 import { execSync } from "node:child_process";
-import { existsSync, mkdirSync, appendFileSync, readFileSync, writeFileSync } from "node:fs";
-import { dirname, join } from "node:path";
+import {
+  existsSync,
+  mkdirSync,
+  appendFileSync,
+  readFileSync,
+  writeFileSync,
+  readdirSync,
+  renameSync,
+  rmSync,
+} from "node:fs";
+import { join } from "node:path";
 import { tmpdir } from "node:os";
 
 const MODEL = process.env.MODEL_ID ?? "gpt-5-codex";
@@ -40,25 +52,36 @@ const INSTRUCTIONS =
   `You are a coding agent running in ${CWD}. ` +
   `Use the shell tool to solve the task. Act, don't explain.`;
 
-// ── NEW in s09: a rollout file the session is written through to ───────────
-// Real Codex appends every turn to ~/.codex/sessions/<date>/rollout-<id>.jsonl.
-// We default to the OS temp dir so the demo never dirties your repo; set
-// CODEX_ROLLOUT to ./.codex/rollout.jsonl if you want a project-local file.
-const ROLLOUT_PATH =
-  process.env.CODEX_ROLLOUT ?? join(tmpdir(), "learn-codex-s09", "rollout.jsonl");
-const RESUME = process.argv.includes("--resume") || process.env.CODEX_RESUME === "1";
+// ── NEW in s09: a session store — one rollout file per session ──────────────
+// Real Codex writes ~/.codex/sessions/<date>/rollout-<ts>-<id>.jsonl and keeps
+// archived sessions out of the default picker. We default to the OS temp dir so
+// the demo never dirties your repo; set CODEX_SESSIONS to pick another root.
+const SESSIONS_DIR = process.env.CODEX_SESSIONS ?? join(tmpdir(), "learn-codex-s09", "sessions");
+const ARCHIVE_DIR = join(SESSIONS_DIR, "archived");
+const rolloutPath = (id: string): string => join(SESSIONS_DIR, `rollout-${id}.jsonl`);
+const archivedPath = (id: string): string => join(ARCHIVE_DIR, `rollout-${id}.jsonl`);
+const newId = (): string => `sess_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 
-// One record per line. A session_meta line opens the log; every later line is a
-// single thread item (user message / function_call / function_call_output / message).
-function startRollout(path: string): void {
-  mkdirSync(dirname(path), { recursive: true });
-  const meta = {
+interface SessionMeta {
+  type: "session_meta";
+  id: string;
+  cwd: string;
+  started: string;
+  forked_from?: string;
+}
+
+// Open a brand-new session: write the session_meta header, truncating any old file.
+function startRollout(id: string, forkedFrom?: string): string {
+  mkdirSync(SESSIONS_DIR, { recursive: true });
+  const meta: SessionMeta = {
     type: "session_meta",
-    id: `sess_${Date.now()}`,
+    id,
     cwd: CWD,
     started: new Date().toISOString(),
+    ...(forkedFrom ? { forked_from: forkedFrom } : {}),
   };
-  writeFileSync(path, JSON.stringify(meta) + "\n"); // truncate: a brand-new session
+  writeFileSync(rolloutPath(id), JSON.stringify(meta) + "\n");
+  return rolloutPath(id);
 }
 
 // Write-through: persist items the moment they are produced, one JSON per line.
@@ -75,6 +98,53 @@ function loadRollout(path: string): unknown[] {
     .filter((l) => l.trim().length > 0)
     .map((l) => JSON.parse(l) as { type?: string })
     .filter((r) => r.type !== "session_meta");
+}
+
+// `codex fork`: branch a session into a NEW copy — same history, fresh id and
+// header, parent recorded in forked_from. The source file is left untouched.
+function forkSession(srcId: string): string {
+  const history = loadRollout(rolloutPath(srcId)); // all items, meta already skipped
+  const id = newId();
+  startRollout(id, srcId); // fresh header records the parent
+  appendRollout(rolloutPath(id), history); // then the full copied history
+  return id;
+}
+
+// `codex archive` / `unarchive`: move the file aside and back. An archived
+// session is hidden from the default picker but nothing is deleted.
+function archiveSession(id: string): void {
+  mkdirSync(ARCHIVE_DIR, { recursive: true });
+  if (existsSync(rolloutPath(id))) renameSync(rolloutPath(id), archivedPath(id));
+}
+function unarchiveSession(id: string): void {
+  if (existsSync(archivedPath(id))) renameSync(archivedPath(id), rolloutPath(id));
+}
+
+// `codex delete`: remove the rollout file (and any archived copy) for good.
+function deleteSession(id: string): void {
+  rmSync(rolloutPath(id), { force: true });
+  rmSync(archivedPath(id), { force: true });
+}
+
+// The picker: list the sessions the user can resume (archived ones are hidden).
+function readMeta(path: string): SessionMeta | null {
+  const first = existsSync(path) ? readFileSync(path, "utf8").split("\n")[0] : "";
+  if (!first.trim()) return null;
+  const m = JSON.parse(first) as SessionMeta;
+  return m.type === "session_meta" ? m : null;
+}
+function listSessions(includeArchived = false): SessionMeta[] {
+  const dirs = includeArchived ? [SESSIONS_DIR, ARCHIVE_DIR] : [SESSIONS_DIR];
+  const metas: SessionMeta[] = [];
+  for (const d of dirs) {
+    if (!existsSync(d)) continue;
+    for (const f of readdirSync(d))
+      if (f.endsWith(".jsonl")) {
+        const m = readMeta(join(d, f));
+        if (m) metas.push(m);
+      }
+  }
+  return metas.sort((a, b) => a.started.localeCompare(b.started));
 }
 
 // ── The one tool: a shell (unchanged from s01) ──────────────────────────────
@@ -143,8 +213,7 @@ function offlineModel(input: unknown[]): OutputItem[] {
             type: "output_text",
             text:
               `[offline demo] Turn done. The thread now holds ${input.length} item(s); ` +
-              `each is a JSON line in the rollout file, so a later \`codex resume\` rebuilds ` +
-              `this exact state.`,
+              `each is a JSON line in the rollout file, so resume/fork rebuild this exact state.`,
           },
         ],
       },
@@ -185,46 +254,80 @@ async function agentLoop(input: unknown[]): Promise<void> {
   }
 }
 
-// Run one user turn and persist everything it adds to the thread.
-async function runTurn(thread: unknown[], rolloutPath: string, query: string): Promise<void> {
+// Run one user turn against a session and persist everything it adds.
+async function runTurn(thread: unknown[], rolloutFile: string, query: string): Promise<void> {
   console.log(`\x1b[36ms09 >> \x1b[0m${query}`);
   const userItem = { role: "user", content: query };
   thread.push(userItem);
-  appendRollout(rolloutPath, [userItem]); // persist the user turn first
+  appendRollout(rolloutFile, [userItem]); // persist the user turn first
   const before = thread.length;
   await agentLoop(thread);
-  appendRollout(rolloutPath, thread.slice(before)); // then everything the turn added
+  appendRollout(rolloutFile, thread.slice(before)); // then everything the turn added
   console.log();
 }
 
-// ── Entry point: write a session, then simulate `codex resume` ─────────────
+// ── Narration helpers for the self-running lifecycle demo ───────────────────
+const section = (t: string): void => console.log(`\x1b[1m── ${t} ──\x1b[0m`);
+function printStore(): void {
+  const visible = listSessions();
+  const archived = listSessions(true).length - visible.length;
+  console.log(
+    `\x1b[35m[picker] visible (${visible.length}): ${visible.map((m) => m.id).join(", ") || "(none)"}` +
+      `   archived (${archived})\x1b[0m\n`,
+  );
+}
+
+// ── Entry point: walk the whole session lifecycle, narrated ────────────────
 async function main(): Promise<void> {
-  console.log("s09: Rollout Persistence & Resume (Codex-style)");
+  console.log("s09: Session Lifecycle — resume, fork, archive, delete (Codex-style)");
   console.log(OFFLINE ? "Offline demo model (no key).\n" : `Model: ${MODEL}.\n`);
 
-  let thread: unknown[];
-  if (RESUME && existsSync(ROLLOUT_PATH)) {
-    thread = loadRollout(ROLLOUT_PATH);
-    console.log(`\x1b[35m[resume] loaded ${thread.length} item(s) from ${ROLLOUT_PATH}\x1b[0m\n`);
-  } else {
-    startRollout(ROLLOUT_PATH);
-    thread = [];
-    console.log(`\x1b[90m[new session] writing rollout -> ${ROLLOUT_PATH}\x1b[0m\n`);
+  // `--resume`: genuinely continue the most recent on-disk session and exit.
+  if (process.argv.includes("--resume")) {
+    const last = listSessions(true).at(-1);
+    if (!last) return console.log("no saved session to resume.");
+    const thread = loadRollout(rolloutPath(last.id));
+    console.log(`\x1b[35m[resume] ${last.id}: ${thread.length} item(s) replayed\x1b[0m\n`);
+    await runTurn(thread, rolloutPath(last.id), "Continue where we left off.");
+    return;
   }
 
-  for (const q of ["Show the working directory.", "Print a hello line."]) {
-    await runTurn(thread, ROLLOUT_PATH, q);
-  }
+  section("1. new session — write-through to rollout-<id>.jsonl");
+  const a = newId();
+  const pathA = startRollout(a);
+  const threadA: unknown[] = [];
+  await runTurn(threadA, pathA, "Show the working directory.");
+  await runTurn(threadA, pathA, "Print a hello line.");
 
-  if (!RESUME) {
-    // Simulate quitting and relaunching with `codex resume`, within this run.
-    console.log(`\x1b[90m--- process exits; relaunch with --resume (codex resume) ---\x1b[0m\n`);
-    const restored = loadRollout(ROLLOUT_PATH);
-    console.log(`\x1b[35m[resume] rebuilt thread: ${restored.length} item(s) replayed from disk\x1b[0m\n`);
-    await runTurn(restored, ROLLOUT_PATH, "What did we do before the restart?");
-  }
+  section("2. codex resume — rebuild the thread from disk and keep going");
+  const restored = loadRollout(pathA);
+  console.log(`\x1b[35m[resume] ${a}: rebuilt ${restored.length} item(s) from the log\x1b[0m`);
+  await runTurn(restored, pathA, "What did we do before the restart?");
 
-  console.log(`\x1b[90mRollout saved at ${ROLLOUT_PATH} (${loadRollout(ROLLOUT_PATH).length} items).\x1b[0m`);
+  section("3. codex fork — branch the session into a NEW copy");
+  const b = forkSession(a);
+  console.log(`\x1b[35m[fork] ${a} → ${b}  (same history, new id, forked_from recorded)\x1b[0m`);
+  const threadB = loadRollout(rolloutPath(b));
+  await runTurn(threadB, rolloutPath(b), "You are the forked copy; explore a different idea.");
+
+  section("4. the picker lists every non-archived session");
+  printStore();
+
+  section("5. codex archive — hide a session from the default picker");
+  archiveSession(a);
+  console.log(`\x1b[35m[archive] ${a} moved aside (not deleted)\x1b[0m`);
+  printStore();
+
+  section("6. codex unarchive — bring it back");
+  unarchiveSession(a);
+  printStore();
+
+  section("7. codex delete — remove the fork for good");
+  deleteSession(b);
+  console.log(`\x1b[35m[delete] ${b} removed\x1b[0m`);
+  printStore();
+
+  console.log(`\x1b[90mSession store: ${SESSIONS_DIR}\x1b[0m`);
 }
 
 main();

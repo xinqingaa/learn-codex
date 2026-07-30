@@ -1,0 +1,53 @@
+{
+  "version": "s24",
+  "title": "Plugins, Apps & Hooks",
+  "description": "codex plugin installs bundled skills/MCP/prompts from marketplace snapshots, hooks fire on lifecycle events, and codex mcp-server turns Codex itself into a callable tool.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "argv = [codex, plugin, marketplace, add, ./team-marketplace]",
+      "annotation": "A marketplace is a source (local path or Git repo) of plugin snapshots; `marketplace add` registers it in config before anything is installed."
+    },
+    {
+      "type": "system_event",
+      "content": "argv = [codex, plugin, add, reviewer@team-marketplace]",
+      "annotation": "codex plugin add installs a plugin from a configured marketplace snapshot into local config and cache. The `plugins` feature flag is stable and on by default."
+    },
+    {
+      "type": "system_event",
+      "content": "install: unpack skills/ + mcp_servers + prompts from the snapshot -> merge into the resolved Config",
+      "annotation": "A plugin is a bundle: it contributes skills, MCP servers, and prompt presets that resolve through the same config chain as hand-written config."
+    },
+    {
+      "type": "user_message",
+      "content": "review the payments refactor",
+      "annotation": "Back in the loop, the installed plugin's skill is now eligible to load, exactly as if it had been added by hand."
+    },
+    {
+      "type": "system_event",
+      "content": "hook: SessionStart -> run ./hooks/inject-context.sh (feature `hooks` is stable/on)",
+      "annotation": "Hooks are user commands bound to lifecycle events; the harness runs them at the event, not the model. --dangerously-bypass-hook-trust skips the persisted trust check for automation."
+    },
+    {
+      "type": "assistant_text",
+      "content": "I'll load the reviewer skill, then walk the diff.",
+      "annotation": "The skill the plugin shipped is injected on demand; the loop itself is unchanged."
+    },
+    {
+      "type": "tool_call",
+      "content": "git diff main...HEAD -- src/payments/",
+      "toolName": "shell",
+      "annotation": "Plugin-contributed tools and MCP servers are dispatched by the same tool layer as built-ins."
+    },
+    {
+      "type": "system_event",
+      "content": "elsewhere: argv = [codex, mcp-server]  ->  Codex starts AS an MCP server over stdio",
+      "annotation": "codex mcp-server exposes the harness itself as a tool, so another agent or IDE can call Codex through the standard MCP protocol."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Review done via the plugin's skill; Codex can also serve other tools as an MCP server.",
+      "annotation": "Plugins and hooks extend Codex from the inside; mcp-server exposes it to the outside. The agent loop stays the single constant."
+    }
+  ]
+}

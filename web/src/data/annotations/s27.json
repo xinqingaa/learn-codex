@@ -1,0 +1,35 @@
+{
+  "version": "s27",
+  "decisions": [
+    {
+      "id": "one-engine-many-frontends",
+      "title": "One Engine, Many Frontends",
+      "description": "The CLI/TUI, the desktop app (codex app), the IDE extension, and the hosted ChatGPT/GitHub surfaces are all frontends over a single Codex engine. Each frontend gathers a turn and renders a result; the engine resolves config, runs the agent loop, dispatches tools, and enforces the sandbox. Because the engine is shared, a fix to tool use or sandboxing lands everywhere at once, and behavior is consistent whether you type in a terminal or click in an editor.",
+      "alternatives": "Each surface could embed its own agent. That would fork behavior across the CLI, desktop, IDE, and cloud, multiplying bugs and drift. One engine behind several frontends keeps the loop the single source of truth.",
+      "zh": {
+        "title": "一个引擎，多个前端",
+        "description": "CLI/TUI、桌面应用（codex app）、IDE 扩展以及托管的 ChatGPT/GitHub 界面，都是同一个 Codex 引擎之上的前端。每个前端负责收集一轮输入并渲染结果；引擎负责解析配置、运行 agent 循环、分发工具并强制执行沙箱。由于引擎是共享的，对工具使用或沙箱的任何修复都会同时落地到所有界面，无论你是在终端里敲字还是在编辑器里点击，行为都保持一致。"
+      }
+    },
+    {
+      "id": "servers-expose-the-engine",
+      "title": "mcp-server, app-server, and exec-server Expose the Engine",
+      "description": "Codex exposes the engine as a service through three doors. codex mcp-server serves it as MCP tools over stdio so any MCP client can call it. codex app-server (experimental) runs the engine behind a socket -- a daemon that thin clients attach to with codex --remote ws://host:port and a bearer token, and it can generate-ts / generate-json-schema bindings for its protocol. codex exec-server (experimental) runs a standalone execution service. All three reuse the one engine; only the transport differs.",
+      "alternatives": "Remote access could be a proprietary protocol per client. Standardizing on MCP for tool calls and a documented app-server protocol for sessions means any conforming client -- TUI, IDE, or orchestrator -- can drive the same engine without bespoke integration.",
+      "zh": {
+        "title": "mcp-server、app-server 与 exec-server 暴露引擎",
+        "description": "Codex 通过三扇门把引擎暴露为服务。codex mcp-server 让它作为 MCP 工具通过 stdio 提供，任何 MCP 客户端都能调用它。codex app-server（实验性）把引擎运行在一个套接字之后——一个守护进程，瘦客户端用 codex --remote ws://host:port 和持有者令牌连接它，并且它能为自己的协议 generate-ts / generate-json-schema 绑定。codex exec-server（实验性）运行一个独立的执行服务。三者都复用同一个引擎，只是传输层不同。"
+      }
+    },
+    {
+      "id": "remote-and-cloud-are-hosted-engine",
+      "title": "Remote and Cloud Are the Engine, Hosted Elsewhere",
+      "description": "Running the loop somewhere other than your laptop does not change what runs. --remote connects a TUI to an app-server endpoint over ws:// or wss:// (with --remote-auth-token-env supplying the token), and remote-control (experimental) manages that daemon. codex cloud (experimental) submits, lists, and applies hosted tasks. In every case the local process is a thin client; the engine -- config resolution, loop, tools, sandbox -- runs on the far end, identical to a local run.",
+      "alternatives": "A hosted Codex could be a separate cloud agent with its own runtime. That would diverge from local behavior and double maintenance. Hosting the same engine keeps a local dry run a faithful preview of a remote or cloud task.",
+      "zh": {
+        "title": "远程与云端是同一引擎，托管在别处",
+        "description": "把循环放到笔记本之外的地方运行，并不会改变所运行的内容。--remote 通过 ws:// 或 wss:// 把 TUI 连接到一个 app-server 端点（用 --remote-auth-token-env 提供令牌），remote-control（实验性）管理该守护进程。codex cloud（实验性）提交、列出并应用托管任务。在所有这些场景中，本地进程都是一个瘦客户端；引擎——配置解析、循环、工具、沙箱——在对端运行，与本地运行完全一致。"
+      }
+    }
+  ]
+}

@@ -1,0 +1,35 @@
+{
+  "version": "s25",
+  "decisions": [
+    {
+      "id": "web-search-as-native-tool",
+      "title": "Live Web Search Is a Native Tool, Not a Plugin",
+      "description": "Passing --search enables the native Responses web_search tool, making the live web available to the model with no per-call approval. Because it is built in, results stream back into the same conversation as any tool result, and the model decides when a fresh lookup beats its training data. This is a harness-level capability toggle, not an MCP server you configure -- one flag turns it on for the whole session.",
+      "alternatives": "Web access could be left to a user-configured MCP search server. That works but adds setup friction and per-call approval noise. A native, flag-gated tool makes the common 'check the current docs' case zero-config while staying off by default for reproducibility.",
+      "zh": {
+        "title": "实时联网搜索是原生工具，而非插件",
+        "description": "传入 --search 会启用原生的 Responses web_search 工具，让模型在无需逐次批准的情况下访问实时网络。由于它是内建的，结果会像任何工具结果一样回流到同一会话中，由模型决定何时一次新鲜查询胜过其训练数据。这是一个 harness 层的能力开关，而不是需要你配置的 MCP 服务器——一个标志即可为整个会话开启。"
+      }
+    },
+    {
+      "id": "images-as-first-class-input",
+      "title": "Images Are First-Class Input and Output",
+      "description": "Codex treats images as data the model can perceive, not text to be described. -i/--image attaches one or more image files to the initial prompt, so a screenshot of an error or a mock can ground the model's plan directly. The flow runs both ways: the stable image_generation feature lets the model produce images too. Multimodality is handled at the input layer of the same loop -- attach, reason, act -- rather than by a separate vision pipeline.",
+      "alternatives": "Vision could be bolted on as an external describe-then-reason step. That loses detail and adds a round trip. Accepting images natively lets the model read pixels alongside code in one turn, which is what makes screenshot-driven debugging practical.",
+      "zh": {
+        "title": "图像是一等输入与输出",
+        "description": "Codex 把图像当作模型可以感知的数据，而不是需要被描述的文本。-i/--image 会把一个或多个图像文件附加到初始提示中，因此一张报错截图或设计稿能直接支撑模型的计划。这个流程是双向的：稳定的 image_generation 特性让模型也能生成图像。多模态在同一个循环的输入层处理——附加、推理、行动——而不是依赖一条独立的视觉流水线。"
+      }
+    },
+    {
+      "id": "browser-and-computer-use",
+      "title": "Codex Can Drive a Browser and a Desktop",
+      "description": "Beyond reading and searching, Codex can act on the world. The stable browser_use feature (with browser_use_external and browser_use_full_cdp_access variants) lets it open pages, submit forms, and trace redirects in a real browser; computer_use extends the same idea to a desktop. These are gated by feature flags you can inspect with codex features list, and they plug into the same tool-dispatch and sandbox layer as the shell -- the loop reasons, the tool acts, the result returns.",
+      "alternatives": "Browser/desktop control could live in a separate product. Folding it into the harness as flagged tools means the agent that edits your code can also verify the running result, closing the loop between change and observed behavior without a context switch.",
+      "zh": {
+        "title": "Codex 能驱动浏览器与桌面",
+        "description": "除了读取和搜索，Codex 还能对外部世界采取行动。稳定的 browser_use 特性（含 browser_use_external 与 browser_use_full_cdp_access 变体）让它能在真实浏览器中打开页面、提交表单、追踪重定向；computer_use 把同样的能力扩展到桌面。它们都由特性标志控制，可用 codex features list 查看，并且与 shell 一样接入同一个工具分发与沙箱层——循环负责推理，工具负责行动，结果回流。"
+      }
+    }
+  ]
+}

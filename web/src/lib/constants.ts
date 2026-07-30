@@ -24,6 +24,11 @@ export const VERSION_ORDER = [
   "s21",
   "s22",
   "s23",
+  "s24",
+  "s25",
+  "s26",
+  "s27",
+  "s28",
 ] as const;
 
 export const LEARNING_PATH = VERSION_ORDER;
@@ -222,6 +227,46 @@ export const VERSION_META: Record<string, {
     layer: "codex",
     prevVersion: "s22",
   },
+  s24: {
+    title: "Plugins, Apps & Hooks",
+    subtitle: "Extend Codex Beyond Skills and MCP",
+    coreAddition: "Plugin marketplace + apps + hooks + Codex-as-MCP-server",
+    keyInsight: "Plugins bundle skills/MCP/prompts into installable marketplaces, hooks run on lifecycle events, and codex mcp-server turns Codex itself into a tool.",
+    layer: "codex",
+    prevVersion: "s23",
+  },
+  s25: {
+    title: "Tools Beyond the Shell",
+    subtitle: "See, Search, and Drive a Browser",
+    coreAddition: "web_search, image input, image_generation, browser_use, computer_use",
+    keyInsight: "Codex's built-in tools go far past the shell — it can search the live web, read images, generate them, and operate a browser or desktop.",
+    layer: "codex",
+    prevVersion: "s24",
+  },
+  s26: {
+    title: "Local Models & Custom Providers",
+    subtitle: "Run Without OpenAI",
+    coreAddition: "--oss, ollama/lmstudio, model_providers + wire_api",
+    keyInsight: "The same harness points at a local Ollama/LM Studio model or a compatible gateway by swapping one provider and its wire_api.",
+    layer: "codex",
+    prevVersion: "s25",
+  },
+  s27: {
+    title: "Codex as a Service & the Other Surfaces",
+    subtitle: "One Engine, Many Frontends",
+    coreAddition: "mcp-server, app-server, exec-server, remote TUI, desktop app, IDE, ChatGPT/GitHub",
+    keyInsight: "One Codex engine serves the CLI, a desktop app, a VS Code extension, a remote app-server, and the hosted ChatGPT/GitHub integrations.",
+    layer: "codex",
+    prevVersion: "s26",
+  },
+  s28: {
+    title: "Sessions, Sandbox & Safety in Depth",
+    subtitle: "Fork, Trust, and the Full Safety Model",
+    coreAddition: "fork/archive lifecycle, codex sandbox, --add-dir, bypass modes, guardian approval, trusted projects, feature flags",
+    keyInsight: "The full session lifecycle (resume/fork/archive) and the safety knobs that dial autonomy from read-only up to full bypass — gated by feature flags.",
+    layer: "codex",
+    prevVersion: "s27",
+  },
 };
 
 export const LAYERS = [
@@ -259,6 +304,6 @@ export const LAYERS = [
     id: "codex" as const,
     label: "Codex in Depth",
     color: "#06B6D4",
-    versions: ["s21", "s22", "s23"],
+    versions: ["s21", "s22", "s23", "s24", "s25", "s26", "s27", "s28"],
   },
 ] as const;

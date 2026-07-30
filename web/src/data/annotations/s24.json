@@ -1,0 +1,35 @@
+{
+  "version": "s24",
+  "decisions": [
+    {
+      "id": "plugins-bundle-capabilities",
+      "title": "Plugins Bundle Skills, MCP, and Prompts",
+      "description": "codex plugin does not install code into the loop; it installs a bundle of configuration -- skills, MCP servers, and prompt presets -- that resolves through the same config chain as anything you would write by hand. You register a source with codex plugin marketplace add (a local path or a Git repo), then codex plugin add NAME@MARKETPLACE unpacks a snapshot into local config and cache; plugin list and plugin remove round out the lifecycle. Because a plugin is just config, it composes with profiles and -c overrides instead of fighting them, and the plugins feature flag is stable and on by default.",
+      "alternatives": "Plugins could have been a code-loading mechanism that patches the harness. That would be fragile across versions and hard to trust. Treating a plugin as versioned config keeps installation declarative, reviewable, and reversible.",
+      "zh": {
+        "title": "插件把 Skills、MCP 与提示词打包",
+        "description": "codex plugin 并不是往循环里装代码，而是安装一捆配置——skills、MCP 服务器和提示词预设——它们通过与手写配置完全相同的解析链生效。你先用 codex plugin marketplace add 注册一个来源（本地路径或 Git 仓库），再用 codex plugin add NAME@MARKETPLACE 把某个快照解包到本地配置与缓存中；plugin list 与 plugin remove 补全了生命周期。因为插件只是配置，它能与 profiles 和 -c 覆盖组合而不是相互冲突，并且 plugins 特性标志默认稳定开启。"
+      }
+    },
+    {
+      "id": "hooks-run-at-lifecycle-events",
+      "title": "Hooks Fire on Events, Not Model Whims",
+      "description": "Hooks are user-supplied commands bound to harness lifecycle events -- session start, before/after a tool call, and so on. The harness runs them deterministically at the event; the model neither decides to invoke them nor can skip them. Hook trust is persisted, so a hook source is vetted once rather than on every run, and --dangerously-bypass-hook-trust exists solely for automation that has already vetted its sources. The hooks flag is stable; the older plugin_hooks flag has been removed.",
+      "alternatives": "Hooks could be modeled as tools the model calls. That would make side effects nondeterministic and put the model in charge of its own guard rails. Event-bound hooks keep lifecycle behavior predictable and outside the model's discretion.",
+      "zh": {
+        "title": "钩子由事件触发，而非模型兴致",
+        "description": "钩子是绑定到 harness 生命周期事件（会话开始、工具调用前后等）的用户命令。harness 在事件发生处确定性地运行它们；模型既不会决定调用它们，也无法跳过它们。钩子信任是持久化的，因此一个钩子来源只需审查一次，而不是每次都审查；--dangerously-bypass-hook-trust 仅供那些已经审查过来源的自动化使用。hooks 标志是稳定的；旧的 plugin_hooks 标志已被移除。"
+      }
+    },
+    {
+      "id": "codex-as-mcp-server",
+      "title": "Codex Can Serve Itself as a Tool",
+      "description": "The same binary that consumes MCP servers can also be one: codex mcp-server starts Codex as an MCP server over stdio, exposing the harness as a callable tool. This inverts the usual direction -- instead of Codex reaching out to external tools, an external agent, IDE, or orchestrator reaches into Codex. The agent loop, tools, and sandbox are unchanged; only the transport (a stdio MCP endpoint) is new. It is the clearest sign that the harness is a reusable engine, not just a terminal app.",
+      "alternatives": "Exposing Codex to other programs could have required a bespoke RPC or SDK. Speaking MCP -- the same protocol Codex already uses to consume tools -- means one protocol serves both directions and any MCP client can drive Codex for free.",
+      "zh": {
+        "title": "Codex 能把自身当作工具对外提供",
+        "description": "这个既能消费 MCP 服务器的二进制，自身也能成为 MCP 服务器：codex mcp-server 让 Codex 通过 stdio 作为 MCP 服务器启动，把 harness 暴露为一个可被调用的工具。这反转了通常的方向——不再是 Codex 去调用外部工具，而是外部 agent、IDE 或编排器来调用 Codex。agent 循环、工具和沙箱都不变；只有传输层（一个 stdio MCP 端点）是新的。这是最明确的信号：harness 是一个可复用的引擎，而不仅仅是一个终端应用。"
+      }
+    }
+  ]
+}

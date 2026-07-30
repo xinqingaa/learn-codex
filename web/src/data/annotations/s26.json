@@ -1,0 +1,35 @@
+{
+  "version": "s26",
+  "decisions": [
+    {
+      "id": "oss-flag-selects-local-provider",
+      "title": "--oss Points the Harness at a Local Model",
+      "description": "Running codex --oss --local-provider ollama (or lmstudio) redirects the entire harness to a locally hosted model. --oss selects an open-source provider; --local-provider names which one. If you omit --local-provider, Codex uses the config default or prompts you to choose. Nothing else about the run changes: the same instructions, tools, and sandbox apply, because the provider is just where model requests are sent, not how the loop behaves.",
+      "alternatives": "Local models could require a separate build or a fork of the CLI. A single flag that swaps the provider keeps local and hosted runs on identical code, so a workflow tuned against a local model transfers to OpenAI by changing one option.",
+      "zh": {
+        "title": "--oss 把 harness 指向本地模型",
+        "description": "运行 codex --oss --local-provider ollama（或 lmstudio）会把整个 harness 重定向到本地托管的模型。--oss 选择一个开源 provider；--local-provider 指定具体是哪一个。如果省略 --local-provider，Codex 会使用配置默认值或提示你选择。除此之外本次运行没有任何变化：相同的指令、工具和沙箱照常生效，因为 provider 只是模型请求发往的目的地，而不是循环的行为方式。"
+      }
+    },
+    {
+      "id": "providers-table-and-wire-api",
+      "title": "Providers Are a Table; wire_api Is the Protocol",
+      "description": "Model access is abstracted behind provider ids in the model_providers table of config.toml. Selecting a provider (via --oss, model_provider, or a profile) chooses an entry; that entry declares a base_url for where traffic goes and a wire_api for which protocol to speak. The agent loop never talks to an endpoint directly -- it reads a resolved client built from this table, which is why swapping providers is a config change, not a code change.",
+      "alternatives": "Hardcoding a single OpenAI endpoint would be simpler to build but would lock out self-hosted gateways and local models entirely. A provider table with an explicit wire_api keeps one binary able to target OpenAI, a compatible gateway, or a local server.",
+      "zh": {
+        "title": "Providers 是一张表；wire_api 是协议",
+        "description": "模型访问被抽象到 config.toml 的 model_providers 表中的 provider id 之后。选择一个 provider（通过 --oss、model_provider 或 profile）即选中一个条目；该条目声明流量发往的 base_url 以及使用哪种协议的 wire_api。agent 循环从不直接访问端点——它读取由这张表解析出的客户端，因此更换 provider 是配置改动，而不是代码改动。"
+      }
+    },
+    {
+      "id": "profiles-pin-providers-per-env",
+      "title": "Profiles Pin a Provider per Environment",
+      "description": "-m overrides the model for a single run, but a named profile (-p/--profile) layers $CODEX_HOME/<name>.config.toml on top of the base config, so an environment can pin a provider, model, and wire_api without editing the shared file. A 'local' profile can fix Ollama and a 'ci' profile can fix a hosted gateway while the base config stays neutral. This is the same precedence chain as the rest of config -- later layers win -- applied to model selection.",
+      "alternatives": "Per-environment providers could be handled by editing config.toml each time or by environment variables alone. Named profile files make the switch explicit, reviewable, and reproducible, and they reuse the resolver every other knob already goes through.",
+      "zh": {
+        "title": "Profiles 为每个环境固定一个 Provider",
+        "description": "-m 只为单次运行覆盖模型，而命名 profile（-p/--profile）会把 $CODEX_HOME/<name>.config.toml 叠加到基础配置之上，因此一个环境可以固定 provider、模型和 wire_api 而不必改动共享文件。一个 'local' profile 可以固定 Ollama，一个 'ci' profile 可以固定托管网关，而基础配置保持中立。这沿用了与其他配置相同的优先级链——后层优先——只不过应用在模型选择上。"
+      }
+    }
+  ]
+}

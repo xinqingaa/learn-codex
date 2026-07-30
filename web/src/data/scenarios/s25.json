@@ -1,0 +1,61 @@
+{
+  "version": "s25",
+  "title": "Tools Beyond the Shell",
+  "description": "Past the shell, Codex's built-in tools search the live web (--search), read attached images (-i), generate images, and drive a browser or desktop -- all gated by stable feature flags.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "argv = [codex, --search, -i, error.png, \"why does this login page loop?\"]",
+      "annotation": "--search enables the native Responses web_search tool (no per-call approval); -i/--image attaches image files to the initial prompt."
+    },
+    {
+      "type": "user_message",
+      "content": "why does this login page loop? (see attached screenshot)",
+      "annotation": "The image is attached as input the model can see, not described in text; the same turn also carries live-web access."
+    },
+    {
+      "type": "assistant_text",
+      "content": "The screenshot shows a redirect to /auth. Let me check current docs and reproduce it.",
+      "annotation": "The model reads the attached image and plans against both the pixels and the repo."
+    },
+    {
+      "type": "tool_call",
+      "content": "web_search: \"oauth redirect loop sameSite cookie 2026\"",
+      "toolName": "web_search",
+      "annotation": "With --search, the model calls the built-in web_search tool for live results instead of relying on training data."
+    },
+    {
+      "type": "tool_result",
+      "content": "top hit: SameSite=Lax + cross-site POST drops the session cookie",
+      "toolName": "web_search",
+      "annotation": "The web result is appended to the conversation like any tool result."
+    },
+    {
+      "type": "tool_call",
+      "content": "browser_use: open http://localhost:3000/login, submit form, trace redirects",
+      "toolName": "browser_use",
+      "annotation": "The browser_use feature (stable/on) lets Codex drive a real browser to reproduce the loop, not just reason about it."
+    },
+    {
+      "type": "tool_result",
+      "content": "302 /login -> /auth -> /login (cookie absent on the POST back)",
+      "toolName": "browser_use",
+      "annotation": "The browser trace confirms the redirect cycle the screenshot hinted at."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Confirmed: the session cookie is dropped cross-site. I'll relax SameSite for the auth callback.",
+      "annotation": "Shell, web_search, image input, and browser all feed one reasoning loop."
+    },
+    {
+      "type": "system_event",
+      "content": "related stable flags: image_generation, computer_use (drive a desktop), browser_use_external / full_cdp_access",
+      "annotation": "These are built-in capabilities toggled by feature flags; `codex features list` shows each one's stage and effective state."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Fixed and re-traced: 200 on the callback, no more loop.",
+      "annotation": "Codex's tool surface reaches well past the shell while staying the same agent loop."
+    }
+  ]
+}

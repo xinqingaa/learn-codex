@@ -101,11 +101,52 @@ The assembled loop is character-for-character identical to s01 except for that o
 
 ---
 
+### A closer look: the apply_patch grammar
+
+The most interesting entry in the registry is `apply_patch`. Codex does not let the model edit code with `sed -i` / `echo >`; it asks for a **structured patch** — a tiny line-oriented DSL. The full grammar (the chapter's `parsePatch` implements a subset):
+
+```text
+*** Begin Patch
+*** Update File: path/to/a.md        # modify an existing file
+*** Move to: path/to/b.md            # (optional) rename / move it along the way
+@@                                   # hunk header: anchors the change that follows
+ context line (one leading space, kept verbatim)
+-line to remove (leading -)
++line to add (leading +)
+*** End of File                      # (optional) anchor at end of file
+*** Add File: path/to/c.md           # create a file: the following + lines are its content
++first line of the new file
+*** Delete File: path/to/d.md        # delete a file
+*** End Patch
+```
+
+What each directive means:
+
+| directive | purpose | note |
+|-----------|---------|------|
+| `*** Begin Patch` / `*** End Patch` | the patch envelope wrapping every operation | one patch may hold several file ops |
+| `*** Add File: <path>` | create a file | the following `+` lines are its content; errors if the file already exists |
+| `*** Update File: <path>` | modify a file | followed by one or more hunks |
+| `*** Move to: <path>` | rename / move | only valid right after `Update File` |
+| `@@` | hunk header | separates distinct edit hunks and anchors context |
+| `*** End of File` | end-of-file anchor | marks a hunk as applying at EOF |
+| ` ` / `-` / `+` line prefix | context / remove / add | the three kinds of hunk body line |
+
+Why does Codex prefer a structured patch over letting the model edit files freeform? Three words:
+
+- **Reviewability**: a patch *is* a diff — a human can see at a glance which file changed, which lines were removed, which were added. The real effect of `sed -i 's/.../.../'` is only known after it runs.
+- **Atomicity**: the chapter parses the *entire* patch first (`parsePatch`), then computes every file's final form in memory, and only touches disk once *everything* validates. If any file's context fails to match, the whole patch is rejected — the disk ends up either fully updated or byte-for-byte untouched, never half-written.
+- **Failure recovery**: each `Update File` hunk must first *find its context* in the file's current content before replacing. No match? You get a precise error (`Error: context not found in <path>`), and the model retries with that error on the next turn — instead of staring at a corrupted file.
+
+The offline demo shows both outcomes: the first patch lands cleanly, the second has context that doesn't match and is rejected wholesale, and the `read_file` right after proves the file is untouched.
+
+---
+
 ## Try It
 
 > **Teaching demo note**: the code creates an `agent_scratch/` folder in the current directory and reads/writes files inside it. Run it in a scratch directory so you don't touch real project files. s03/s04 add approval and a sandbox.
 
-**No API key needed**: without `OPENAI_API_KEY`, the built-in offline scripted model fans out 3 tool calls in a **single turn** (twice), so you can clearly watch the dispatch map route each call by name.
+**No API key needed**: without `OPENAI_API_KEY`, the built-in offline scripted model fans out several tool calls in a **single turn** (twice), so you can clearly watch the dispatch map route each call by name. The second turn also shows both patch outcomes: one lands cleanly, the other is rejected wholesale because its context doesn't match.
 
 **Setup** (first run):
 
@@ -127,7 +168,7 @@ Try these prompts:
 2. `Read README.md and summarize this project in a new file SUMMARY.md` (read + write)
 3. `Use a patch to add a "Usage" section to SUMMARY.md` (apply_patch)
 
-Watch for: when does the model call one tool versus several in a single turn? How does each call get routed by name to the right function?
+Watch for: when does the model call one tool versus several in a single turn? How does each call get routed by name to the right function? In the offline second turn, why does one `apply_patch` succeed while the other is rejected wholesale with the file left untouched?
 
 ---
 
@@ -147,7 +188,16 @@ s03 Approval → put an approval gate in front of tool execution: should this op
 <details>
 <summary>1. Tools are first-class — apply_patch especially</summary>
 
-In the tool set Codex exposes to the model, `apply_patch` isn't a nice-to-have; it's the **preferred way to modify files**. The model is explicitly steered to edit code with a structured patch (`*** Begin Patch ... *** Add/Update/Delete File ...`) rather than `echo >` or `sed`. The chapter implements a minimal Add/Update/Delete parser; the real repo has a full patch grammar with parsing and validation that handles context matching, file moves, and more — and a patch passes through approval and the sandbox before it ever touches disk (see s03/s04).
+In the tool set Codex exposes to the model, `apply_patch` isn't a nice-to-have; it's the **preferred way to modify files**. The model is explicitly steered to edit code with a structured patch (`*** Begin Patch ... *** Add/Update/Delete File ...`) rather than `echo >` or `sed`. The chapter implements a minimal Add/Update/Delete/Move parser; the real repo has a full patch grammar with parsing and validation that handles context matching, file moves, and more — and a patch passes through approval and the sandbox before it ever touches disk (see s03/s04).
+
+**Freeform or JSON function?** This is a real detail worth getting straight. `apply_patch` can be exposed to the model in two ways:
+
+| form | what the model sees | strength of constraint |
+|------|---------------------|------------------------|
+| ordinary function tool (what the chapter uses) | one JSON arg `{ "patch": "<string>" }` | only guarantees valid JSON; the patch body can be any string, so the harness must catch bad input at parse time |
+| freeform custom tool | a **raw text** body constrained by a dedicated **grammar** | the model is constrained by the grammar *while generating*, so it **cannot emit a malformed patch at all** |
+
+This distinction used to be controlled by the `apply_patch_freeform` feature flag. In current Codex (v0.144.x), `codex features list` reports that flag as `removed` — the grammar-constrained freeform form has "graduated" to be the standard behavior, no longer a toggleable experiment. The chapter uses the first form so it can demo over an ordinary Responses API function tool, but the parser (`parsePatch`) teaches the very same real grammar.
 
 </details>
 
@@ -184,4 +234,4 @@ Beyond Codex's built-in tools (read, write, patch, shell, …), external tools c
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

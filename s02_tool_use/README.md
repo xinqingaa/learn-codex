@@ -101,11 +101,52 @@ for (const call of calls) {                 // 一轮可能有好几个 function
 
 ---
 
+### 深入一点：apply_patch 的补丁文法
+
+登记表里最值得细看的是 `apply_patch`。Codex 不让模型用 `sed -i` / `echo >` 改代码，而是要求它产出一段**结构化补丁**——一种行导向的微型 DSL。完整文法（教学版 `parsePatch` 实现了它的子集）：
+
+```text
+*** Begin Patch
+*** Update File: path/to/a.md        # 改一个已存在的文件
+*** Move to: path/to/b.md            # （可选）顺手重命名 / 移动
+@@                                   # hunk 头：锚定接下来这段改动
+ 上下文行（前缀一个空格，原样保留）
+-要删除的行（前缀 -）
++要新增的行（前缀 +）
+*** End of File                      # （可选）锚定到文件末尾
+*** Add File: path/to/c.md           # 新建文件：下面的 + 行就是内容
++新文件第一行
+*** Delete File: path/to/d.md        # 删除文件
+*** End Patch
+```
+
+每条指令的含义：
+
+| 指令 | 作用 | 备注 |
+|------|------|------|
+| `*** Begin Patch` / `*** End Patch` | 补丁信封，包裹所有操作 | 一个补丁可含多个文件操作 |
+| `*** Add File: <path>` | 新建文件 | 后续 `+` 行即文件内容；文件已存在则报错 |
+| `*** Update File: <path>` | 修改文件 | 后跟若干 hunk |
+| `*** Move to: <path>` | 重命名 / 移动 | 只能跟在 `Update File` 之后 |
+| `@@` | hunk 头 | 分隔不同的修改片段，锚定上下文 |
+| `*** End of File` | 文件末尾锚点 | 表示该 hunk 作用于 EOF |
+| ` ` / `-` / `+` 行前缀 | 上下文 / 删除 / 新增 | hunk 体的三种行 |
+
+为什么 Codex 偏爱结构化补丁，而不是让模型自由发挥地改文件？三个字：
+
+- **可审查（reviewability）**：补丁本身就是一份 diff，人一眼看清「改了哪个文件、删了哪行、加了哪行」。而 `sed -i 's/.../.../'` 的真实效果要跑完才知道。
+- **原子性（atomicity）**：教学版先把**整个补丁解析完**（`parsePatch`），再在内存里算出每个文件的最终形态，**全部校验通过才落盘**。任何一个文件的上下文对不上，整个补丁被拒绝——磁盘上要么全是新内容，要么一个字节没动，绝不留写了一半的文件。
+- **失败可恢复（failure recovery）**：每个 `Update File` 的 hunk 都要先在文件当前内容里**找到上下文**才替换。找不到？返回一条精确的错误（`Error: context not found in <path>`），模型下一轮拿着这条错误重试，而不是对着一个被改坏的文件发呆。
+
+离线 demo 里你能同时看到这两种结局：第一轮补丁干净落地，第二轮补丁的上下文对不上、被整体拒绝，紧接着的 `read_file` 证明文件原封不动。
+
+---
+
 ## 试一下
 
 > **教学 demo 提示**：代码会在当前目录创建 `agent_scratch/` 并读写里面的文件。建议在临时测试目录里运行，避免碰真实项目。s03/s04 会给它加上审批和沙箱。
 
-**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，内置的离线脚本模型会在**同一轮** fan-out 出 3 个工具调用（两次），让你清楚看到 dispatch map 按名字路由每个调用。
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，内置的离线脚本模型会在**同一轮** fan-out 出多个工具调用（两次），让你清楚看到 dispatch map 按名字路由每个调用。第二轮还会演示补丁的两种结局：一个干净落地，一个因上下文对不上被整体拒绝。
 
 **准备**（首次运行）：
 
@@ -127,7 +168,7 @@ OPENAI_API_KEY=sk-... npx tsx s02_tool_use/code.ts   # 真实模型
 2. `Read README.md and summarize this project in a new file SUMMARY.md`（read + write）
 3. `Use a patch to add a "Usage" section to SUMMARY.md`（apply_patch）
 
-观察重点：模型什么时候只调一个工具、什么时候一轮调多个？每个调用是怎么被按名字路由到对应函数的？
+观察重点：模型什么时候只调一个工具、什么时候一轮调多个？每个调用是怎么被按名字路由到对应函数的？离线第二轮的两个 `apply_patch`，为什么一个成功、一个被整体拒绝且文件原封不动？
 
 ---
 
@@ -147,7 +188,16 @@ s03 Approval → 在工具执行前加一道审批门：这次操作要不要先
 <details>
 <summary>一、工具是一等公民，apply_patch 尤其特殊</summary>
 
-Codex 给模型的工具集里，`apply_patch` 不是「锦上添花」，而是修改文件的**首选方式**。模型被明确要求用结构化的 patch（`*** Begin Patch ... *** Add/Update/Delete File ...`）来改代码，而不是 `echo >` 或 `sed`。教学版实现了一个极简的 Add/Update/Delete 解析器；真实仓库里有一套完整的 patch 语法解析与校验（专用 grammar），能处理上下文匹配、移动文件等情况，并且 patch 会先经过审批与沙箱才落盘（见 s03/s04）。
+Codex 给模型的工具集里，`apply_patch` 不是「锦上添花」，而是修改文件的**首选方式**。模型被明确要求用结构化的 patch（`*** Begin Patch ... *** Add/Update/Delete File ...`）来改代码，而不是 `echo >` 或 `sed`。教学版实现了一个极简的 Add/Update/Delete/Move 解析器；真实仓库里有一套完整的 patch 语法解析与校验（专用 grammar），能处理上下文匹配、移动文件等情况，并且 patch 会先经过审批与沙箱才落盘（见 s03/s04）。
+
+**freeform 还是 JSON 函数？** 这是个值得说清的真实细节。`apply_patch` 可以有两种暴露给模型的方式：
+
+| 方式 | 模型看到什么 | 约束强度 |
+|------|--------------|----------|
+| 普通 function tool（教学版用的） | 一个 JSON 参数 `{ "patch": "<字符串>" }` | 只保证是合法 JSON，补丁体本身可以是任意字符串，得靠 harness 解析时兜底 |
+| freeform 自定义工具 | 一段**原始文本**，其语法被一条专用 **grammar 约束** | 模型在生成阶段就被文法限制，**根本产不出格式非法的补丁** |
+
+这个区别曾由 `apply_patch_freeform` 这个 feature flag 控制。在当前 Codex（v0.144.x）里跑 `codex features list` 可以看到该 flag 状态为 `removed`——文法约束的 freeform 形式已经「毕业」成为标准行为，不再是可开关的实验项。教学版为了能用普通 Responses API function tool 演示，采用了第一种，但解析器（`parsePatch`）教的正是那套真实文法。
 
 </details>
 
@@ -184,4 +234,4 @@ Codex 的内置工具（读、写、patch、shell 等）之外，还能通过 `m
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

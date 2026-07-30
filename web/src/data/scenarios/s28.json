@@ -1,0 +1,59 @@
+{
+  "version": "s28",
+  "title": "Sessions, Sandbox & Safety in Depth",
+  "description": "resume/fork/archive manage the session lifecycle, while sandbox_mode, --add-dir, approval policy, and bypass modes dial autonomy from read-only up to full bypass -- gated by feature flags.",
+  "steps": [
+    {
+      "type": "system_event",
+      "content": "argv = [codex, resume, --last]   (or: fork --last to branch it)",
+      "annotation": "resume continues a persisted session (picker by default, --last for the most recent); fork starts a new branch from a prior session instead of overwriting it."
+    },
+    {
+      "type": "system_event",
+      "content": "lifecycle: codex archive / unarchive / delete manage saved rollouts by id or name",
+      "annotation": "Sessions are durable records under $CODEX_HOME; archive hides one from the picker, delete removes it permanently."
+    },
+    {
+      "type": "system_event",
+      "content": "trust gate: [projects.\"<path>\"] in config.toml marks this repo trusted -> project config may load",
+      "annotation": "Per-project trust decides whether a repo-local config is honored at all -- a checkout cannot grant itself privileges."
+    },
+    {
+      "type": "user_message",
+      "content": "apply the migration across the repo",
+      "annotation": "The task will write files, so the resolved sandbox policy decides what the shell may touch."
+    },
+    {
+      "type": "system_event",
+      "content": "resolve safety: -s read-only | workspace-write | danger-full-access ; --add-dir grants extra writable roots",
+      "annotation": "sandbox_mode sets the boundary; --add-dir widens it for specific directories without going full-access."
+    },
+    {
+      "type": "system_event",
+      "content": "approval: -a untrusted | on-request | never ; guardian_approval (stable/on) can escalate risky steps",
+      "annotation": "The approval policy is a separate dial from the sandbox: it decides when the model must ask before a command runs."
+    },
+    {
+      "type": "tool_call",
+      "content": "codex sandbox -- npx prisma migrate deploy   (run inside the seatbelt sandbox)",
+      "toolName": "shell",
+      "annotation": "codex sandbox runs a command under the Codex-provided (seatbelt) sandbox directly -- the same isolation the loop applies to tool calls."
+    },
+    {
+      "type": "tool_result",
+      "content": "migration applied; writes confined to the workspace boundary",
+      "toolName": "shell",
+      "annotation": "The OS-level sandbox denies out-of-bounds writes before they happen, independent of model intent."
+    },
+    {
+      "type": "system_event",
+      "content": "escape hatches: --dangerously-bypass-approvals-and-sandbox (no sandbox, no prompts) and --dangerously-bypass-hook-trust -- for externally-sandboxed automation only",
+      "annotation": "The bypass flags remove the safety rails entirely and are meant only for environments that are already sandboxed from the outside."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Migration applied inside the boundary; resume/fork later to continue, and features list shows which safety flags are on.",
+      "annotation": "Session lifecycle and the safety model are layered dials over one loop: sandbox, approval, trust, and feature flags each gate a different axis."
+    }
+  ]
+}
