@@ -15,6 +15,11 @@ const OUT_DIR = path.join(WEB_DIR, "src", "data", "generated");
 const PUBLIC_DIR = path.join(WEB_DIR, "public");
 const COURSE_ASSETS_DIR = path.join(PUBLIC_DIR, "course-assets");
 
+// Public URL prefix for assets and cross-page links. Empty for local dev and
+// root-domain hosts; set to "/learn-codex" for the GitHub Pages project site so
+// absolute /course-assets and /{locale} links resolve under the base path.
+const ASSET_BASE = process.env.NEXT_BASE_PATH ?? "";
+
 type Locale = "en" | "zh";
 
 interface ChapterSource {
@@ -163,7 +168,7 @@ function copyChapterAssets(chapter: ChapterSource): ChapterImage[] {
     .filter((filename) => !filename.includes(".en."))
     .sort()
     .map((filename) => ({
-      src: `/course-assets/${chapter.dirName}/${filename}`,
+      src: `${ASSET_BASE}/course-assets/${chapter.dirName}/${filename}`,
       alt: filename.replace(/\.svg$/, "").replace(/-/g, " "),
     }));
 }
@@ -188,14 +193,14 @@ function rewriteChapterMarkdown(
 
   next = next.replace(
     /(!\[[^\]]*\]\()images\/([^)]+)(\))/g,
-    `$1/course-assets/${chapter.dirName}/$2$3`
+    `$1${ASSET_BASE}/course-assets/${chapter.dirName}/$2$3`
   );
 
   next = next.replace(
     /\]\(\.\.\/(s\d{2}_[^)\/]+)\/?\)/g,
     (_match, dirName) => {
       const id = dirToVersionId(dirName);
-      return id ? `](/${locale}/${id})` : `](../${dirName}/)`;
+      return id ? `](${ASSET_BASE}/${locale}/${id})` : `](../${dirName}/)`;
     }
   );
 
@@ -203,7 +208,7 @@ function rewriteChapterMarkdown(
     /\]\(\.\/(s\d{2}_[^)\/]+)\/?\)/g,
     (_match, dirName) => {
       const id = dirToVersionId(dirName);
-      return id ? `](/${locale}/${id})` : `](./${dirName}/)`;
+      return id ? `](${ASSET_BASE}/${locale}/${id})` : `](./${dirName}/)`;
     }
   );
 
