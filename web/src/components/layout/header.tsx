@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useTranslations, useLocale } from "@/lib/i18n";
 import { Github, Menu, X, Sun, Moon } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -21,6 +21,7 @@ const LOCALES = [
 export function Header() {
   const t = useTranslations("nav");
   const pathname = usePathname();
+  const router = useRouter();
   const locale = useLocale();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [dark, setDark] = useState(false);
@@ -39,8 +40,14 @@ export function Header() {
   }
 
   function switchLocale(newLocale: string) {
-    const newPath = pathname.replace(`/${locale}`, `/${newLocale}`);
-    window.location.href = newPath;
+    if (newLocale === locale) return;
+    // usePathname() excludes basePath, so swap only the FIRST path segment (the
+    // locale) and let the router re-apply basePath. Using window.location here
+    // would drop the basePath and 404 on the GitHub Pages project site.
+    const segments = pathname.split("/"); // ["", "en", "s01", ...]
+    segments[1] = newLocale;
+    const nextPath = segments.join("/") || `/${newLocale}`;
+    router.push(nextPath);
   }
 
   return (
