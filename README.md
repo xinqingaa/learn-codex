@@ -7,6 +7,8 @@
 
 # Learn Codex —— 把 Codex 的 Harness 一个机制一个机制地造出来
 
+### 📖 [**在线阅读文档站 → moonaiai.github.io/learn-codex**](https://moonaiai.github.io/learn-codex/)
+
 > 一门用 **TypeScript** 重造 Codex 风格编码 agent harness 的课程：**Part I（s01–s20）** 从 30 行的 Agent Loop 递进到一个多智能体平台；**Part II（s21–s28）** 把真实 Codex 的产品面（CLI、`config.toml`、插件、多模态工具、本地模型、服务化、安全模型、Review/CI/Cloud）逐一讲透。
 >
 > 双语（中/英）· 每章可运行 · 内置离线演示模型 · 交互式文档站
@@ -193,7 +195,11 @@ npm test          # 28 章全跑一遍，CI 同款
 
 ## 在线文档站
 
+**🔗 [https://moonaiai.github.io/learn-codex/](https://moonaiai.github.io/learn-codex/)** —— 打开即读，无需安装。
+
 文档站是一个 Next.js 静态站，构建时用脚本把根目录章节抽成 JSON 再渲染，包含：**每章的架构图、可交互的 Agent Loop 模拟器、代码查看器、章节间 diff 对比、分层/时间线视图**。
+
+本地运行：
 
 ```sh
 cd web

@@ -7,6 +7,8 @@
 
 # Learn Codex — Rebuild the Codex Harness, One Mechanism at a Time
 
+### 📖 [**Read online → moonaiai.github.io/learn-codex**](https://moonaiai.github.io/learn-codex/)
+
 > A course on rebuilding a Codex-style coding-agent harness in **TypeScript**: **Part I (s01–s20)** progresses from a 30-line Agent Loop to a multi-agent platform; **Part II (s21–s28)** goes deep on the real Codex product surface — the CLI, `config.toml`, plugins, built-in multimodal tools, local models, the service forms, the safety model, and Review/CI/Cloud.
 >
 > Bilingual (zh/en) · every chapter runnable · built-in offline demo model · interactive docs site
@@ -194,7 +196,11 @@ npm test          # runs all 28 chapters, same as CI
 
 ## The Docs Site
 
+**🔗 [https://moonaiai.github.io/learn-codex/](https://moonaiai.github.io/learn-codex/)** — open and read, nothing to install.
+
 The docs site is a static Next.js app. At build time a script extracts the root chapters into JSON and renders them, with **per-chapter architecture diagrams, an interactive Agent-Loop simulator, a code viewer, per-chapter diffs, and layer/timeline views**.
+
+Run it locally:
 
 ```sh
 cd web
