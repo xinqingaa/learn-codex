@@ -15,3 +15,6 @@ web/public/course-assets/
 .DS_Store
 *.log
 dist/
+
+# chapter demo temp files
+.tmp/

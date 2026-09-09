@@ -1,11 +1,11 @@
 {
   "version": "s01",
   "title": "The Agent Loop",
-  "description": "A minimal agent that uses only a shell tool to accomplish tasks",
+  "description": "分镜与终端离线剧本相同：创建 .tmp/s01/hello.ts → cat 核对。终端不读你的提示词；这里也不是在跑 code.ts。 / Same storyboard as the terminal offline demo: create .tmp/s01/hello.ts, then cat it. The script ignores your prompt; this player is not live code.ts.",
   "steps": [
     {
       "type": "user_message",
-      "content": "Create a file called hello.ts that prints 'Hello, World!'",
+      "content": "Create a file called hello.ts that prints 'Hello, Codex!'",
       "annotation": "User sends a task to the agent"
     },
     {
@@ -15,13 +15,13 @@
     },
     {
       "type": "tool_call",
-      "content": "echo 'console.log(\"Hello, World!\")' > hello.ts",
+      "content": "echo 'console.log(\"Hello, Codex!\")' > .tmp/s01/hello.ts",
       "toolName": "shell",
       "annotation": "Function call: the model emits a shell command in the Responses output"
     },
     {
       "type": "tool_result",
-      "content": "",
+      "content": "(no output)",
       "toolName": "shell",
       "annotation": "The shell returns empty output (success)"
     },
@@ -32,19 +32,19 @@
     },
     {
       "type": "tool_call",
-      "content": "cat hello.ts",
+      "content": "cat .tmp/s01/hello.ts",
       "toolName": "shell",
       "annotation": "Another shell call to verify"
     },
     {
       "type": "tool_result",
-      "content": "console.log(\"Hello, World!\")",
+      "content": "console.log(\"Hello, Codex!\")",
       "toolName": "shell",
       "annotation": "File contents confirmed"
     },
     {
       "type": "assistant_text",
-      "content": "Done! I've created hello.ts with the print statement. You can run it with `npx tsx hello.ts`.",
+      "content": "Done! I've created hello.ts in .tmp/s01/. You can run it with `npx tsx .tmp/s01/hello.ts`.",
       "annotation": "No function_call items in the response -> loop breaks, agent responds to user"
     }
   ]

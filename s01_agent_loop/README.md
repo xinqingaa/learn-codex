@@ -101,9 +101,9 @@ async function agentLoop(input) {
 
 ## 试一下
 
-> **教学 demo 提示**：代码会执行模型生成的 shell 命令。建议在一个临时测试目录里运行，避免误伤项目文件。s03/s04 会讲真正的审批 + 沙箱系统。
+> **教学 demo 提示**：有 API key 时，代码会执行模型生成的 shell 命令。建议在临时目录里跑，避免误伤项目文件。离线模式只写入仓库根目录的 `.tmp/s01/`。s03/s04 会讲真正的审批 + 沙箱系统。
 
-**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，本章用一个内置的「离线脚本化模型」演示完整循环（它会假装调用两次 `shell` 然后收尾），方便你先把机制看明白。
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时走**离线剧本**——**不读你的提示词**，固定演示「创建 `hello.ts` → `cat` 核对 → 收尾」，和网页模拟器是同一条分镜。随便输入即可，盯 `function_call`（`continue`）和 `message`（`stop`）。
 
 **准备**（首次运行）：
 
@@ -115,17 +115,17 @@ cp .env.example .env        # 想跑真实模型就填入 OPENAI_API_KEY 和 MOD
 **运行**：
 
 ```sh
-npx tsx s01_agent_loop/code.ts                # 离线 demo 模型
-OPENAI_API_KEY=sk-... npx tsx s01_agent_loop/code.ts   # 真实模型
+npx tsx s01_agent_loop/code.ts                # 离线剧本（忽略提示词）
+OPENAI_API_KEY=sk-... npx tsx s01_agent_loop/code.ts   # 真实模型（命令跟着问题变）
 ```
 
-试试这些 prompt：
+设了 key 之后再试这些 prompt：
 
 1. `Create a file called hello.ts that prints "Hello, Codex!"`
 2. `List all TypeScript files in this directory`
 3. `What is the current git branch?`
 
-观察重点：模型什么时候调用工具（循环继续），什么时候不调用（循环结束）？
+观察重点：每一轮先打印完整的 `output`（返回值数组）。`type: function_call` 是要调工具，`name` 是工具名，`arguments` 里才是命令；`type: message` 是文本。`$` 是 harness 在执行，不在 `output` 里。同一进程里再问一句，离线剧本**不会再跑命令**。
 
 ---
 

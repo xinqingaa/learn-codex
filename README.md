@@ -1,13 +1,12 @@
 [English](./README.md) | [中文](./README-zh.md)
 
-[![ci](https://github.com/moonaiai/learn-codex/actions/workflows/ci.yml/badge.svg)](https://github.com/moonaiai/learn-codex/actions/workflows/ci.yml)
-[![docs](https://img.shields.io/badge/docs-moonaiai.github.io%2Flearn--codex-06B6D4)](https://moonaiai.github.io/learn-codex/)
+[![docs](https://img.shields.io/badge/docs-xinqingaa.github.io%2Flearn--codex-06B6D4)](https://xinqingaa.github.io/learn-codex/)
 [![chapters](https://img.shields.io/badge/chapters-28-blueviolet)](#learning-path)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 # Learn Codex — Rebuild the Codex Harness, One Mechanism at a Time
 
-### 📖 [**Read online → moonaiai.github.io/learn-codex**](https://moonaiai.github.io/learn-codex/)
+### 📖 [**Read online → xinqingaa.github.io/learn-codex**](https://xinqingaa.github.io/learn-codex/)
 
 > A course on rebuilding a Codex-style coding-agent harness in **TypeScript**: **Part I (s01–s20)** progresses from a 30-line Agent Loop to a multi-agent platform; **Part II (s21–s28)** goes deep on the real Codex product surface — the CLI, `config.toml`, plugins, built-in multimodal tools, local models, the service forms, the safety model, and Review/CI/Cloud.
 >
@@ -196,7 +195,7 @@ npm test          # runs all 28 chapters, same as CI
 
 ## The Docs Site
 
-**🔗 [https://moonaiai.github.io/learn-codex/](https://moonaiai.github.io/learn-codex/)** — open and read, nothing to install.
+**🔗 [https://xinqingaa.github.io/learn-codex/](https://xinqingaa.github.io/learn-codex/)** — open and read, nothing to install.
 
 The docs site is a static Next.js app. At build time a script extracts the root chapters into JSON and renders them, with **per-chapter architecture diagrams, an interactive Agent-Loop simulator, a code viewer, per-chapter diffs, and layer/timeline views**.
 

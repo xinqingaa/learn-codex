@@ -101,9 +101,9 @@ Thirty-odd lines: the smallest runnable kernel of an agent harness. It isn't int
 
 ## Try It
 
-> **Teaching demo note**: the code runs shell commands the model generates. Run it in a scratch directory so you don't touch real project files. s03/s04 build the real approval + sandbox system.
+> **Teaching demo note**: with an API key, the code runs shell commands the model generates. Use a scratch directory so you don't touch real project files. Offline mode only writes to `.tmp/s01/` at the repo root. s03/s04 build the real approval + sandbox system.
 
-**No API key needed**: without `OPENAI_API_KEY`, this chapter drives the full loop with a built-in *offline scripted model* (it pretends to call `shell` twice, then wraps up), so you can understand the mechanism first.
+**No API key needed**: without `OPENAI_API_KEY` this chapter runs a **fixed script** — it **ignores your prompt** and always demos "create `hello.ts` → `cat` to verify → stop", the same storyboard as the web simulator. Type anything; watch `function_call` (`continue`) vs `message` (`stop`).
 
 **Setup** (first run):
 
@@ -115,17 +115,17 @@ cp .env.example .env        # fill in OPENAI_API_KEY and MODEL_ID to run the rea
 **Run**:
 
 ```sh
-npx tsx s01_agent_loop/code.ts                # offline demo model
-OPENAI_API_KEY=sk-... npx tsx s01_agent_loop/code.ts   # real model
+npx tsx s01_agent_loop/code.ts                # offline script (ignores the prompt)
+OPENAI_API_KEY=sk-... npx tsx s01_agent_loop/code.ts   # real model (commands follow the task)
 ```
 
-Try these prompts:
+With a key, try these prompts:
 
 1. `Create a file called hello.ts that prints "Hello, Codex!"`
 2. `List all TypeScript files in this directory`
 3. `What is the current git branch?`
 
-Watch for: when does the model call a tool (loop continues), and when does it stop (loop ends)?
+Watch for: each turn prints the full `output` array. `type: function_call` means call a tool, `name` is the tool, `arguments` holds the command; `type: message` is text. `$` is the harness running a command — it is not part of `output`. A second prompt in the same process does **not** re-run the script.
 
 ---
 
