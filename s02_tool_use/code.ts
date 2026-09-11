@@ -38,6 +38,11 @@
  * matched against the file's current content before commit — so it either applies
  * cleanly or fails with a precise error, never a half-written file.
  *
+ * Each turn prints the raw `output` array, then the harness line for each call.
+ * Offline mode ignores the prompt and writes .tmp/s02/ (same story as the web
+ * simulator): one turn fans out writes, the next fans out apply_patch ×2 /
+ * read_file / list_dir — one patch commits, one is rejected atomically.
+ *
  * Run it:
  *     npm install
  *     npx tsx s02_tool_use/code.ts          # offline demo model (no key needed)
@@ -52,7 +57,12 @@ import * as readline from "node:readline";
 
 const MODEL = process.env.MODEL_ID ?? "gpt-5-codex";
 const CWD = process.cwd();
+const TMP_DIR = path.join(CWD, ".tmp", "s02");
+const ALPHA_REL = path.join(".tmp", "s02", "alpha.md");
+const BETA_REL = path.join(".tmp", "s02", "beta.md");
+const USAGE_REL = path.join(".tmp", "s02", "usage.md");
 const OFFLINE = !process.env.OPENAI_API_KEY || process.env.CODEX_OFFLINE === "1";
+const MODEL_LABEL = OFFLINE ? "offline" : MODEL;
 
 const INSTRUCTIONS =
   `You are a coding agent in ${CWD}. Prefer the structured tools (read_file, ` +
@@ -300,8 +310,18 @@ function runApplyPatch(patch: string): string {
 }
 
 function runShell(command: string): string {
+  // Teaching guardrail only. s03/s04 build the real approval + sandbox.
+  const dangerous = ["rm -rf /", "sudo ", "shutdown", "reboot", "> /dev/"];
+  if (dangerous.some((d) => command.includes(d))) {
+    return "Error: dangerous command blocked";
+  }
   try {
-    const out = execSync(command, { cwd: CWD, timeout: 120_000, maxBuffer: 1024 * 1024 });
+    const out = execSync(command, {
+      cwd: CWD,
+      timeout: 120_000,
+      maxBuffer: 1024 * 1024,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     return (String(out).trim() || "(no output)").slice(0, 50_000);
   } catch (err: unknown) {
     const e = err as { stderr?: Buffer; message?: string };
@@ -340,6 +360,83 @@ type OutputItem = {
   content?: { type: string; text?: string }[];
 };
 
+const dim = (s: string) => `\x1b[90m${s}\x1b[0m`;
+const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`;
+const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
+const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
+
+const SCRIPT_TOOL_COUNT = 7; // turn 1: 3 calls, turn 2: 4 calls
+
+function countToolResults(input: unknown[]): number {
+  return input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
+}
+
+function countToolResultsSinceLastUser(input: unknown[]): number {
+  let lastUser = -1;
+  for (let i = 0; i < input.length; i++) {
+    if ((input[i] as { role?: string }).role === "user") lastUser = i;
+  }
+  return input
+    .slice(lastUser + 1)
+    .filter((i) => (i as { type?: string }).type === "function_call_output").length;
+}
+
+function printOutput(output: OutputItem[]): void {
+  const json = JSON.stringify(
+    output,
+    (_key, value) =>
+      typeof value === "string" && value.length > 500 ? `${value.slice(0, 500)}…` : value,
+    2,
+  );
+  console.log(dim("  output:"));
+  for (const line of json.split("\n")) console.log(dim(`  ${line}`));
+}
+
+function previewToolOutput(result: string, maxLines = 20): void {
+  const all = result.split("\n");
+  const isDotEntry = (line: string) => {
+    const name = line.trimEnd().split(/\s+/).pop();
+    return name === "." || name === "..";
+  };
+  const visible = all.filter((line) => !isDotEntry(line));
+  if (result === "(no output)" || result === "") {
+    console.log(dim("  │ （成功，无 stdout。echo > 文件时很常见）"));
+    return;
+  }
+  const shown = visible.slice(0, maxLines);
+  for (const line of shown) console.log(dim(`  │ ${line}`));
+  const hidden = all.length - shown.length;
+  if (hidden > 0) {
+    console.log(dim(`  │ … ${hidden} more lines（完整结果在 thread 里）`));
+  }
+}
+
+function printHarnessCall(call: OutputItem): void {
+  let args: Args = {};
+  try {
+    args = JSON.parse(call.arguments ?? "{}") as Args;
+  } catch {
+    args = {};
+  }
+  console.log(dim("  harness 执行:"));
+  if (call.name === "shell") {
+    console.log(yellow(`  $ ${String(args.command ?? "")}`));
+    return;
+  }
+  if (call.name === "apply_patch") {
+    console.log(yellow("  apply_patch"));
+    const lines = String(args.patch ?? "").split("\n");
+    const shown = lines.slice(0, 16);
+    for (const line of shown) console.log(dim(`  │ ${line}`));
+    if (lines.length > shown.length) {
+      console.log(dim(`  │ … ${lines.length - shown.length} more lines`));
+    }
+    return;
+  }
+  const pathArg = args.path != null ? `  path=${args.path}` : "";
+  console.log(yellow(`  ${call.name ?? "?"}${pathArg}`));
+}
+
 const openai = OFFLINE ? null : new OpenAI();
 
 async function callModel(input: unknown[]): Promise<OutputItem[]> {
@@ -356,11 +453,14 @@ async function callModel(input: unknown[]): Promise<OutputItem[]> {
   return offlineModel(input);
 }
 
-// Offline scripted model: it fans out several tool calls in a single turn, twice,
-// so you can watch the dispatch map route each call by name. The second turn shows
-// one patch that commits and one whose stale context is rejected atomically.
+// Scripted stand-in: same story as the web simulator.
+// Ignores the user text. Plays once per process; later prompts do not re-run tools.
 function offlineModel(input: unknown[]): OutputItem[] {
-  const ran = input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
+  fs.mkdirSync(TMP_DIR, { recursive: true });
+  const ran = countToolResultsSinceLastUser(input);
+  const alreadyPlayed = countToolResults(input) >= SCRIPT_TOOL_COUNT && ran === 0;
+  const turn = input.filter((i) => (i as { role?: string }).role === "user").length;
+
   const call = (id: string, name: string, args: Record<string, unknown>): OutputItem => ({
     type: "function_call",
     id,
@@ -369,43 +469,61 @@ function offlineModel(input: unknown[]): OutputItem[] {
     arguments: JSON.stringify(args),
   });
 
-  if (ran === 0) {
+  if (alreadyPlayed) {
     return [
-      call("c1", "write_file", { path: "agent_scratch/alpha.md", content: "# Alpha\n" }),
-      call("c2", "write_file", { path: "agent_scratch/beta.md", content: "# Beta\n" }),
-      call("c3", "shell", { command: "echo 'scratch workspace ready'" }),
+      {
+        type: "message",
+        content: [
+          {
+            type: "output_text",
+            text:
+              `[offline demo] 这条进程里的固定剧本已经演完（写两个文件 → 补丁成功/失败 → 核对）。` +
+              `刚才不是听懂了你的话。输入 q 退出；设 OPENAI_API_KEY 后工具才会跟着问题变。`,
+          },
+        ],
+      },
+    ];
+  }
+
+  if (ran === 0) {
+    fs.rmSync(TMP_DIR, { recursive: true, force: true });
+    fs.mkdirSync(TMP_DIR, { recursive: true });
+    return [
+      call(`call_${turn}_1`, "write_file", { path: ALPHA_REL, content: "# Alpha\n" }),
+      call(`call_${turn}_2`, "write_file", { path: BETA_REL, content: "# Beta\n" }),
+      call(`call_${turn}_3`, "shell", { command: "echo 'scratch workspace ready'" }),
     ];
   }
   if (ran === 3) {
     return [
       // A structured patch using the real grammar: envelope, @@ hunk header, a
       // context line (space prefix), added lines (+), and an Add File op.
-      call("c4", "apply_patch", {
+      call(`call_${turn}_4`, "apply_patch", {
         patch:
           "*** Begin Patch\n" +
-          "*** Update File: agent_scratch/alpha.md\n" +
+          `*** Update File: ${ALPHA_REL}\n` +
           "@@\n" +
           " # Alpha\n" +
           "+\n" +
           "+Patched by apply_patch.\n" +
-          "*** Add File: agent_scratch/usage.md\n" +
+          `*** Add File: ${USAGE_REL}\n` +
           "+# Usage\n" +
           "*** End Patch",
       }),
       // A patch whose context does NOT match the file: the WHOLE patch is
       // rejected before any byte is written — atomicity / failure recovery.
-      call("c5", "apply_patch", {
+      call(`call_${turn}_5`, "apply_patch", {
         patch:
           "*** Begin Patch\n" +
-          "*** Update File: agent_scratch/alpha.md\n" +
+          `*** Update File: ${ALPHA_REL}\n` +
           "@@\n" +
           " this line is not in the file\n" +
           "-# Alpha\n" +
           "+# ALPHA\n" +
           "*** End Patch",
       }),
-      call("c6", "read_file", { path: "agent_scratch/alpha.md" }),
-      call("c7", "list_dir", { path: "agent_scratch" }),
+      call(`call_${turn}_6`, "read_file", { path: ALPHA_REL }),
+      call(`call_${turn}_7`, "list_dir", { path: path.join(".tmp", "s02") }),
     ];
   }
   return [
@@ -415,15 +533,9 @@ function offlineModel(input: unknown[]): OutputItem[] {
         {
           type: "output_text",
           text:
-            `[offline demo] One turn produced several tool calls at once, twice — the ` +
-            `dispatch map routed each by name (write_file/shell, then apply_patch x2 / ` +
-            `read_file / list_dir). The first apply_patch used the real '*** Begin Patch ... ` +
-            `*** End Patch' grammar (an @@-anchored update + an Add File) and committed ` +
-            `atomically. The second apply_patch had context that did not match alpha.md, so ` +
-            `the WHOLE patch was rejected before a single byte was written — the read above ` +
-            `shows alpha.md still intact. That is why Codex prefers a structured patch: ` +
-            `reviewable, atomic, and it fails cleanly. Set OPENAI_API_KEY for a real model; ` +
-            `the loop and dispatch stay the same.`,
+            `[offline demo] 已写入 ${ALPHA_REL} / ${BETA_REL}，第一份补丁落地（改 alpha、加 usage），` +
+            `第二份因上下文对不上被整体拒绝——上面的 read_file 证明 alpha.md 没被改坏。` +
+            `这是固定剧本，不是在回答你刚打的字。设 OPENAI_API_KEY 后，工具才会跟着问题变——循环和 dispatch 不变。`,
         },
       ],
     },
@@ -432,16 +544,36 @@ function offlineModel(input: unknown[]): OutputItem[] {
 
 // ── The agent loop: identical to s01, only the execution line changes ──────
 async function agentLoop(input: unknown[]): Promise<void> {
+  const lastUser = [...input].reverse().find((i) => (i as { role?: string }).role === "user") as
+    | { content?: unknown }
+    | undefined;
+  if (typeof lastUser?.content === "string") console.log(dim(`  user: ${lastUser.content}`));
+  if (OFFLINE) {
+    const replay = countToolResults(input) >= SCRIPT_TOOL_COUNT;
+    console.log(
+      dim(
+        replay
+          ? "[offline] 剧本已演过，不再重复执行工具。"
+          : "[offline] 不读你刚打的字。固定演示：一轮写出两个文件 → 一轮补丁（成功+失败）→ 核对。"
+      )
+    );
+  }
+  let turn = 0;
   for (;;) {
+    turn += 1;
     const output = await callModel(input);
     input.push(...output);
 
     const calls = output.filter((i) => i.type === "function_call");
+    console.log(cyan(`── turn ${turn} ──`));
+    console.log(dim(`  模型: ${MODEL_LABEL}`));
+    printOutput(output);
+
     if (calls.length === 0) {
       for (const item of output) {
         if (item.type === "message") {
-          for (const c of item.content ?? []) {
-            if (c.type === "output_text" && c.text) console.log(c.text);
+          for (const part of item.content ?? []) {
+            if (part.type === "output_text" && part.text) console.log("message: " + part.text);
           }
         }
       }
@@ -449,23 +581,15 @@ async function agentLoop(input: unknown[]): Promise<void> {
     }
 
     if (calls.length > 1) {
-      console.log(`\x1b[35m~ fan-out: ${calls.length} tool calls in ONE turn\x1b[0m`);
+      console.log(dim(`  本轮 ${calls.length} 个 function_call → 同一轮 fan-out，按 name 查表`));
     }
     for (const call of calls) {
-      console.log(`\x1b[33m-> ${call.name}(${summarize(call.arguments ?? "")})\x1b[0m`);
+      printHarnessCall(call);
       const result = dispatch(call.name ?? "", call.arguments ?? "{}"); // s02: table lookup
-      console.log(result.split("\n").slice(0, 6).join("\n"));
+      previewToolOutput(result);
+      console.log(green("  已写回 function_call_output → continue"));
       input.push({ type: "function_call_output", call_id: call.call_id, output: result });
     }
-  }
-}
-
-function summarize(argsJson: string): string {
-  try {
-    const a = JSON.parse(argsJson) as Args;
-    return String(a.path ?? a.command ?? "(patch)").slice(0, 60);
-  } catch {
-    return argsJson.slice(0, 60);
   }
 }
 
@@ -474,8 +598,15 @@ async function main(): Promise<void> {
   console.log("s02: Tool Registry & Dispatch Map (Codex-style)");
   console.log(
     OFFLINE
-      ? "Offline demo model (no OPENAI_API_KEY). Type a task, or q to quit.\n"
-      : `Model: ${MODEL}. Type a task, or q to quit.\n`
+      ? "Offline demo model (no OPENAI_API_KEY). Type a task, or q to quit."
+      : `Model: ${MODEL}. Type a task, or q to quit.`
+  );
+  console.log(
+    dim(
+      OFFLINE
+        ? "output: 是返回值。harness 按 name 查表执行。没 key：不读提示词，固定演示写入 .tmp/s02/。\n"
+        : "output: 是返回值。harness 按 name 查表执行。\n"
+    )
   );
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -487,6 +618,7 @@ async function main(): Promise<void> {
     );
     if (!query || ["q", "exit"].includes(query.trim().toLowerCase())) break;
     thread.push({ role: "user", content: query });
+    console.log();
     try {
       await agentLoop(thread);
     } catch (err) {

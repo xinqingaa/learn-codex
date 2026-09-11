@@ -18,8 +18,8 @@ interface ToolDef {
 
 const TOOLS: ToolDef[] = [
   {
-    name: "bash",
-    desc: "Execute shell commands",
+    name: "shell",
+    desc: "Run a command",
     color: "border-orange-300 bg-orange-50",
     activeColor: "border-orange-500 bg-orange-100 ring-2 ring-orange-400",
     darkColor: "dark:border-zinc-700 dark:bg-zinc-800/50",
@@ -35,15 +35,15 @@ const TOOLS: ToolDef[] = [
   },
   {
     name: "write_file",
-    desc: "Create or overwrite a file",
+    desc: "Create or overwrite",
     color: "border-emerald-300 bg-emerald-50",
     activeColor: "border-emerald-500 bg-emerald-100 ring-2 ring-emerald-400",
     darkColor: "dark:border-zinc-700 dark:bg-zinc-800/50",
     darkActiveColor: "dark:border-emerald-500 dark:bg-emerald-950/40 dark:ring-emerald-500",
   },
   {
-    name: "edit_file",
-    desc: "Apply targeted edits",
+    name: "apply_patch",
+    desc: "Structured patch",
     color: "border-violet-300 bg-violet-50",
     activeColor: "border-violet-500 bg-violet-100 ring-2 ring-violet-400",
     darkColor: "dark:border-zinc-700 dark:bg-zinc-800/50",
@@ -57,20 +57,20 @@ const ACTIVE_TOOL_PER_STEP: number[] = [-1, 0, 1, 2, 3, 4];
 // Incoming request JSON per step
 const REQUEST_PER_STEP: (string | null)[] = [
   null,
-  '{ name: "bash", input: { cmd: "ls -la" } }',
-  '{ name: "read_file", input: { path: "src/auth.ts" } }',
-  '{ name: "write_file", input: { path: "config.json" } }',
-  '{ name: "edit_file", input: { path: "index.ts" } }',
+  '{ name: "shell", arguments: { command: "ls -la" } }',
+  '{ name: "read_file", arguments: { path: "src/auth.ts" } }',
+  '{ name: "write_file", arguments: { path: "config.json" } }',
+  '{ name: "apply_patch", arguments: { patch: "*** Begin Patch ..." } }',
   null,
 ];
 
 // Step annotations
 const STEP_INFO = [
   { title: "The Dispatch Map", desc: "A dictionary maps tool names to handler functions. The loop code never changes." },
-  { title: "Route: bash", desc: "tool_call.name -> handlers['bash'](input). Name-based routing." },
+  { title: "Route: shell", desc: "function_call.name -> TOOL_HANDLERS['shell'](arguments). Name-based routing." },
   { title: "Route: read_file", desc: "Same pattern, different handler. Validate input, execute, return result." },
-  { title: "Route: write_file", desc: "Every tool returns a tool_result that goes back into messages[]." },
-  { title: "Route: edit_file", desc: "Adding a new tool = adding one entry to the dispatch map." },
+  { title: "Route: write_file", desc: "Every tool returns a function_call_output that goes back into the thread." },
+  { title: "Route: apply_patch", desc: "Adding a new tool = adding one entry to the dispatch map." },
   { title: "The Key Insight", desc: "The while loop stays the same. You only grow the dispatch map. That's it." },
 ];
 
@@ -141,7 +141,7 @@ export default function ToolDispatch({ title }: { title?: string }) {
                 animate={{ opacity: 0.6 }}
                 className="text-xs text-zinc-400 dark:text-zinc-600"
               >
-                waiting for tool_call...
+                waiting for function_call...
               </motion.span>
             )}
             {isAllActive && (

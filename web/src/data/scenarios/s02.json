@@ -1,46 +1,111 @@
 {
   "version": "s02",
   "title": "Tool Use",
-  "description": "Agent with a shell tool for execution and apply_patch for structured edits",
+  "description": "分镜与终端离线剧本相同：一轮写出 .tmp/s02/ 两个文件 → 一轮补丁（一份落地、一份因上下文对不上被整体拒绝）→ 核对。终端不读你的提示词；这里也不是在跑 code.ts。 / Same storyboard as the terminal offline demo: write two files under .tmp/s02/, then two patches (one commits, one is rejected wholesale), then verify. The script ignores your prompt; this player is not live code.ts.",
   "steps": [
     {
       "type": "user_message",
-      "content": "Add a function called greet(name) to hello.ts",
-      "annotation": "User requests a code modification"
+      "content": "Create two files a.md and b.md, then list the directory",
+      "annotation": "User sends a task. Offline mode ignores the text and plays a fixed script."
     },
     {
-      "type": "assistant_text",
-      "content": "Let me read the current file first.",
-      "annotation": "The model chooses the shell tool to inspect the file"
-    },
-    {
-      "type": "tool_call",
-      "content": "cat hello.ts",
-      "toolName": "shell",
-      "annotation": "The shell tool handles execution and arbitrary commands"
-    },
-    {
-      "type": "tool_result",
-      "content": "console.log(\"Hello, World!\")",
-      "toolName": "shell",
-      "annotation": "File contents returned to the model"
+      "type": "system_event",
+      "content": "turn 1: 3 function_call items in one output — fan-out",
+      "annotation": "One Responses output can hold several function_call items. The harness dispatches each by name."
     },
     {
       "type": "tool_call",
-      "content": "*** Begin Patch\n*** Update File: hello.ts\n@@\n console.log(\"Hello, World!\")\n+function greet(name: string) {\n+  console.log(`Hello, ${name}!`);\n+}\n+greet(\"World\");\n*** End Patch",
-      "toolName": "apply_patch",
-      "annotation": "apply_patch makes a structured, reviewable edit instead of an opaque rewrite"
+      "content": "path: .tmp/s02/alpha.md\ncontent: # Alpha\\n",
+      "toolName": "write_file",
+      "annotation": "Structured write — no echo > quoting. Path is a typed argument."
     },
     {
       "type": "tool_result",
-      "content": "The file hello.ts has been edited.",
+      "content": "Wrote 8 bytes to .tmp/s02/alpha.md",
+      "toolName": "write_file",
+      "annotation": "Handler looked up as TOOL_HANDLERS[\"write_file\"]"
+    },
+    {
+      "type": "tool_call",
+      "content": "path: .tmp/s02/beta.md\ncontent: # Beta\\n",
+      "toolName": "write_file",
+      "annotation": "Second call in the same turn — same name, different path"
+    },
+    {
+      "type": "tool_result",
+      "content": "Wrote 7 bytes to .tmp/s02/beta.md",
+      "toolName": "write_file",
+      "annotation": "Dispatch map routes by name; the loop does not special-case the second write"
+    },
+    {
+      "type": "tool_call",
+      "content": "echo 'scratch workspace ready'",
+      "toolName": "shell",
+      "annotation": "shell stays as the escape hatch, no longer the only tool"
+    },
+    {
+      "type": "tool_result",
+      "content": "scratch workspace ready",
+      "toolName": "shell",
+      "annotation": "Results are fed back as function_call_output; the loop continues"
+    },
+    {
+      "type": "system_event",
+      "content": "turn 2: 4 function_call items in one output — apply_patch ×2 / read_file / list_dir",
+      "annotation": "The model still has not stopped. Another fan-out, now including apply_patch."
+    },
+    {
+      "type": "tool_call",
+      "content": "*** Begin Patch\n*** Update File: .tmp/s02/alpha.md\n@@\n # Alpha\n+\n+Patched by apply_patch.\n*** Add File: .tmp/s02/usage.md\n+# Usage\n*** End Patch",
       "toolName": "apply_patch",
-      "annotation": "Patch applied"
+      "annotation": "Real Codex patch grammar: @@-anchored update + Add File, committed atomically"
+    },
+    {
+      "type": "tool_result",
+      "content": "Patch applied: updated .tmp/s02/alpha.md, added .tmp/s02/usage.md",
+      "toolName": "apply_patch",
+      "annotation": "Whole patch parsed and validated before a single byte is written"
+    },
+    {
+      "type": "tool_call",
+      "content": "*** Begin Patch\n*** Update File: .tmp/s02/alpha.md\n@@\n this line is not in the file\n-# Alpha\n+# ALPHA\n*** End Patch",
+      "toolName": "apply_patch",
+      "annotation": "Context does not match the file — the harness must reject the whole patch"
+    },
+    {
+      "type": "tool_result",
+      "content": "Error: context not found in .tmp/s02/alpha.md",
+      "toolName": "apply_patch",
+      "annotation": "Atomic failure: nothing is written. The file stays as the first patch left it."
+    },
+    {
+      "type": "tool_call",
+      "content": "path: .tmp/s02/alpha.md",
+      "toolName": "read_file",
+      "annotation": "Verify the failed patch did not half-write the file"
+    },
+    {
+      "type": "tool_result",
+      "content": "# Alpha\n\nPatched by apply_patch.",
+      "toolName": "read_file",
+      "annotation": "alpha.md is intact — still the first patch, not ALPHA"
+    },
+    {
+      "type": "tool_call",
+      "content": "path: .tmp/s02",
+      "toolName": "list_dir",
+      "annotation": "Structured listing — no parsing of free-text ls output"
+    },
+    {
+      "type": "tool_result",
+      "content": "alpha.md\nbeta.md\nusage.md",
+      "toolName": "list_dir",
+      "annotation": "usage.md exists from the first patch; the second patch added nothing"
     },
     {
       "type": "assistant_text",
-      "content": "I've updated hello.ts with a greet(name) function that takes a name parameter.",
-      "annotation": "A small, focused toolset beats one giant tool: each capability has a clear purpose"
+      "content": "Done. Two files were written under .tmp/s02/, the first patch updated alpha.md and added usage.md, and the second patch was rejected wholesale because its context did not match. That is why Codex prefers a structured patch: reviewable, atomic, and it fails cleanly.",
+      "annotation": "No function_call items → loop stops. Same ending as the terminal offline script."
     }
   ]
 }

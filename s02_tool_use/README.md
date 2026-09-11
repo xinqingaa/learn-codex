@@ -144,9 +144,9 @@ for (const call of calls) {                 // 一轮可能有好几个 function
 
 ## 试一下
 
-> **教学 demo 提示**：代码会在当前目录创建 `agent_scratch/` 并读写里面的文件。建议在临时测试目录里运行，避免碰真实项目。s03/s04 会给它加上审批和沙箱。
+> **教学 demo 提示**：有 API key 时，代码会执行模型生成的工具调用（写文件、打补丁、跑 shell）。建议在临时目录里跑，避免误伤项目文件。离线模式只写入仓库根目录的 `.tmp/s02/`。s03/s04 会讲真正的审批 + 沙箱系统。
 
-**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，内置的离线脚本模型会在**同一轮** fan-out 出多个工具调用（两次），让你清楚看到 dispatch map 按名字路由每个调用。第二轮还会演示补丁的两种结局：一个干净落地，一个因上下文对不上被整体拒绝。
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时走**离线剧本**——**不读你的提示词**，固定演示「一轮写出两个文件 → 一轮补丁（一份落地、一份因上下文对不上被整体拒绝）→ 核对」，和网页模拟器是同一条分镜。随便输入即可，盯 `function_call`（`continue`）和 `message`（`stop`），以及同一轮多个 `function_call` 如何按 `name` 查表。
 
 **准备**（首次运行）：
 
@@ -158,17 +158,17 @@ cp .env.example .env        # 想跑真实模型就填入 OPENAI_API_KEY 和 MOD
 **运行**：
 
 ```sh
-npx tsx s02_tool_use/code.ts                # 离线 demo 模型
-OPENAI_API_KEY=sk-... npx tsx s02_tool_use/code.ts   # 真实模型
+npx tsx s02_tool_use/code.ts                # 离线剧本（忽略提示词）
+OPENAI_API_KEY=sk-... npx tsx s02_tool_use/code.ts   # 真实模型（工具跟着问题变）
 ```
 
-试试这些 prompt：
+设了 key 之后再试这些 prompt：
 
 1. `Create two files a.md and b.md, then list the directory`（一轮 fan-out 多个调用）
 2. `Read README.md and summarize this project in a new file SUMMARY.md`（read + write）
 3. `Use a patch to add a "Usage" section to SUMMARY.md`（apply_patch）
 
-观察重点：模型什么时候只调一个工具、什么时候一轮调多个？每个调用是怎么被按名字路由到对应函数的？离线第二轮的两个 `apply_patch`，为什么一个成功、一个被整体拒绝且文件原封不动？
+观察重点：每一轮先打印完整的 `output`（返回值数组）。同一轮里几个 `function_call` 就是 fan-out，harness 按 `name` 路由。`apply_patch` 的参数是补丁正文，不要只看摘要。第二轮两个补丁，一个成功、一个被整体拒绝；随后的 `read_file` 证明文件原封不动。同一进程里再问一句，离线剧本**不会再跑工具**。
 
 ---
 
@@ -234,4 +234,4 @@ Codex 的内置工具（读、写、patch、shell 等）之外，还能通过 `m
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->

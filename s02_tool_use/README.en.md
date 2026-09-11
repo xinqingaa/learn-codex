@@ -144,9 +144,9 @@ The offline demo shows both outcomes: the first patch lands cleanly, the second 
 
 ## Try It
 
-> **Teaching demo note**: the code creates an `agent_scratch/` folder in the current directory and reads/writes files inside it. Run it in a scratch directory so you don't touch real project files. s03/s04 add approval and a sandbox.
+> **Teaching demo note**: with an API key, the code runs tool calls the model generates (write files, apply patches, run shell). Use a scratch directory so you don't touch real project files. Offline mode only writes to `.tmp/s02/` at the repo root. s03/s04 build the real approval + sandbox system.
 
-**No API key needed**: without `OPENAI_API_KEY`, the built-in offline scripted model fans out several tool calls in a **single turn** (twice), so you can clearly watch the dispatch map route each call by name. The second turn also shows both patch outcomes: one lands cleanly, the other is rejected wholesale because its context doesn't match.
+**No API key needed**: without `OPENAI_API_KEY` this chapter runs a **fixed script** — it **ignores your prompt** and always demos "one turn writes two files → one turn applies two patches (one lands, one is rejected because context does not match) → verify", the same storyboard as the web simulator. Type anything; watch `function_call` (`continue`) vs `message` (`stop`), and how several `function_call`s in one turn are routed by `name`.
 
 **Setup** (first run):
 
@@ -158,17 +158,17 @@ cp .env.example .env        # fill in OPENAI_API_KEY and MODEL_ID to run the rea
 **Run**:
 
 ```sh
-npx tsx s02_tool_use/code.ts                # offline demo model
-OPENAI_API_KEY=sk-... npx tsx s02_tool_use/code.ts   # real model
+npx tsx s02_tool_use/code.ts                # offline script (ignores the prompt)
+OPENAI_API_KEY=sk-... npx tsx s02_tool_use/code.ts   # real model (tools follow the task)
 ```
 
-Try these prompts:
+With a key, try these prompts:
 
 1. `Create two files a.md and b.md, then list the directory` (fan-out of several calls in one turn)
 2. `Read README.md and summarize this project in a new file SUMMARY.md` (read + write)
 3. `Use a patch to add a "Usage" section to SUMMARY.md` (apply_patch)
 
-Watch for: when does the model call one tool versus several in a single turn? How does each call get routed by name to the right function? In the offline second turn, why does one `apply_patch` succeed while the other is rejected wholesale with the file left untouched?
+Watch for: each turn prints the full `output` array. Several `function_call`s in one turn are fan-out; the harness routes each by `name`. The `apply_patch` argument is the patch body — don't look at a summary. In the second turn one patch commits and the other is rejected wholesale; the following `read_file` proves the file is untouched. A second prompt in the same process does **not** re-run the script.
 
 ---
 
@@ -234,4 +234,4 @@ Beyond Codex's built-in tools (read, write, patch, shell, …), external tools c
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->
