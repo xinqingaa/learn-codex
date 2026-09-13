@@ -1,39 +1,55 @@
 {
   "version": "s03",
-  "title": "Approval & Permissions",
-  "description": "Tool calls pass through the approval_policy gate before the shell ever runs them.",
+  "title": "Approval",
+  "description": "分镜与终端离线剧本相同：同一轮写出 .tmp/s03/keep.txt，再提议 rm -rf .tmp/s03。默认 on-request：写入放行，危险命令拦住。终端不读你的提示词；这里也不是在跑 code.ts。 / Same storyboard as the terminal offline demo: one turn writes .tmp/s03/keep.txt then proposes rm -rf .tmp/s03. Default on-request allows the write and holds the delete. The script ignores your prompt; this player is not live code.ts.",
   "steps": [
     {
       "type": "user_message",
-      "content": "Delete the temporary build directory.",
-      "annotation": "The user asks for a filesystem action that may be safe or dangerous depending on the path."
+      "content": "Create a scratch folder and put a note in it",
+      "annotation": "User sends a task. Offline mode ignores the text and plays a fixed script."
     },
     {
-      "type": "assistant_text",
-      "content": "I'll check the target before running the command.",
-      "annotation": "The model can propose a tool call, but the harness decides whether execution is allowed."
+      "type": "system_event",
+      "content": "turn 1: 2 function_call items in one output — write_file + shell",
+      "annotation": "Fan-out from s02 still applies. What is new: each call hits classify + the approval gate before dispatch."
     },
     {
       "type": "tool_call",
-      "toolName": "shell",
-      "content": "rm -rf /tmp/build-cache",
-      "annotation": "A destructive-looking command reaches the approval gate."
+      "content": "path: .tmp/s03/keep.txt\ncontent: keep me\\n",
+      "toolName": "write_file",
+      "annotation": "Structured write. classify → risk=write. Under on-request, write is not held."
     },
     {
       "type": "system_event",
-      "content": "approval_policy=on-request: command is not in the trusted allowlist -> escalate to the user",
-      "annotation": "Under on-request the harness asks before running anything it cannot verify as safe."
-    },
-    {
-      "type": "system_event",
-      "content": "User approval: allowed",
-      "annotation": "The runtime pauses before execution and resumes only after approval."
+      "content": "classify: risk=write  policy=on-request → allow, dispatch",
+      "annotation": "The harness classifies; the model does not self-declare risk."
     },
     {
       "type": "tool_result",
+      "content": "Wrote 8 bytes to .tmp/s03/keep.txt",
+      "toolName": "write_file",
+      "annotation": "Allowed calls still go through TOOL_HANDLERS[name], same as s02."
+    },
+    {
+      "type": "tool_call",
+      "content": "rm -rf .tmp/s03",
       "toolName": "shell",
-      "content": "(no output)",
-      "annotation": "Approved commands continue through the normal tool result path."
+      "annotation": "Same turn, second call. classify → risk=danger because of rm -rf."
+    },
+    {
+      "type": "system_event",
+      "content": "hold [on-request] shell risk=danger. Allow? [y/N]",
+      "annotation": "The gate pauses before dispatch. y runs it; anything else is a denial."
+    },
+    {
+      "type": "system_event",
+      "content": "denied by approval_policy (on-request)",
+      "annotation": "Denial is not a crash: an error function_call_output is fed back and the loop continues."
+    },
+    {
+      "type": "assistant_text",
+      "content": "The write landed in .tmp/s03/keep.txt. The rm -rf was held and denied, so the file is still there. Same calls under untrusted would also hold the write; under never both would run.",
+      "annotation": "No function_call items → loop stops. Same ending as the terminal offline script."
     }
   ]
 }

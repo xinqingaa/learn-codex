@@ -101,9 +101,9 @@ All four policies share one `classify`; they differ only in *when to ask*. The k
 
 ## Try It
 
-> **Teaching demo note**: the offline demo has the model attempt an `rm -rf agent_scratch`, which the gate holds for your answer. When piping an answer, put the `y`/`n` after the task (e.g. `printf 'do it\nn\nq\n'`). The code only creates/deletes `agent_scratch/` in the current directory.
+> **Teaching demo note**: with an API key, the code runs tool calls the model generates (write files, run shell). Use a scratch directory so you don't touch real project files. Offline mode only writes to `.tmp/s03/` at the repo root, then proposes `rm -rf .tmp/s03` (the default `on-request` policy holds it for your `y`/`n`). When piping an answer, put the `y`/`n` after the task (e.g. `printf 'do it\nn\nq\n'`). s04 builds the real sandbox.
 
-**No API key needed**: the default policy is `on-request`. The offline model issues a safe write and a dangerous `rm -rf` in a **single turn**, so you can see "write allowed, dangerous command held". Flip through all four policies with the env var.
+**No API key needed**: without `OPENAI_API_KEY` this chapter runs a **fixed script** — it **ignores your prompt** and always demos "one turn: a safe write to `.tmp/s03/keep.txt` + a dangerous `rm -rf .tmp/s03`", the same storyboard as the web simulator. The default policy is `on-request`: the write is allowed, `rm -rf` is held. Type anything; watch `classify`'s `risk=` and whether the gate allows or `hold`s.
 
 **Setup** (first run):
 
@@ -115,19 +115,19 @@ cp .env.example .env        # fill in OPENAI_API_KEY and MODEL_ID to run the rea
 **Run**:
 
 ```sh
-npx tsx s03_approval/code.ts                              # default: on-request
+npx tsx s03_approval/code.ts                              # offline script, default on-request
 APPROVAL_POLICY=untrusted npx tsx s03_approval/code.ts    # holds the write too
-APPROVAL_POLICY=never     npx tsx s03_approval/code.ts    # asks nothing
-OPENAI_API_KEY=sk-...     npx tsx s03_approval/code.ts    # real model
+APPROVAL_POLICY=never     npx tsx s03_approval/code.ts    # asks nothing (will actually delete .tmp/s03)
+OPENAI_API_KEY=sk-...     npx tsx s03_approval/code.ts    # real model (tools follow the task)
 ```
 
-Try these prompts:
+With a key, try these prompts:
 
 1. `Create a scratch folder and put a note in it` (a write; allowed under on-request, held under untrusted)
 2. `Delete the scratch folder` (`rm -rf` is classified danger; held for you under on-request)
 3. `List the files here` (a pure read; every policy lets it straight through)
 
-Watch for: with the same set of calls, which get held and which get allowed under each policy? How does a denied call turn into an error item fed back to the model?
+Watch for: each turn prints the full `output` array. With the same set of calls, which get held and which get allowed under each policy? How does a denied call become a `function_call_output` error item fed back to the model while the loop continues? A second prompt in the same process does **not** re-run the script.
 
 ---
 
@@ -176,4 +176,4 @@ As in the chapter, Codex doesn't blow up the turn on a denial: the refusal retur
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

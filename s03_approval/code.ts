@@ -21,6 +21,11 @@
  *         |
  *    denied? -> feed an error item back to the model (the loop goes on)
  *
+ * Each turn prints the raw `output` array, then classify + the gate, then
+ * dispatch. Offline mode ignores the prompt and writes .tmp/s03/keep.txt
+ * (same story as the web simulator), then proposes `rm -rf .tmp/s03` so the
+ * default on-request policy holds the dangerous call for y/n.
+ *
  * Run it:
  *     npm install
  *     npx tsx s03_approval/code.ts                  # offline demo (policy: on-request)
@@ -36,7 +41,11 @@ import * as readline from "node:readline";
 
 const MODEL = process.env.MODEL_ID ?? "gpt-5-codex";
 const CWD = process.cwd();
+const TMP_DIR = path.join(CWD, ".tmp", "s03");
+const KEEP_REL = path.join(".tmp", "s03", "keep.txt");
+const TMP_REL = path.join(".tmp", "s03");
 const OFFLINE = !process.env.OPENAI_API_KEY || process.env.CODEX_OFFLINE === "1";
+const MODEL_LABEL = OFFLINE ? "offline" : MODEL;
 
 // ── NEW in s03: approval_policy ───────────────────────────────────────────
 // The four Codex modes, read from config (here: an env var, like config.toml).
@@ -130,7 +139,12 @@ function runWriteFile(p: string, content: string): string {
 }
 function runShell(command: string): string {
   try {
-    const out = execSync(command, { cwd: CWD, timeout: 120_000, maxBuffer: 1024 * 1024 });
+    const out = execSync(command, {
+      cwd: CWD,
+      timeout: 120_000,
+      maxBuffer: 1024 * 1024,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     return (String(out).trim() || "(no output)").slice(0, 50_000);
   } catch (err: unknown) {
     const e = err as { stderr?: Buffer; message?: string };
@@ -163,6 +177,70 @@ type OutputItem = {
   arguments?: string;
   content?: { type: string; text?: string }[];
 };
+
+const dim = (s: string) => `\x1b[90m${s}\x1b[0m`;
+const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`;
+const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
+const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
+const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
+
+const SCRIPT_TOOL_COUNT = 2; // one turn: write_file + rm -rf
+
+function countToolResults(input: unknown[]): number {
+  return input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
+}
+
+function countToolResultsSinceLastUser(input: unknown[]): number {
+  let lastUser = -1;
+  for (let i = 0; i < input.length; i++) {
+    if ((input[i] as { role?: string }).role === "user") lastUser = i;
+  }
+  return input
+    .slice(lastUser + 1)
+    .filter((i) => (i as { type?: string }).type === "function_call_output").length;
+}
+
+function printOutput(output: OutputItem[]): void {
+  const json = JSON.stringify(
+    output,
+    (_key, value) =>
+      typeof value === "string" && value.length > 500 ? `${value.slice(0, 500)}…` : value,
+    2,
+  );
+  console.log(dim("  output:"));
+  for (const line of json.split("\n")) console.log(dim(`  ${line}`));
+}
+
+function previewToolOutput(result: string, maxLines = 20): void {
+  const all = result.split("\n");
+  if (result === "(no output)" || result === "") {
+    console.log(dim("  │ （成功，无 stdout）"));
+    return;
+  }
+  const shown = all.slice(0, maxLines);
+  for (const line of shown) console.log(dim(`  │ ${line}`));
+  const hidden = all.length - shown.length;
+  if (hidden > 0) {
+    console.log(dim(`  │ … ${hidden} more lines（完整结果在 thread 里）`));
+  }
+}
+
+function printHarnessCall(call: OutputItem): void {
+  let args: Args = {};
+  try {
+    args = JSON.parse(call.arguments ?? "{}") as Args;
+  } catch {
+    args = {};
+  }
+  console.log(dim("  harness:"));
+  if (call.name === "shell") {
+    console.log(yellow(`  $ ${String(args.command ?? "")}`));
+    return;
+  }
+  const pathArg = args.path != null ? `  path=${args.path}` : "";
+  console.log(yellow(`  ${call.name ?? "?"}${pathArg}`));
+}
+
 const openai = OFFLINE ? null : new OpenAI();
 async function callModel(input: unknown[]): Promise<OutputItem[]> {
   if (!OFFLINE && openai) {
@@ -178,10 +256,13 @@ async function callModel(input: unknown[]): Promise<OutputItem[]> {
   return offlineModel(input);
 }
 
-// Offline scripted model: one turn that mixes a safe write with a DANGEROUS
-// command, so you can watch the policy hold the dangerous one for approval.
+// Scripted stand-in: same story as the web simulator.
+// Ignores the user text. One turn: a safe write + a dangerous rm -rf.
 function offlineModel(input: unknown[]): OutputItem[] {
-  const ran = input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
+  const ran = countToolResultsSinceLastUser(input);
+  const alreadyPlayed = countToolResults(input) >= SCRIPT_TOOL_COUNT && ran === 0;
+  const turn = input.filter((i) => (i as { role?: string }).role === "user").length;
+
   const call = (id: string, name: string, args: Record<string, unknown>): OutputItem => ({
     type: "function_call",
     id,
@@ -189,12 +270,32 @@ function offlineModel(input: unknown[]): OutputItem[] {
     name,
     arguments: JSON.stringify(args),
   });
-  if (ran === 0) {
+
+  if (alreadyPlayed) {
     return [
-      call("c1", "write_file", { path: "agent_scratch/keep.txt", content: "keep me\n" }),
-      call("c2", "shell", { command: "rm -rf agent_scratch" }), // danger: held for approval
+      {
+        type: "message",
+        content: [
+          {
+            type: "output_text",
+            text:
+              `[offline demo] 这条进程里的固定剧本已经演完（写 ${KEEP_REL} → rm -rf ${TMP_REL}）。` +
+              `刚才不是听懂了你的话。输入 q 退出；设 OPENAI_API_KEY 后工具才会跟着问题变。`,
+          },
+        ],
+      },
     ];
   }
+
+  if (ran === 0) {
+    fs.rmSync(TMP_DIR, { recursive: true, force: true });
+    fs.mkdirSync(TMP_DIR, { recursive: true });
+    return [
+      call(`call_${turn}_1`, "write_file", { path: KEEP_REL, content: "keep me\n" }),
+      call(`call_${turn}_2`, "shell", { command: `rm -rf ${TMP_REL}` }), // danger: held under on-request
+    ];
+  }
+
   const denials = input.filter((i) =>
     (i as { output?: string }).output?.includes("denied by approval_policy")
   ).length;
@@ -205,10 +306,10 @@ function offlineModel(input: unknown[]): OutputItem[] {
         {
           type: "output_text",
           text:
-            `[offline demo] policy=${POLICY}: the model attempted a safe write AND a dangerous ` +
-            `\`rm -rf\`. ${denials} call(s) were held and denied, each returning an error item ` +
-            `to the model; the rest ran. Try APPROVAL_POLICY=untrusted|on-failure|never. ` +
-            `Set OPENAI_API_KEY for a real model.`,
+            `[offline demo] policy=${POLICY}：同一轮里一次安全写入 ${KEEP_REL}，一次危险的 \`rm -rf ${TMP_REL}\`。` +
+            `${denials} 个调用被门拦住并拒绝，错误 item 喂回模型；其余已执行。` +
+            `这是固定剧本，不是在回答你刚打的字。试 APPROVAL_POLICY=untrusted|on-failure|never。` +
+            `设 OPENAI_API_KEY 后，工具才会跟着问题变——循环和 dispatch 不变，只是 dispatch 前多了这道门。`,
         },
       ],
     },
@@ -219,56 +320,76 @@ function offlineModel(input: unknown[]): OutputItem[] {
 type Confirm = (question: string) => Promise<boolean>;
 
 async function agentLoop(input: unknown[], confirm: Confirm): Promise<void> {
+  const lastUser = [...input].reverse().find((i) => (i as { role?: string }).role === "user") as
+    | { content?: unknown }
+    | undefined;
+  if (typeof lastUser?.content === "string") console.log(dim(`  user: ${lastUser.content}`));
+  if (OFFLINE) {
+    const replay = countToolResults(input) >= SCRIPT_TOOL_COUNT;
+    console.log(
+      dim(
+        replay
+          ? "[offline] 剧本已演过，不再重复执行工具。"
+          : `[offline] 不读你刚打的字。固定演示：写 ${KEEP_REL}（write）+ rm -rf ${TMP_REL}（danger）。policy=${POLICY}`
+      )
+    );
+  }
+  let turn = 0;
   for (;;) {
+    turn += 1;
     const output = await callModel(input);
     input.push(...output);
     const calls = output.filter((i) => i.type === "function_call");
+    console.log(cyan(`── turn ${turn} ──`));
+    console.log(dim(`  模型: ${MODEL_LABEL}`));
+    printOutput(output);
+
     if (calls.length === 0) {
       for (const item of output) {
         if (item.type === "message") {
-          for (const c of item.content ?? []) {
-            if (c.type === "output_text" && c.text) console.log(c.text);
+          for (const part of item.content ?? []) {
+            if (part.type === "output_text" && part.text) console.log("message: " + part.text);
           }
         }
       }
       return;
     }
 
+    if (calls.length > 1) {
+      console.log(dim(`  本轮 ${calls.length} 个 function_call → 同一轮 fan-out，每个都先过审批门再 dispatch`));
+    }
+
     for (const call of calls) {
       const risk = classify(call);
-      console.log(`\x1b[33m-> ${call.name}(${summarize(call.arguments ?? "")})\x1b[0m  [risk=${risk}]`);
+      printHarnessCall(call);
+      console.log(dim(`  classify: risk=${risk}  policy=${POLICY}`));
 
       // NEW in s03: the gate. Hold the call if the policy says so.
       if (needsApprovalUpFront(POLICY, risk)) {
-        const ok = await confirm(`\x1b[31mhold [${POLICY}]\x1b[0m ${call.name} risk=${risk}. Allow?`);
+        console.log(red(`  hold [${POLICY}] — 执行前问人`));
+        const ok = await confirm(`hold [${POLICY}] ${call.name} risk=${risk}. Allow?`);
         if (!ok) {
           const err = `Error: denied by approval_policy (${POLICY})`;
-          console.log(`\x1b[31m✗ denied — error item fed back to the model\x1b[0m`);
+          previewToolOutput(err);
+          console.log(red("  已写回 function_call_output（denied）→ continue"));
           input.push({ type: "function_call_output", call_id: call.call_id, output: err });
           continue; // the model sees the denial and can choose a safer path
         }
+        console.log(green("  用户允许 → dispatch"));
       }
 
       let result = dispatch(call.name ?? "", call.arguments ?? "{}");
 
       // on-failure: nothing is held up front; a FAILURE is what triggers the ask.
       if (POLICY === "on-failure" && result.startsWith("Error")) {
-        const retry = await confirm(`\x1b[31mcall failed [on-failure]\x1b[0m retry with approval?`);
+        const retry = await confirm(`call failed [on-failure] retry with approval?`);
         if (retry) result = dispatch(call.name ?? "", call.arguments ?? "{}") + "\n(escalated after failure)";
       }
 
-      console.log(result.split("\n").slice(0, 6).join("\n"));
+      previewToolOutput(result);
+      console.log(green("  已写回 function_call_output → continue"));
       input.push({ type: "function_call_output", call_id: call.call_id, output: result });
     }
-  }
-}
-
-function summarize(argsJson: string): string {
-  try {
-    const a = JSON.parse(argsJson) as Args;
-    return String(a.path ?? a.command ?? "").slice(0, 60);
-  } catch {
-    return argsJson.slice(0, 60);
   }
 }
 
@@ -297,8 +418,15 @@ async function main(): Promise<void> {
   console.log("s03: approval_policy — a Gate Before Execution (Codex-style)");
   console.log(
     OFFLINE
-      ? `Offline demo model (no OPENAI_API_KEY). approval_policy=${POLICY}. Type a task, or q to quit.\n`
-      : `Model: ${MODEL}. approval_policy=${POLICY}. Type a task, or q to quit.\n`
+      ? `Offline demo model (no OPENAI_API_KEY). approval_policy=${POLICY}. Type a task, or q to quit.`
+      : `Model: ${MODEL}. approval_policy=${POLICY}. Type a task, or q to quit.`
+  );
+  console.log(
+    dim(
+      OFFLINE
+        ? "output: 是返回值。dispatch 前先 classify + 审批门。没 key：不读提示词，固定演示写入 .tmp/s03/ 再提议 rm -rf。\n"
+        : "output: 是返回值。dispatch 前先 classify + 审批门。\n"
+    )
   );
 
   const io = createLineReader();
@@ -313,6 +441,7 @@ async function main(): Promise<void> {
     const query = await io.question("\x1b[36ms03 >> \x1b[0m");
     if (!query || ["q", "exit"].includes(query.trim().toLowerCase())) break;
     thread.push({ role: "user", content: query });
+    console.log();
     try {
       await agentLoop(thread, confirm);
     } catch (err) {

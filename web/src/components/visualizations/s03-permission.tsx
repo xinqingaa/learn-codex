@@ -50,15 +50,15 @@ const REQUESTS = [
   },
   {
     id: "ask",
-    tool: "bash",
-    command: "rm -rf ./tmp/build-cache",
+    tool: "shell",
+    command: "rm -rf .tmp/s03",
     result: "ask",
     detail: "local destructive command",
     tone: "amber",
   },
   {
     id: "deny",
-    tool: "bash",
+    tool: "shell",
     command: "sudo rm -rf /",
     result: "deny",
     detail: "forbidden root delete",
@@ -273,7 +273,7 @@ function Outcome({ mode }: { mode: StepMode }) {
           <UserCheck size={17} />
           Approval ticket
         </div>
-        <div className="text-sm leading-relaxed">"Allow deleting local build cache?"</div>
+        <div className="text-sm leading-relaxed">"Allow rm -rf .tmp/s03?"</div>
       </motion.div>
     );
   }
@@ -285,8 +285,8 @@ function Outcome({ mode }: { mode: StepMode }) {
           <PlayCircle size={17} />
           Handler runs after approval
         </div>
-        <CodeLine label="handler" value="bash" />
-        <CodeLine label="args" value="rm -rf ./tmp/build-cache" />
+        <CodeLine label="handler" value="shell" />
+        <CodeLine label="args" value="rm -rf .tmp/s03" />
       </motion.div>
     );
   }

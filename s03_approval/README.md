@@ -101,9 +101,9 @@ if (POLICY === "on-failure" && result.startsWith("Error")) {
 
 ## 试一下
 
-> **教学 demo 提示**：离线 demo 会让模型尝试一次 `rm -rf agent_scratch`，审批门会拦下来等你回答。管道喂答案时把 `y`/`n` 放在任务之后即可（如 `printf 'do it\nn\nq\n'`）。代码只在当前目录创建/删除 `agent_scratch/`。
+> **教学 demo 提示**：有 API key 时，代码会执行模型生成的工具调用（写文件、跑 shell）。建议在临时目录里跑。离线模式只写入仓库根目录的 `.tmp/s03/`，并会提议 `rm -rf .tmp/s03`（默认 `on-request` 会拦住等你 `y`/`n`）。管道喂答案时把 `y`/`n` 放在任务之后即可（如 `printf 'do it\nn\nq\n'`）。s04 会讲真正的沙箱。
 
-**无需 API key 也能跑**：默认策略是 `on-request`。离线模型会在**同一轮**里发起一次安全写入 + 一次危险的 `rm -rf`，让你看清「写入放行、危险命令被拦」。用环境变量切换四档策略各试一遍。
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时走**离线剧本**——**不读你的提示词**，固定演示「同一轮：安全写入 `.tmp/s03/keep.txt` + 危险的 `rm -rf .tmp/s03`」，和网页模拟器是同一条分镜。默认策略是 `on-request`：写入放行，`rm -rf` 拦住。随便输入即可，盯 `classify` 的 `risk=` 和门是放行还是 `hold`。
 
 **准备**（首次运行）：
 
@@ -115,19 +115,19 @@ cp .env.example .env        # 想跑真实模型就填入 OPENAI_API_KEY 和 MOD
 **运行**：
 
 ```sh
-npx tsx s03_approval/code.ts                              # 默认 on-request
+npx tsx s03_approval/code.ts                              # 离线剧本，默认 on-request
 APPROVAL_POLICY=untrusted npx tsx s03_approval/code.ts    # 连写入也拦
-APPROVAL_POLICY=never     npx tsx s03_approval/code.ts    # 一概不问
-OPENAI_API_KEY=sk-...     npx tsx s03_approval/code.ts    # 真实模型
+APPROVAL_POLICY=never     npx tsx s03_approval/code.ts    # 一概不问（会真的删 .tmp/s03）
+OPENAI_API_KEY=sk-...     npx tsx s03_approval/code.ts    # 真实模型（工具跟着问题变）
 ```
 
-试试这些 prompt：
+设了 key 之后再试这些 prompt：
 
 1. `Create a scratch folder and put a note in it`（写入；on-request 下放行，untrusted 下被拦）
 2. `Delete the scratch folder`（`rm -rf` 被判为 danger，on-request 下拦下来问你）
 3. `List the files here`（纯读，任何策略都直接放行）
 
-观察重点：同一组调用，在四种策略下哪些被拦、哪些放行？被拒绝的调用是如何变成错误 item 喂回给模型的？
+观察重点：每一轮先打印完整的 `output`。同一组调用，在四种策略下哪些被拦、哪些放行？被拒绝的调用如何变成 `function_call_output` 错误 item 喂回给模型、循环照常 continue？同一进程里再问一句，离线剧本**不会再跑工具**。
 
 ---
 
@@ -176,4 +176,4 @@ Codex 把审批策略建模成一个四值枚举，语义与教学版一致：`u
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->
