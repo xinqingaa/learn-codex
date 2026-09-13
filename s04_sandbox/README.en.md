@@ -102,9 +102,9 @@ The key insight: **approval and the sandbox answer two different questions**. Ap
 
 ## Try It
 
-> **Teaching demo note**: the code creates `agent_scratch/` in the current directory and writes into it, and it also **deliberately tries** to write `../s04_outside.txt` (out of bounds — the sandbox blocks it). Run it in a scratch directory.
+> **Teaching demo note**: with an API key, the code runs tool calls the model generates (write files, run shell). Use a scratch directory so you don't touch real project files. Offline mode only writes to `.tmp/s04/` at the repo root, and it **deliberately tries** to write `../s04_outside.txt` (out of bounds; the default `workspace-write` mode blocks it). `danger-full-access` will actually create that out-of-bounds file — be careful.
 
-**No API key needed**: the default is `sandbox_mode=workspace-write`. The offline model issues 4 calls in **one turn** — write inside the workspace, read it back, write out of bounds via `../`, and a shell command that writes — so you can watch "inside allowed, escape refused". Switch modes with an env var and try all three.
+**No API key needed**: without `OPENAI_API_KEY` this chapter runs a **fixed script** — it **ignores your prompt** and always demos "one turn: write `.tmp/s04/note.md` inside → read it back → write `../s04_outside.txt` → shell-write `.tmp/s04/shell.txt`", the same storyboard as the web simulator. The default is `workspace-write`: inside allowed, escape refused. Type anything; watch `sandbox:` allow / refuse.
 
 **Setup** (first run):
 
@@ -116,19 +116,19 @@ cp .env.example .env        # fill in OPENAI_API_KEY and MODEL_ID to run the rea
 **Run**:
 
 ```sh
-npx tsx s04_sandbox/code.ts                                   # default: workspace-write
+npx tsx s04_sandbox/code.ts                                   # offline script, default workspace-write
 SANDBOX_MODE=read-only          npx tsx s04_sandbox/code.ts   # every write refused
-SANDBOX_MODE=danger-full-access npx tsx s04_sandbox/code.ts   # no boundary (careful!)
-OPENAI_API_KEY=sk-...           npx tsx s04_sandbox/code.ts   # real model
+SANDBOX_MODE=danger-full-access npx tsx s04_sandbox/code.ts   # no boundary (writes ../s04_outside.txt)
+OPENAI_API_KEY=sk-...           npx tsx s04_sandbox/code.ts   # real model (tools follow the task)
 ```
 
-Try these prompts:
+With a key, try these prompts:
 
 1. `Create a notes file in a scratch folder and read it back` (inside write + read; allowed under workspace-write)
 2. `Write a file one level up, outside this directory` (out-of-bounds write; refused under workspace-write)
 3. `Just list what's here` (pure read; allowed under all three modes)
 
-Watch for: under the three `sandbox_mode`s, which of the same calls are allowed and which refused? How does a refused call turn into an error item fed back to the model?
+Watch for: each turn prints the full `output` array. Under the three `sandbox_mode`s, which of the same calls are allowed and which refused? How does a refused call become a `function_call_output` error item fed back to the model while the loop continues? A second prompt in the same process does **not** re-run the script.
 
 ---
 
@@ -184,4 +184,4 @@ In Codex it's not just shell commands — file modifications like `apply_patch` 
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

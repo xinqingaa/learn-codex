@@ -21,6 +21,11 @@
  * The teaching sandbox is a userspace path-check. The REAL backend is the OS:
  * Seatbelt on macOS, Landlock on Linux (see the README deep-dive).
  *
+ * Each turn prints the raw `output` array, then the sandbox verdict, then
+ * dispatch. Offline mode ignores the prompt and writes .tmp/s04/ (same story
+ * as the web simulator): inside write + read, a `../` escape, and a shell
+ * write — workspace-write allows the inside calls and refuses the escape.
+ *
  * Run it:
  *     npm install
  *     npx tsx s04_sandbox/code.ts                       # offline demo (workspace-write)
@@ -37,7 +42,12 @@ import * as readline from "node:readline";
 
 const MODEL = process.env.MODEL_ID ?? "gpt-5-codex";
 const CWD = process.cwd();
+const TMP_DIR = path.join(CWD, ".tmp", "s04");
+const NOTE_REL = path.join(".tmp", "s04", "note.md");
+const SHELL_REL = path.join(".tmp", "s04", "shell.txt");
+const OUTSIDE_REL = path.join("..", "s04_outside.txt");
 const OFFLINE = !process.env.OPENAI_API_KEY || process.env.CODEX_OFFLINE === "1";
+const MODEL_LABEL = OFFLINE ? "offline" : MODEL;
 
 // ── NEW in s04: sandbox_mode ──────────────────────────────────────────────
 // The writable root under workspace-write is the directory you launched from.
@@ -117,7 +127,12 @@ function runListDir(p: string): string {
 }
 function runShell(command: string): string {
   try {
-    const out = execSync(command, { cwd: CWD, timeout: 120_000, maxBuffer: 1024 * 1024 });
+    const out = execSync(command, {
+      cwd: CWD,
+      timeout: 120_000,
+      maxBuffer: 1024 * 1024,
+      stdio: ["ignore", "pipe", "pipe"],
+    });
     return (String(out).trim() || "(no output)").slice(0, 50_000);
   } catch (err: unknown) {
     const e = err as { stderr?: Buffer; message?: string };
@@ -202,6 +217,70 @@ type OutputItem = {
   arguments?: string;
   content?: { type: string; text?: string }[];
 };
+
+const dim = (s: string) => `\x1b[90m${s}\x1b[0m`;
+const cyan = (s: string) => `\x1b[36m${s}\x1b[0m`;
+const yellow = (s: string) => `\x1b[33m${s}\x1b[0m`;
+const green = (s: string) => `\x1b[32m${s}\x1b[0m`;
+const red = (s: string) => `\x1b[31m${s}\x1b[0m`;
+
+const SCRIPT_TOOL_COUNT = 4; // one turn: inside write, read, ../ escape, shell write
+
+function countToolResults(input: unknown[]): number {
+  return input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
+}
+
+function countToolResultsSinceLastUser(input: unknown[]): number {
+  let lastUser = -1;
+  for (let i = 0; i < input.length; i++) {
+    if ((input[i] as { role?: string }).role === "user") lastUser = i;
+  }
+  return input
+    .slice(lastUser + 1)
+    .filter((i) => (i as { type?: string }).type === "function_call_output").length;
+}
+
+function printOutput(output: OutputItem[]): void {
+  const json = JSON.stringify(
+    output,
+    (_key, value) =>
+      typeof value === "string" && value.length > 500 ? `${value.slice(0, 500)}…` : value,
+    2,
+  );
+  console.log(dim("  output:"));
+  for (const line of json.split("\n")) console.log(dim(`  ${line}`));
+}
+
+function previewToolOutput(result: string, maxLines = 20): void {
+  const all = result.split("\n");
+  if (result === "(no output)" || result === "") {
+    console.log(dim("  │ （成功，无 stdout）"));
+    return;
+  }
+  const shown = all.slice(0, maxLines);
+  for (const line of shown) console.log(dim(`  │ ${line}`));
+  const hidden = all.length - shown.length;
+  if (hidden > 0) {
+    console.log(dim(`  │ … ${hidden} more lines（完整结果在 thread 里）`));
+  }
+}
+
+function printHarnessCall(call: OutputItem): void {
+  let args: Args = {};
+  try {
+    args = JSON.parse(call.arguments ?? "{}") as Args;
+  } catch {
+    args = {};
+  }
+  console.log(dim("  harness:"));
+  if (call.name === "shell") {
+    console.log(yellow(`  $ ${String(args.command ?? "")}`));
+    return;
+  }
+  const pathArg = args.path != null ? `  path=${args.path}` : "";
+  console.log(yellow(`  ${call.name ?? "?"}${pathArg}`));
+}
+
 const openai = OFFLINE ? null : new OpenAI();
 async function callModel(input: unknown[]): Promise<OutputItem[]> {
   if (!OFFLINE && openai) {
@@ -217,11 +296,13 @@ async function callModel(input: unknown[]): Promise<OutputItem[]> {
   return offlineModel(input);
 }
 
-// Offline scripted model: one turn that writes INSIDE the workspace, reads it
-// back, tries to write OUTSIDE (../), and writes via shell — so you can watch
-// the sandbox allow the inside writes and refuse the escape.
+// Scripted stand-in: same story as the web simulator.
+// Ignores the user text. One turn: write inside, read back, write via ../, shell write.
 function offlineModel(input: unknown[]): OutputItem[] {
-  const ran = input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
+  const ran = countToolResultsSinceLastUser(input);
+  const alreadyPlayed = countToolResults(input) >= SCRIPT_TOOL_COUNT && ran === 0;
+  const turn = input.filter((i) => (i as { role?: string }).role === "user").length;
+
   const call = (id: string, name: string, args: Record<string, unknown>): OutputItem => ({
     type: "function_call",
     id,
@@ -229,14 +310,34 @@ function offlineModel(input: unknown[]): OutputItem[] {
     name,
     arguments: JSON.stringify(args),
   });
-  if (ran === 0) {
+
+  if (alreadyPlayed) {
     return [
-      call("c1", "write_file", { path: "agent_scratch/note.md", content: "inside the workspace\n" }),
-      call("c2", "read_file", { path: "agent_scratch/note.md" }),
-      call("c3", "write_file", { path: "../s04_outside.txt", content: "escape the workspace!\n" }),
-      call("c4", "shell", { command: "echo hi > agent_scratch/shell.txt" }),
+      {
+        type: "message",
+        content: [
+          {
+            type: "output_text",
+            text:
+              `[offline demo] 这条进程里的固定剧本已经演完（界内写 ${NOTE_REL} → 读回 → 越界写 ${OUTSIDE_REL} → shell 写入）。` +
+              `刚才不是听懂了你的话。输入 q 退出；设 OPENAI_API_KEY 后工具才会跟着问题变。`,
+          },
+        ],
+      },
     ];
   }
+
+  if (ran === 0) {
+    fs.rmSync(TMP_DIR, { recursive: true, force: true });
+    fs.mkdirSync(TMP_DIR, { recursive: true });
+    return [
+      call(`call_${turn}_1`, "write_file", { path: NOTE_REL, content: "inside the workspace\n" }),
+      call(`call_${turn}_2`, "read_file", { path: NOTE_REL }),
+      call(`call_${turn}_3`, "write_file", { path: OUTSIDE_REL, content: "escape the workspace!\n" }),
+      call(`call_${turn}_4`, "shell", { command: `echo hi > ${SHELL_REL}` }),
+    ];
+  }
+
   const blocked = input.filter((i) =>
     (i as { output?: string }).output?.includes("blocked by sandbox_mode")
   ).length;
@@ -247,9 +348,10 @@ function offlineModel(input: unknown[]): OutputItem[] {
         {
           type: "output_text",
           text:
-            `[offline demo] sandbox_mode=${MODE}: the model tried 4 calls in one turn — ` +
-            `${blocked} were refused by the sandbox and returned as error items; the rest ran. ` +
-            `Try SANDBOX_MODE=read-only|danger-full-access. Set OPENAI_API_KEY for a real model.`,
+            `[offline demo] sandbox_mode=${MODE}：同一轮 4 个调用——界内写 ${NOTE_REL}、读回、越界写 ${OUTSIDE_REL}、shell 写入 ${SHELL_REL}。` +
+            `${blocked} 个被沙箱拒绝并喂回错误 item；其余已执行。` +
+            `这是固定剧本，不是在回答你刚打的字。试 SANDBOX_MODE=read-only|danger-full-access。` +
+            `设 OPENAI_API_KEY 后，工具才会跟着问题变——循环和 dispatch 不变，只是 dispatch 外包了这层沙箱。`,
         },
       ],
     },
@@ -258,39 +360,63 @@ function offlineModel(input: unknown[]): OutputItem[] {
 
 // ── The agent loop: s02's dispatch, now behind the sandbox layer ──────────
 async function agentLoop(input: unknown[]): Promise<void> {
+  const lastUser = [...input].reverse().find((i) => (i as { role?: string }).role === "user") as
+    | { content?: unknown }
+    | undefined;
+  if (typeof lastUser?.content === "string") console.log(dim(`  user: ${lastUser.content}`));
+  if (OFFLINE) {
+    const replay = countToolResults(input) >= SCRIPT_TOOL_COUNT;
+    console.log(
+      dim(
+        replay
+          ? "[offline] 剧本已演过，不再重复执行工具。"
+          : `[offline] 不读你刚打的字。固定演示：界内写/读 ${NOTE_REL} + 越界 ${OUTSIDE_REL} + shell 写入。mode=${MODE}`
+      )
+    );
+  }
+  let turn = 0;
   for (;;) {
+    turn += 1;
     const output = await callModel(input);
     input.push(...output);
     const calls = output.filter((i) => i.type === "function_call");
+    console.log(cyan(`── turn ${turn} ──`));
+    console.log(dim(`  模型: ${MODEL_LABEL}`));
+    printOutput(output);
+
     if (calls.length === 0) {
       for (const item of output) {
         if (item.type === "message") {
-          for (const c of item.content ?? []) {
-            if (c.type === "output_text" && c.text) console.log(c.text);
+          for (const part of item.content ?? []) {
+            if (part.type === "output_text" && part.text) console.log("message: " + part.text);
           }
         }
       }
       return;
     }
 
+    if (calls.length > 1) {
+      console.log(dim(`  本轮 ${calls.length} 个 function_call → 同一轮 fan-out，每个都先过沙箱再 dispatch`));
+    }
+
     for (const call of calls) {
       const args = JSON.parse(call.arguments ?? "{}") as Args;
       const verdict = sandboxCheck(call, args);
-      const tag = verdict.ok ? "\x1b[32m✓ allow\x1b[0m" : `\x1b[31m✗ ${verdict.reason}\x1b[0m`;
-      console.log(`\x1b[33m-> ${call.name}(${summarize(call.arguments ?? "")})\x1b[0m ${tag}`);
+      printHarnessCall(call);
+      if (verdict.ok) {
+        console.log(dim(`  sandbox: mode=${MODE}  allow`));
+      } else {
+        console.log(red(`  sandbox: mode=${MODE}  refuse — ${verdict.reason}`));
+      }
       const result = sandboxedDispatch(call); // NEW in s04: dispatch behind the sandbox
-      console.log(result.split("\n").slice(0, 5).join("\n"));
+      previewToolOutput(result);
+      console.log(
+        verdict.ok
+          ? green("  已写回 function_call_output → continue")
+          : red("  已写回 function_call_output（blocked）→ continue")
+      );
       input.push({ type: "function_call_output", call_id: call.call_id, output: result });
     }
-  }
-}
-
-function summarize(argsJson: string): string {
-  try {
-    const a = JSON.parse(argsJson) as Args;
-    return String(a.path ?? a.command ?? "").slice(0, 60);
-  } catch {
-    return argsJson.slice(0, 60);
   }
 }
 
@@ -299,8 +425,15 @@ async function main(): Promise<void> {
   console.log("s04: sandbox_mode — a Hard Boundary at Execution (Codex-style)");
   console.log(
     OFFLINE
-      ? `Offline demo model (no OPENAI_API_KEY). sandbox_mode=${MODE}. Type a task, or q to quit.\n`
-      : `Model: ${MODEL}. sandbox_mode=${MODE}. Type a task, or q to quit.\n`
+      ? `Offline demo model (no OPENAI_API_KEY). sandbox_mode=${MODE}. Type a task, or q to quit.`
+      : `Model: ${MODEL}. sandbox_mode=${MODE}. Type a task, or q to quit.`
+  );
+  console.log(
+    dim(
+      OFFLINE
+        ? "output: 是返回值。dispatch 外包一层沙箱。没 key：不读提示词，固定演示写入 .tmp/s04/ 并尝试 ../ 越界。\n"
+        : "output: 是返回值。dispatch 外包一层沙箱。\n"
+    )
   );
 
   const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
@@ -309,8 +442,9 @@ async function main(): Promise<void> {
     const query = await new Promise<string>((resolve) =>
       rl.question("\x1b[36ms04 >> \x1b[0m", resolve)
     );
-    if (!query || ["q", "exit"].includes(query.trim().toLowerCase()) ) break;
+    if (!query || ["q", "exit"].includes(query.trim().toLowerCase())) break;
     thread.push({ role: "user", content: query });
+    console.log();
     try {
       await agentLoop(thread);
     } catch (err) {

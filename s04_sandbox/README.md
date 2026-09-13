@@ -11,11 +11,11 @@ s01 → s02 → s03 → `s04` → [s05](../s05_plan_tool/) → ... → s20
 
 ## 问题
 
-s03 给工具执行前加了一道审批门，但这道门只回答「要不要问人」。一旦你按下 `y`，命令就以你的全部权限运行——一个被你批准的 `rm -rf /`，照样能把磁盘清空。
+s03 给工具执行前加了一道审批门，但这道门只回答「要不要问人」。一旦你按下 `y`，命令就以你的**全部用户权限**跑在**真实工作区**上——一个被批准的 `rm -rf /` 照样能把磁盘清空。工作区里的文件也一样：批过了，没有任何东西限制进程还能碰到哪。
 
-更别扭的是，在 `on-request` 策略下，模型每次想写工作区以外的文件都要停下来问你。于是你成了那道边界：一个接一个地判断「这个路径行不行」。既繁琐又危险——边界靠的是你的注意力，而人总有手滑、疲惫、被说服的时候。
+没有沙箱时，连「这个路径在不在工作区」都只能靠审批一条条问。`on-request` 下模型每次想写 `../` 或 `/etc`，都会停下来让你当边界。既繁琐又危险：边界靠的是注意力，人会手滑、疲惫、被说服。
 
-安全不该押在人的警觉上。你要的是 harness 用机器的方式强制执行：不管刚才批没批，一个调用物理上只能碰这么多。这就是沙箱。
+安全不该押在人的警觉上。路径行不行必须变成机器强制的硬边界，而且这道边界要包住**每一次**调用——包括看起来「只是在项目里改文件」的那些。
 
 ---
 
@@ -102,9 +102,9 @@ for (const call of calls) {
 
 ## 试一下
 
-> **教学 demo 提示**：代码会在当前目录创建 `agent_scratch/` 并写入文件，还会**故意尝试**写 `../s04_outside.txt`（越界，将被沙箱拦下）。建议在临时测试目录里运行。
+> **教学 demo 提示**：有 API key 时，代码会执行模型生成的工具调用（写文件、跑 shell）。建议在临时目录里跑。离线模式只写入仓库根目录的 `.tmp/s04/`，并会**故意尝试**写 `../s04_outside.txt`（越界；默认 `workspace-write` 会拦下）。`danger-full-access` 会真的写出该越界文件，请小心。
 
-**无需 API key 也能跑**：默认 `sandbox_mode=workspace-write`。离线模型会在**同一轮**发起 4 个调用——工作区内写入、读回、越界写 `../`、以及一条写入的 shell 命令，让你看清「界内放行、越界被拒」。用环境变量切换三档各试一遍。
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时走**离线剧本**——**不读你的提示词**，固定演示「同一轮：界内写 `.tmp/s04/note.md` → 读回 → 越界写 `../s04_outside.txt` → shell 写入 `.tmp/s04/shell.txt`」，和网页模拟器是同一条分镜。默认 `workspace-write`：界内放行、越界拒绝。随便输入即可，盯 `sandbox:` 的 allow / refuse。
 
 **准备**（首次运行）：
 
@@ -116,19 +116,19 @@ cp .env.example .env        # 想跑真实模型就填入 OPENAI_API_KEY 和 MOD
 **运行**：
 
 ```sh
-npx tsx s04_sandbox/code.ts                                   # 默认 workspace-write
+npx tsx s04_sandbox/code.ts                                   # 离线剧本，默认 workspace-write
 SANDBOX_MODE=read-only          npx tsx s04_sandbox/code.ts   # 一切写入都被拒
-SANDBOX_MODE=danger-full-access npx tsx s04_sandbox/code.ts   # 无边界（小心！）
-OPENAI_API_KEY=sk-...           npx tsx s04_sandbox/code.ts   # 真实模型
+SANDBOX_MODE=danger-full-access npx tsx s04_sandbox/code.ts   # 无边界（会写出 ../s04_outside.txt）
+OPENAI_API_KEY=sk-...           npx tsx s04_sandbox/code.ts   # 真实模型（工具跟着问题变）
 ```
 
-试试这些 prompt：
+设了 key 之后再试这些 prompt：
 
 1. `Create a notes file in a scratch folder and read it back`（界内写 + 读，workspace-write 放行）
 2. `Write a file one level up, outside this directory`（越界写，workspace-write 拒绝）
 3. `Just list what's here`（纯读，三档都放行）
 
-观察重点：同一组调用，在三种 `sandbox_mode` 下哪些被放行、哪些被拒？被拒绝的调用是如何变成错误 item 喂回给模型的？
+观察重点：每一轮先打印完整的 `output`。同一组调用，在三种 `sandbox_mode` 下哪些被放行、哪些被拒？被拒绝的调用如何变成 `function_call_output` 错误 item 喂回给模型、循环照常 continue？同一进程里再问一句，离线剧本**不会再跑工具**。
 
 ---
 
@@ -184,4 +184,4 @@ Codex 里不只 shell 命令，`apply_patch` 这类文件修改同样受沙箱�
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

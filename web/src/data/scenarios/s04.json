@@ -1,51 +1,85 @@
 {
   "version": "s04",
   "title": "Sandbox",
-  "description": "sandbox_mode decides what a command may touch before the OS ever runs it.",
+  "description": "分镜与终端离线剧本相同：同一轮写出 .tmp/s04/note.md、读回、尝试 ../s04_outside.txt、再用 shell 写入 .tmp/s04/shell.txt。默认 workspace-write：界内放行、越界拒绝。终端不读你的提示词；这里也不是在跑 code.ts。 / Same storyboard as the terminal offline demo: one turn writes .tmp/s04/note.md, reads it back, tries ../s04_outside.txt, then shell-writes .tmp/s04/shell.txt. Default workspace-write allows inside and refuses the escape. The script ignores your prompt; this player is not live code.ts.",
   "steps": [
     {
       "type": "user_message",
-      "content": "Patch src/app.ts to fix the typo, then clean up /etc/hosts.",
-      "annotation": "One request with two writes: one inside the workspace, one outside it."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "apply_patch",
-      "content": "*** Begin Patch\n*** Update File: src/app.ts\n@@\n-recieve\n+receive\n*** End Patch",
-      "annotation": "The model proposes an in-workspace edit first."
+      "content": "Create a notes file in a scratch folder and read it back",
+      "annotation": "User sends a task. Offline mode ignores the text and plays a fixed script."
     },
     {
       "type": "system_event",
-      "content": "sandbox_mode=workspace-write: src/app.ts is inside the workspace -> allowed",
-      "annotation": "workspace-write confines writes to the working directory; this one stays in bounds."
-    },
-    {
-      "type": "tool_result",
-      "toolName": "apply_patch",
-      "content": "The file src/app.ts has been edited.",
-      "annotation": "Allowed writes run normally."
+      "content": "turn 1: 4 function_call items in one output — write / read / ../ escape / shell write",
+      "annotation": "Fan-out from s02 still applies. What is new: sandboxedDispatch wraps every call before the handler runs."
     },
     {
       "type": "tool_call",
-      "toolName": "shell",
-      "content": "echo 127.0.0.1 x >> /etc/hosts",
-      "annotation": "The second write targets a path outside the workspace."
+      "content": "path: .tmp/s04/note.md\ncontent: inside the workspace\\n",
+      "toolName": "write_file",
+      "annotation": "In-workspace write. sandbox_mode=workspace-write → allow."
     },
     {
       "type": "system_event",
-      "content": "sandbox_mode=workspace-write: /etc/hosts is outside the workspace -> denied (Seatbelt/Landlock)",
-      "annotation": "The OS enforces the boundary in the kernel, so the model cannot talk its way past it."
+      "content": "sandbox: mode=workspace-write  allow",
+      "annotation": "isInside(workspace, .tmp/s04/note.md) is true, so dispatch runs."
     },
     {
       "type": "tool_result",
+      "content": "Wrote 21 bytes to .tmp/s04/note.md",
+      "toolName": "write_file",
+      "annotation": "Allowed calls still go through TOOL_HANDLERS[name], same as s02."
+    },
+    {
+      "type": "tool_call",
+      "content": "path: .tmp/s04/note.md",
+      "toolName": "read_file",
+      "annotation": "Reads never write. Allowed under every sandbox_mode."
+    },
+    {
+      "type": "tool_result",
+      "content": "inside the workspace",
+      "toolName": "read_file",
+      "annotation": "The inside write is visible — the file exists."
+    },
+    {
+      "type": "tool_call",
+      "content": "path: ../s04_outside.txt\ncontent: escape the workspace!\\n",
+      "toolName": "write_file",
+      "annotation": "One level up: the path resolves outside the workspace."
+    },
+    {
+      "type": "system_event",
+      "content": "sandbox: mode=workspace-write  refuse — write outside workspace",
+      "annotation": "The teaching sandbox is a path check. Real Codex uses Seatbelt / Landlock in the kernel."
+    },
+    {
+      "type": "tool_result",
+      "content": "Error: blocked by sandbox_mode=workspace-write: write outside workspace: …/s04_outside.txt",
+      "toolName": "write_file",
+      "annotation": "Refusal is not a crash: an error function_call_output is fed back and the loop continues."
+    },
+    {
+      "type": "tool_call",
+      "content": "echo hi > .tmp/s04/shell.txt",
       "toolName": "shell",
-      "content": "Error: operation not permitted (sandbox denied the write outside the workspace)",
-      "annotation": "The command is refused before it runs."
+      "annotation": "A mutating shell command whose path stays inside the workspace."
+    },
+    {
+      "type": "system_event",
+      "content": "sandbox: mode=workspace-write  allow",
+      "annotation": "workspace-write allows writes inside the launch directory, including via shell."
+    },
+    {
+      "type": "tool_result",
+      "content": "(no output)",
+      "toolName": "shell",
+      "annotation": "echo > succeeded. .tmp/s04/shell.txt now exists."
     },
     {
       "type": "assistant_text",
-      "content": "I fixed src/app.ts, but the sandbox blocked the /etc/hosts write because it escapes the workspace. I would need danger-full-access for that.",
-      "annotation": "The agent reports the boundary instead of silently bypassing it."
+      "content": "Inside writes landed under .tmp/s04/. The ../ escape was blocked by sandbox_mode=workspace-write, so s04_outside.txt was never created. Same calls under read-only would refuse every write; under danger-full-access the escape would run.",
+      "annotation": "No function_call items → loop stops. Same ending as the terminal offline script."
     }
   ]
 }

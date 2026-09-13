@@ -60,14 +60,14 @@ const OPERATIONS: Record<
   { tool: string; command: string; where: string; icon: React.ComponentType<{ size?: number | string }> }
 > = {
   inside: {
-    tool: "apply_patch",
-    command: "patch src/app.ts",
+    tool: "write_file",
+    command: "path: .tmp/s04/note.md",
     where: "lands inside the workspace",
     icon: FileCode,
   },
   outside: {
-    tool: "shell",
-    command: "echo 127.0.0.1 x >> /etc/hosts",
+    tool: "write_file",
+    command: "path: ../s04_outside.txt",
     where: "lands outside the workspace",
     icon: Terminal,
   },
@@ -94,21 +94,21 @@ const STEPS: {
   },
   {
     title: "workspace-write: Inside Is Fine",
-    desc: "A patch to src/app.ts stays inside the workspace, so the OS allows it.",
+    desc: "A write to .tmp/s04/note.md stays inside the workspace, so the sandbox allows it.",
     mode: "workspace-write",
     op: "inside",
     allowed: true,
   },
   {
     title: "workspace-write: Outside Is Blocked",
-    desc: "Writing /etc/hosts escapes the workspace boundary, so the same mode refuses it.",
+    desc: "Writing ../s04_outside.txt escapes the workspace boundary, so the same mode refuses it.",
     mode: "workspace-write",
     op: "outside",
     allowed: false,
   },
   {
     title: "danger-full-access: No Boundary",
-    desc: "With the sandbox off, the same /etc/hosts write runs with full user permissions.",
+    desc: "With the sandbox off, the same ../s04_outside.txt write runs with full user permissions.",
     mode: "danger-full-access",
     op: "outside",
     allowed: true,
