@@ -11,11 +11,11 @@ s01 → s02 → s03 → `s04` → [s05](../s05_plan_tool/) → ... → s20
 
 ## The Problem
 
-s03 put an approval gate in front of tool execution, but that gate only answers "should we ask a human". The moment you press `y`, the command runs with your full privileges — an approved `rm -rf /` still wipes your disk.
+s03 put an approval gate in front of tool execution, but that gate only answers "should we ask a human". The moment you press `y`, the command runs with your **full user privileges** against the **real workspace** — an approved `rm -rf /` still wipes the disk. The same is true inside the project: once approved, nothing limits which paths the process can still touch.
 
-And it's awkward in another way: under `on-request`, the model pauses to ask you every time it wants to write outside the workspace. So *you* become the boundary, judging path after path. Tedious and risky — the boundary rests on your attention, and everyone has a careless, tired, or persuadable moment.
+Without a sandbox, even "is this path inside the workspace?" has to be asked one call at a time. Under `on-request` the model pauses whenever it wants to write `../` or `/etc`, and *you* become the boundary. Tedious and risky: the boundary rests on attention, and everyone has a careless, tired, or persuadable moment.
 
-Safety shouldn't ride on human vigilance. You want the harness to enforce, mechanically: no matter what was just approved, a call can physically touch only so much. That's the sandbox.
+Safety shouldn't ride on human vigilance. Path bounds have to be a machine-enforced invariant, wrapping **every** call — including the ones that look like "just editing a file in the repo".
 
 ---
 
@@ -23,9 +23,11 @@ Safety shouldn't ride on human vigilance. You want the harness to enforce, mecha
 
 ![Sandbox](images/sandbox.svg)
 
-Wrap dispatch in one more **sandbox** layer: intercept every tool call, work out which path it wants to write and where that lands, then check it against `sandbox_mode` to allow or refuse. A refused call doesn't crash — the harness feeds an error item back to the model, which reads "out of bounds, refused" and picks another path.
+Wrap dispatch in one more **sandbox** layer: intercept **every** tool call (including writes inside the workspace), work out what it wants to touch, then check it against `sandbox_mode` to allow or refuse. A refused call doesn't crash — the harness feeds an error item back to the model, which reads "out of bounds, refused" and picks another path.
 
-Codex's `sandbox_mode` has three modes — three boundaries:
+The sandbox is not "enabled only outside the workspace", and it is not a shadow copy that later syncs back. Commands still write **real files**. The sandbox is a cage around that process. `workspace-write` just sets the cage's writable root to the launch directory: in-repo edits land on disk immediately; paths outside (and, in real Codex, often the network) stay unreachable. Only `danger-full-access` takes the lock off.
+
+Codex's `sandbox_mode` has three modes — three sizes of writable scope:
 
 | mode | can read | can write | when to use |
 |------|----------|-----------|-------------|
@@ -96,7 +98,12 @@ for (const call of calls) {
 }
 ```
 
-The key insight: **approval and the sandbox answer two different questions**. Approval asks "should a human be consulted first?" — a per-call judgment. The sandbox asks "what is physically reachable?" — an always-on hard invariant. Because the sandbox wraps dispatch, it protects reads, writes, patches and shell alike; and to the model, "refused for going out of bounds" is just an ordinary piece of data — it reads it and keeps reasoning, rather than the whole turn crashing.
+The key insight: **approval and the sandbox sit on the same path and answer different questions. They are not "approval inside, sandbox outside".**
+
+- Approval (s03) asks "should a human be consulted first?" — a dangerous in-workspace command like `rm -rf` often still runs inside the cage, because the path is within the writable root.
+- The sandbox (this chapter) asks "what is physically reachable?" — every call, inside or out, runs in the cage; `sandbox_mode` only sizes the writable scope. Escapes are blocked by the cage, not by you clicking through paths.
+
+In real Codex the order is: run first in the current sandbox; if more privilege is needed (escape, network) and `approval_policy` allows asking, surface approval and re-run elevated. This chapter splits the layers: an out-of-bounds call is `blocked` and fed back, with no follow-up `y/n`. To the model, a refusal is an ordinary `function_call_output`; the loop continues.
 
 ---
 
@@ -169,7 +176,7 @@ Before a command starts, it's wrapped in the platform's sandbox helper (`codex-r
 <details>
 <summary>3. The sandbox and approval are intertwined</summary>
 
-As the s03 deep-dive noted, the two sit on the same execution path in Codex: a command is first tried inside the environment bounded by `sandbox_mode`; if it needs higher privileges (write outside the workspace, network access) and the current `approval_policy` allows asking, the harness surfaces an approval and, once granted, re-runs with elevated permissions. The chapter simplifies "try sandboxed, escalate on failure" into "the sandbox refuses outright + an error item is fed back" — same direction.
+As the s03 deep-dive noted, the two sit on the same execution path in Codex: a command is first tried inside the environment bounded by `sandbox_mode` (in-workspace writes are that same process, landing on real files — not a copy that later syncs); if it needs higher privileges (write outside the workspace, network access) and the current `approval_policy` allows asking, the harness surfaces an approval and, once granted, re-runs with elevated permissions. The chapter simplifies "try sandboxed, escalate on failure" into "the sandbox refuses outright + an error item is fed back" — same direction.
 
 </details>
 
@@ -184,4 +191,4 @@ In Codex it's not just shell commands — file modifications like `apply_patch` 
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->

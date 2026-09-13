@@ -133,9 +133,9 @@ Watch for: each turn prints the full `output` array. With the same set of calls,
 
 ## What's Next
 
-Approval answers "should it run", but even when you type `y`, what the command can actually *touch* is still unrestricted — an approved `rm -rf /` can still wreck the system. And under `on-request`, the model asks you every time it writes outside the workspace, which gets tedious.
+Approval answers "should we ask", but even when you type `y` the command still runs with full privileges against the real workspace — an approved `rm -rf /` can still wreck the system. Without a sandbox, even "is this path inside the workspace?" has to be clicked through one call at a time.
 
-s04 Sandbox → draw a hard boundary at the execution layer with `sandbox_mode`: read-only / workspace-write / fully open. Approval governs "do we ask"; the sandbox governs "what can be touched".
+s04 Sandbox → wrap **every** call in a cage with `sandbox_mode` (including in-workspace writes — it is not "sandbox only outside"): read-only / workspace-write / fully open. Approval governs "do we ask"; the sandbox governs "what can be touched".
 
 <details>
 <summary>Into the Codex source</summary>
@@ -176,4 +176,4 @@ As in the chapter, Codex doesn't blow up the turn on a denial: the refusal retur
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->
