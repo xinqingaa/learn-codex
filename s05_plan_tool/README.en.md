@@ -90,9 +90,9 @@ Assembled, the model's typical trajectory is: `update_plan` (all pending) → `s
 
 ## Try It
 
-> **Teaching demo note**: the offline demo creates and runs a `hello.ts` in the current directory. Run it in a scratch directory, or delete the file afterwards.
+> **Teaching demo note**: with an API key, the code runs shell commands the model generates. Use a scratch directory so you don't touch real project files. Offline mode only writes `.tmp/s05/hello.ts` at the repo root.
 
-**No API key needed**: without `OPENAI_API_KEY`, the chapter's built-in offline model acts out the whole "plan → work the steps → check them off" flow.
+**No API key needed**: without `OPENAI_API_KEY` this chapter runs a **fixed script** — it **ignores your prompt** and always demos "`update_plan` with three steps → `ls` → rewrite the plan → write `.tmp/s05/hello.ts` → run it → all `completed`", the same storyboard as the web simulator. Type anything; watch whether the first tool is `update_plan`, and how statuses move `pending` → `in_progress` → `completed` (only one step `in_progress` at a time).
 
 **Setup** (first run):
 
@@ -104,17 +104,17 @@ cp .env.example .env        # fill in OPENAI_API_KEY and MODEL_ID to run the rea
 **Run**:
 
 ```sh
-npx tsx s05_plan_tool/code.ts                # offline demo model
-OPENAI_API_KEY=sk-... npx tsx s05_plan_tool/code.ts   # real model
+npx tsx s05_plan_tool/code.ts                # offline script (ignores the prompt)
+OPENAI_API_KEY=sk-... npx tsx s05_plan_tool/code.ts   # real model (tools follow the task)
 ```
 
-Try these prompts:
+With a key, try these prompts:
 
 1. `Rename every script to TypeScript, run the tests, fix what fails`
 2. `Set up a small package: tsconfig, an entry file, and a build script`
 3. `Refactor this file into modules and verify it still runs`
 
-Watch for: is the first tool call `update_plan`? How many steps does the plan list? As it works, do statuses move `pending` → `in_progress` → `completed`, with only one step `in_progress` at a time?
+Watch for: each turn prints the full `output` array. `update_plan` only changes the harness checklist — it does not touch the disk; `shell` does the real work. A second prompt in the same process does **not** re-run the script.
 
 ---
 
@@ -163,4 +163,4 @@ Codex persists a session as a rollout (see s09), and the plan, as part of sessio
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

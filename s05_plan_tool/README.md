@@ -90,9 +90,9 @@ input.push({ type: "function_call_output", call_id: call.call_id, output: result
 
 ## 试一下
 
-> **教学 demo 提示**：离线 demo 会在当前目录创建并运行一个 `hello.ts`。建议在临时目录里跑，或跑完手动删掉它。
+> **教学 demo 提示**：有 API key 时，代码会执行模型生成的 shell 命令。建议在临时目录里跑。离线模式只写入仓库根目录的 `.tmp/s05/hello.ts`。
 
-**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，本章的内置离线模型会把「列计划 → 逐步执行 → 逐步打勾」完整演一遍。
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时走**离线剧本**——**不读你的提示词**，固定演示「`update_plan` 列出三步 → `ls` → 重写计划 → 写入 `.tmp/s05/hello.ts` → 跑通 → 全部 completed」，和网页模拟器是同一条分镜。随便输入即可，盯第一次工具是不是 `update_plan`，以及清单如何从 `pending` → `in_progress` → `completed`（同一时刻只有一步 `in_progress`）。
 
 **准备**（首次运行）：
 
@@ -104,17 +104,17 @@ cp .env.example .env        # 想跑真实模型就填入 OPENAI_API_KEY 和 MOD
 **运行**：
 
 ```sh
-npx tsx s05_plan_tool/code.ts                # 离线 demo 模型
-OPENAI_API_KEY=sk-... npx tsx s05_plan_tool/code.ts   # 真实模型
+npx tsx s05_plan_tool/code.ts                # 离线剧本（忽略提示词）
+OPENAI_API_KEY=sk-... npx tsx s05_plan_tool/code.ts   # 真实模型（工具跟着问题变）
 ```
 
-试试这些 prompt：
+设了 key 之后再试这些 prompt：
 
 1. `Rename every script to TypeScript, run the tests, fix what fails`
 2. `Set up a small package: tsconfig, an entry file, and a build script`
 3. `Refactor this file into modules and verify it still runs`
 
-观察重点：第一次工具调用是不是 `update_plan`？计划列了几步？执行中状态有没有从 `pending` 走到 `in_progress` 再走到 `completed`，同一时刻是不是只有一步 `in_progress`？
+观察重点：每一轮先打印完整的 `output`。`update_plan` 只改 harness 里的清单，不碰磁盘；`shell` 才干活。同一进程里再问一句，离线剧本**不会再跑工具**。
 
 ---
 
@@ -163,4 +163,4 @@ Codex 的会话会被持久化成 rollout（见 s09），计划作为会话状�
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

@@ -1,40 +1,101 @@
 {
   "version": "s05",
   "title": "The Plan Tool",
-  "description": "The update_plan tool makes the agent's intended work visible and keeps long tasks from drifting.",
+  "description": "分镜与终端离线剧本相同：先 update_plan 列出三步，再 ls / 写入 .tmp/s05/hello.ts / 跑通，每步重写同一份清单。终端不读你的提示词；这里也不是在跑 code.ts。 / Same storyboard as the terminal offline demo: update_plan with three steps, then ls / write .tmp/s05/hello.ts / run it, rewriting the same checklist each time. The script ignores your prompt; this player is not live code.ts.",
   "steps": [
     {
       "type": "user_message",
-      "content": "Refactor the parser and add a regression test.",
-      "annotation": "The task has multiple steps, so the plan should become visible."
+      "content": "Create a file called hello.ts that prints a greeting, then run it.",
+      "annotation": "User sends a multi-step task. Offline mode ignores the text and plays a fixed script."
     },
     {
       "type": "tool_call",
       "toolName": "update_plan",
-      "content": "{\"plan\":[{\"step\":\"Inspect parser\",\"status\":\"in_progress\"},{\"step\":\"Refactor parsing branch\",\"status\":\"pending\"},{\"step\":\"Add regression test\",\"status\":\"pending\"}]}",
-      "annotation": "The model records a plan before acting."
+      "content": "1. Inspect the workspace — in_progress\n2. Create .tmp/s05/hello.ts that prints a greeting — pending\n3. Run it to verify the output — pending",
+      "annotation": "First tool is update_plan, not shell. The plan lives in the harness as a function_call."
     },
     {
       "type": "tool_result",
       "toolName": "update_plan",
-      "content": "Plan updated.",
-      "annotation": "The current plan is kept by the harness and shown to the user."
+      "content": "Plan updated: 0/3 steps completed.",
+      "annotation": "The handler stores currentPlan[] and re-renders the checklist. No files are touched."
     },
     {
       "type": "tool_call",
       "toolName": "shell",
-      "content": "cat parser.ts",
-      "annotation": "Normal tools continue through the same dispatch table."
+      "content": "ls -la .tmp/s05",
+      "annotation": "shell does the real work. Exactly one step is in_progress."
     },
     {
-      "type": "system_event",
-      "content": "<reminder>3 rounds without update_plan; refresh the plan if any step completed.</reminder>",
-      "annotation": "A nag reminder keeps the plan fresh during long work."
+      "type": "tool_result",
+      "toolName": "shell",
+      "content": "(empty directory listing)",
+      "annotation": "Inspect done. Next turn the model rewrites the whole plan, not a diff."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "update_plan",
+      "content": "1. Inspect the workspace — completed\n2. Create .tmp/s05/hello.ts that prints a greeting — in_progress\n3. Run it to verify the output — pending",
+      "annotation": "Same three steps, new statuses. Harness replaces currentPlan wholesale."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "update_plan",
+      "content": "Plan updated: 1/3 steps completed.",
+      "annotation": "○ became ✓ on step 1; ▸ moved to step 2."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "shell",
+      "content": "printf 'console.log(\"Hello, Codex!\");\\n' > .tmp/s05/hello.ts",
+      "annotation": "The write lands in .tmp/s05/, gitignored like earlier chapters."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "shell",
+      "content": "wrote .tmp/s05/hello.ts",
+      "annotation": "Disk changed via shell, not via update_plan."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "update_plan",
+      "content": "1. Inspect the workspace — completed\n2. Create .tmp/s05/hello.ts that prints a greeting — completed\n3. Run it to verify the output — in_progress",
+      "annotation": "Still one in_progress step at a time."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "update_plan",
+      "content": "Plan updated: 2/3 steps completed.",
+      "annotation": "Harness replaced currentPlan again. Disk still unchanged until the next shell."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "shell",
+      "content": "npx tsx .tmp/s05/hello.ts",
+      "annotation": "Verify the file actually runs."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "shell",
+      "content": "Hello, Codex!",
+      "annotation": "The greeting printed. Last plan rewrite will mark every step completed."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "update_plan",
+      "content": "1. Inspect the workspace — completed\n2. Create .tmp/s05/hello.ts that prints a greeting — completed\n3. Run it to verify the output — completed",
+      "annotation": "3/3 done. The checklist is harness state, gone when the process exits (s09 persists it)."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "update_plan",
+      "content": "Plan updated: 3/3 steps completed.",
+      "annotation": "Same three steps, all completed. update_plan still did not touch the disk."
     },
     {
       "type": "assistant_text",
-      "content": "I inspected the parser and will mark the first step completed before making the code change.",
-      "annotation": "The plan state guides the next turn."
+      "content": "Planned 3 steps, wrote .tmp/s05/hello.ts, and ran it. The plan lived in the harness the whole time — update_plan never touched the disk.",
+      "annotation": "No function_call items → loop stops. Same ending as the terminal offline script."
     }
   ]
 }

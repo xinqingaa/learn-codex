@@ -18,52 +18,52 @@ interface Task {
 const TASK_STATES: Task[][] = [
   // Step 0: all pending
   [
-    { id: 1, label: "Write auth tests", status: "pending" },
-    { id: 2, label: "Fix mobile layout", status: "pending" },
-    { id: 3, label: "Add error handling", status: "pending" },
-    { id: 4, label: "Update config loader", status: "pending" },
+    { id: 1, label: "Inspect .tmp/s05", status: "pending" },
+    { id: 2, label: "Create .tmp/s05/hello.ts", status: "pending" },
+    { id: 3, label: "Run hello.ts", status: "pending" },
+    { id: 4, label: "Report the result", status: "pending" },
   ],
   // Step 1: still all pending (idle round 1)
   [
-    { id: 1, label: "Write auth tests", status: "pending" },
-    { id: 2, label: "Fix mobile layout", status: "pending" },
-    { id: 3, label: "Add error handling", status: "pending" },
-    { id: 4, label: "Update config loader", status: "pending" },
+    { id: 1, label: "Inspect .tmp/s05", status: "pending" },
+    { id: 2, label: "Create .tmp/s05/hello.ts", status: "pending" },
+    { id: 3, label: "Run hello.ts", status: "pending" },
+    { id: 4, label: "Report the result", status: "pending" },
   ],
   // Step 2: still all pending (idle round 2)
   [
-    { id: 1, label: "Write auth tests", status: "pending" },
-    { id: 2, label: "Fix mobile layout", status: "pending" },
-    { id: 3, label: "Add error handling", status: "pending" },
-    { id: 4, label: "Update config loader", status: "pending" },
+    { id: 1, label: "Inspect .tmp/s05", status: "pending" },
+    { id: 2, label: "Create .tmp/s05/hello.ts", status: "pending" },
+    { id: 3, label: "Run hello.ts", status: "pending" },
+    { id: 4, label: "Report the result", status: "pending" },
   ],
   // Step 3: NAG fires, task 1 moves to in_progress
   [
-    { id: 1, label: "Write auth tests", status: "in_progress" },
-    { id: 2, label: "Fix mobile layout", status: "pending" },
-    { id: 3, label: "Add error handling", status: "pending" },
-    { id: 4, label: "Update config loader", status: "pending" },
+    { id: 1, label: "Inspect .tmp/s05", status: "in_progress" },
+    { id: 2, label: "Create .tmp/s05/hello.ts", status: "pending" },
+    { id: 3, label: "Run hello.ts", status: "pending" },
+    { id: 4, label: "Report the result", status: "pending" },
   ],
   // Step 4: task 1 done
   [
-    { id: 1, label: "Write auth tests", status: "done" },
-    { id: 2, label: "Fix mobile layout", status: "pending" },
-    { id: 3, label: "Add error handling", status: "pending" },
-    { id: 4, label: "Update config loader", status: "pending" },
+    { id: 1, label: "Inspect .tmp/s05", status: "done" },
+    { id: 2, label: "Create .tmp/s05/hello.ts", status: "pending" },
+    { id: 3, label: "Run hello.ts", status: "pending" },
+    { id: 4, label: "Report the result", status: "pending" },
   ],
   // Step 5: task 2 self-directed to in_progress
   [
-    { id: 1, label: "Write auth tests", status: "done" },
-    { id: 2, label: "Fix mobile layout", status: "in_progress" },
-    { id: 3, label: "Add error handling", status: "pending" },
-    { id: 4, label: "Update config loader", status: "pending" },
+    { id: 1, label: "Inspect .tmp/s05", status: "done" },
+    { id: 2, label: "Create .tmp/s05/hello.ts", status: "in_progress" },
+    { id: 3, label: "Run hello.ts", status: "pending" },
+    { id: 4, label: "Report the result", status: "pending" },
   ],
   // Step 6: tasks 2,3 done, task 4 in_progress
   [
-    { id: 1, label: "Write auth tests", status: "done" },
-    { id: 2, label: "Fix mobile layout", status: "done" },
-    { id: 3, label: "Add error handling", status: "done" },
-    { id: 4, label: "Update config loader", status: "in_progress" },
+    { id: 1, label: "Inspect .tmp/s05", status: "done" },
+    { id: 2, label: "Create .tmp/s05/hello.ts", status: "done" },
+    { id: 3, label: "Run hello.ts", status: "done" },
+    { id: 4, label: "Report the result", status: "in_progress" },
   ],
 ];
 
