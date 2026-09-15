@@ -34,6 +34,10 @@ Agent 在修一个 bug。为了追一条调用链，它读了三十个文件，�
 
 子 Agent 不是另一种 Agent，它就是**同一个循环用一份干净输入再跑一遍**。
 
+![同一个循环，两份上下文](images/same-loop-two-contexts.svg)
+
+左右两份线程共用同一份 `agentLoop`；紫色 `task()` 是派生，红色 `conclusion` 是唯一允许穿越边界的东西。
+
 ---
 
 ## 工作原理
@@ -78,13 +82,19 @@ input.push({ type: "function_call_output", call_id: call.call_id, output: result
 
 组装起来：父 Agent 收到任务 → 决定委派 → `spawnSubagent` 用一个干净输入再跑一遍 `agentLoop` → 子 Agent 跑完返回结论 → 结论作为 `function_call_output` 回到父线程 → 父 Agent 拿着结论继续。
 
+![task 只是循环里的一条分发支路](images/dispatch-branch.svg)
+
+`task` 并没有另起一套循环。停不停仍看有没有 `function_call`；名字是 `task` 就派生，否则父循环自己跑 `shell`。子循环出错时，错误字符串走同一条 tool-output 路径回到父线程。
+
 **核心洞察**：子 Agent 的价值不在「多一个模型」，而在**上下文的边界**。支线任务的几十轮中间过程被挡在边界外，主线只看到一条结论——注意力因此不漂移。
 
 ---
 
 ## 试一下
 
-**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，内置离线模型会把「父 Agent 委派 → 子 Agent 用干净上下文查 `package.json` → 只把结论带回主线」完整演一遍。
+> **教学 demo 提示**：有 API key 时，代码会执行模型生成的 shell 命令。建议在临时目录里跑。离线模式只读取仓库根目录的 `package.json`。
+
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时走**离线剧本**——**不读你的提示词**，固定演示「父循环调用 `task` → 子循环用 1 条消息 `cat package.json` → 只把结论文本写回父线程」，和网页模拟器是同一条分镜。随便输入即可。
 
 **准备**（首次运行）：
 
@@ -96,17 +106,25 @@ cp .env.example .env        # 想跑真实模型就填入 OPENAI_API_KEY 和 MOD
 **运行**：
 
 ```sh
-npx tsx s06_subagents/code.ts                # 离线 demo 模型
-OPENAI_API_KEY=sk-... npx tsx s06_subagents/code.ts   # 真实模型
+npx tsx s06_subagents/code.ts                # 离线剧本（忽略提示词）
+OPENAI_API_KEY=sk-... npx tsx s06_subagents/code.ts   # 真实模型（会不会委派跟着问题变）
 ```
 
-试试这些 prompt：
+设了 key 之后再试这些 prompt：
 
 1. `Use a subtask to find out what test/build tooling this repo uses`
 2. `Delegate: read the files under spec/ and summarize the authoring rules`
 3. `Research how the web/ docs site is built, but keep my main thread clean`
 
-观察重点：有没有出现 `[subagent spawned]` / `[subagent done]`？子 Agent 的命令是不是以 `[sub]` 前缀输出？父 Agent 最后是不是只接着处理子 Agent 返回的那条结论？
+观察重点：每一轮先打印完整的 `output`。盯 `── parent turn` / `── sub turn`、两边的**线程条数**，以及 `task` 派生时父线程是否暂停增长。子循环的 `$ cat package.json` 只出现在 `sub turn` 里；父循环最后只拿到一条结论文本。同一进程里再问一句，离线剧本**不会再派生**。
+
+---
+
+## 小总结：还是同一条循环
+
+s01 到 s05 没有换循环。s06 也没有。停不停看有没有 `function_call`；`task` 只是分发里多出来的一个名字。真正换掉的是**喂进去的数组**和**工具表**：子循环拿到全新的 `input = [task]`，工具里没有 `task`，跑完只把结论文本当作父线程的一条 `function_call_output`。
+
+子 Agent 不是另一种 Agent，也不是第二个模型。它就是 `agentLoop` 用一份干净输入再进一次。
 
 ---
 
@@ -155,4 +173,4 @@ Codex Cloud 的模型可以看作子 Agent 的极端形态：**每个任务都�
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v5, en@v5 -->

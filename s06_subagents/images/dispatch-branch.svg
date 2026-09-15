@@ -1,0 +1,99 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" width="1600" height="900" data-generator="fireworks-tech-graph" data-schema-version="1" data-text-metrics="heuristic-v1" data-style-id="1" data-visual-theme="Flat Icon" data-diagram-type="flowchart" data-motion-scene="" data-semantic-profile="generic" data-semantic-valid="true" data-quality-profile="showcase" data-max-bends-per-edge="2" data-max-total-bends="8" data-max-route-stretch="1.35" data-max-bridged-crossings="0" data-min-node-gap="40.0" data-min-container-gutter="20.0" data-min-label-clearance="4.0" data-min-segment-length="16.0">
+  <defs>
+    <marker id="arrowA" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrowB" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#10b981"/>
+    </marker>
+    <marker id="arrowC" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#2563eb"/>
+    </marker>
+    <marker id="arrowE" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#f97316"/>
+    </marker>
+    <marker id="arrowF" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#7c3aed"/>
+    </marker>
+    <marker id="arrowG" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#ef4444"/>
+    </marker>
+    <marker id="arrowH" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#6b7280"/>
+    </marker>
+    <style>
+    text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }
+    .title { font-size: 30px; font-weight: 700; fill: #111827; }
+    .subtitle { font-size: 14px; font-weight: 500; fill: #6b7280; }
+    .section { font-size: 13px; font-weight: 700; fill: #2563eb; letter-spacing: 1.4px; }
+    .section-sub { font-size: 12px; font-weight: 500; fill: #94a3b8; }
+    .node-title { font-weight: 700; fill: #111827; }
+    .node-sub { font-size: 12px; font-weight: 500; fill: #6b7280; }
+    .node-type { font-size: 12px; font-weight: 700; fill: #9ca3af; letter-spacing: 0.08em; }
+    .arrow-label { font-size: 13px; font-weight: 600; fill: #6b7280; }
+    .legend { font-size: 12px; font-weight: 500; fill: #6b7280; }
+    .footnote { font-size: 12px; font-weight: 500; fill: #94a3b8; }
+    .metric-label { font-size: 8.5px; font-weight: 700; fill: #94a3b8; text-transform: uppercase; }
+    .metric-value { font-size: 9.5px; font-weight: 700; fill: #111827; }
+    </style>
+  </defs>
+  <rect data-graph-role="background" width="1600.0" height="900.0" fill="#ffffff"/>
+  <text x="800.0" y="56" text-anchor="middle" class="title">task is another branch</text>
+  <text x="800.0" y="82" text-anchor="middle" class="subtitle">The s01 loop is unchanged. who=sub only switches tools and input.</text>
+  <path id="a1" data-graph-role="edge" data-edge-id="a1" data-source="user" data-target="parent" data-edge-kind="flow" data-topic-id="" data-flow="control" data-motion-role="" data-motion-stage="" data-motion-order="" data-protocol="" data-via="" data-critical-path-id="" data-critical-hop="" data-critical-hops="" data-critical="false" data-bends="0" data-route-stretch="1.0" data-bridges="" d="M 320,435 L 400,435" fill="none" stroke="#7c3aed" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowA)"/>
+  <path id="a2" data-graph-role="edge" data-edge-id="a2" data-source="parent" data-target="taskq" data-edge-kind="flow" data-topic-id="" data-flow="control" data-motion-role="" data-motion-stage="" data-motion-order="" data-protocol="" data-via="" data-critical-path-id="" data-critical-hop="" data-critical-hops="" data-critical="false" data-bends="0" data-route-stretch="1.0" data-bridges="" d="M 680,435 L 760,435" fill="none" stroke="#7c3aed" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowA)"/>
+  <path id="a3" data-graph-role="edge" data-edge-id="a3" data-source="taskq" data-target="sub" data-edge-kind="flow" data-topic-id="" data-flow="control" data-motion-role="" data-motion-stage="" data-motion-order="" data-protocol="" data-via="" data-critical-path-id="" data-critical-hop="" data-critical-hops="" data-critical="false" data-bends="2" data-route-stretch="1.0" data-bridges="" d="M 1040,435 L 1060.4,435 L 1060.4,260 L 1160,260" fill="none" stroke="#7c3aed" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowA)"/>
+  <path id="a4" data-graph-role="edge" data-edge-id="a4" data-source="sub" data-target="summary" data-edge-kind="flow" data-topic-id="" data-flow="write" data-motion-role="" data-motion-stage="" data-motion-order="" data-protocol="" data-via="" data-critical-path-id="" data-critical-hop="" data-critical-hops="" data-critical="false" data-bends="0" data-route-stretch="1.0" data-bridges="" d="M 1340,320 L 1340,400" fill="none" stroke="#10b981" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowB)"/>
+  <path id="a5" data-graph-role="edge" data-edge-id="a5" data-source="taskq" data-target="shell" data-edge-kind="flow" data-topic-id="" data-flow="data" data-motion-role="" data-motion-stage="" data-motion-order="" data-protocol="" data-via="" data-critical-path-id="" data-critical-hop="" data-critical-hops="" data-critical="false" data-bends="0" data-route-stretch="1.0" data-bridges="" d="M 900,510 L 900,620" fill="none" stroke="#f97316" stroke-width="4.0" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#arrowE)"/>
+  <g id="node-user" data-graph-role="node" data-node-id="user" data-semantic-role="rect" data-motion-role="" data-motion-stage="" data-motion-order="" data-parent="" data-deployment-id="" data-topic-id="" data-span-id="" data-station-order="" data-status="" data-start-ms="" data-duration-ms="" data-parent-span="" data-graph-bounds="80,380,320,490">
+  <rect x="80.0" y="380.0" width="240.0" height="110.0" rx="8.0" fill="#ffffff" stroke="#94a3b8" stroke-width="4.0"/>
+  <text x="200.0" y="435.0" text-anchor="middle" class="node-title" font-size="18.0">User prompt</text>
+  </g>
+  <g id="node-parent" data-graph-role="node" data-node-id="parent" data-semantic-role="rect" data-motion-role="" data-motion-stage="" data-motion-order="" data-parent="" data-deployment-id="" data-topic-id="" data-span-id="" data-station-order="" data-status="" data-start-ms="" data-duration-ms="" data-parent-span="" data-graph-bounds="400,380,680,490">
+  <rect x="400.0" y="380.0" width="280.0" height="110.0" rx="8.0" fill="#ffffff" stroke="#7c3aed" stroke-width="4.0"/>
+  <text x="540.0" y="435.0" text-anchor="middle" class="node-title" font-size="18.0">agentLoop</text>
+  <text x="540.0" y="457.0" text-anchor="middle" class="node-sub">who = parent</text>
+  </g>
+  <g id="node-taskq" data-graph-role="node" data-node-id="taskq" data-semantic-role="hexagon" data-motion-role="" data-motion-stage="" data-motion-order="" data-parent="" data-deployment-id="" data-topic-id="" data-span-id="" data-station-order="" data-status="" data-start-ms="" data-duration-ms="" data-parent-span="" data-graph-bounds="760,360,1040,510">
+  <path d="M 782.0 360.0 L 1018.0 360.0 L 1040.0 435.0 L 1018.0 510.0 L 782.0 510.0 L 760.0 435.0 Z" fill="#ffffff" stroke="#2563eb" stroke-width="4.0"/>
+  <text x="900.0" y="435.0" text-anchor="middle" class="node-title" font-size="18.0">name == task?</text>
+  </g>
+  <g id="node-sub" data-graph-role="node" data-node-id="sub" data-semantic-role="rect" data-motion-role="" data-motion-stage="" data-motion-order="" data-parent="" data-deployment-id="" data-topic-id="" data-span-id="" data-station-order="" data-status="" data-start-ms="" data-duration-ms="" data-parent-span="" data-graph-bounds="1160,200,1520,320">
+  <rect x="1160.0" y="200.0" width="360.0" height="120.0" rx="8.0" fill="#ffffff" stroke="#16a34a" stroke-width="4.0"/>
+  <text x="1340.0" y="260.0" text-anchor="middle" class="node-title" font-size="18.0">fresh agentLoop</text>
+  <text x="1340.0" y="282.0" text-anchor="middle" class="node-sub">input = [task]</text>
+  </g>
+  <g id="node-summary" data-graph-role="node" data-node-id="summary" data-semantic-role="rect" data-motion-role="" data-motion-stage="" data-motion-order="" data-parent="" data-deployment-id="" data-topic-id="" data-span-id="" data-station-order="" data-status="" data-start-ms="" data-duration-ms="" data-parent-span="" data-graph-bounds="1160,400,1520,510">
+  <rect x="1160.0" y="400.0" width="360.0" height="110.0" rx="8.0" fill="#ffffff" stroke="#16a34a" stroke-width="4.0"/>
+  <text x="1340.0" y="455.0" text-anchor="middle" class="node-title" font-size="18.0">Return conclusion</text>
+  <text x="1340.0" y="477.0" text-anchor="middle" class="node-sub">text only</text>
+  </g>
+  <g id="node-shell" data-graph-role="node" data-node-id="shell" data-semantic-role="rect" data-motion-role="" data-motion-stage="" data-motion-order="" data-parent="" data-deployment-id="" data-topic-id="" data-span-id="" data-station-order="" data-status="" data-start-ms="" data-duration-ms="" data-parent-span="" data-graph-bounds="760,620,1040,730">
+  <rect x="760.0" y="620.0" width="280.0" height="110.0" rx="8.0" fill="#ffffff" stroke="#ea580c" stroke-width="4.0"/>
+  <text x="900.0" y="675.0" text-anchor="middle" class="node-title" font-size="18.0">runShell</text>
+  </g>
+  <g id="a1-label" data-graph-role="label" data-owner="a1" data-graph-bounds="332.12,404,387.88,424">
+  <text x="360.0" y="408.0" text-anchor="middle" class="arrow-label">prompt</text>
+  </g>
+  <g id="a3-label" data-graph-role="label" data-owner="a3" data-graph-bounds="1015.56,333.5,1057.4,353.5">
+  <text x="1036.48" y="347.5" text-anchor="middle" class="arrow-label">task</text>
+  </g>
+  <g id="a4-label" data-graph-role="label" data-owner="a4" data-graph-bounds="1295.16,346,1337,366">
+  <text x="1378.0" y="368.0" text-anchor="middle" class="arrow-label">text</text>
+  </g>
+  <g id="a5-label" data-graph-role="label" data-owner="a5" data-graph-bounds="854.44,551,897,571">
+  <text x="860.0" y="565.0" text-anchor="middle" class="arrow-label">shell</text>
+  </g>
+  <g id="legend" data-graph-role="legend">
+    <rect id="legend-zone" data-graph-role="reserved" data-reserved-kind="legend" x="70" y="766" width="465.2" height="46" rx="10" fill="none" stroke="none"/>
+    <line data-graph-role="decoration" x1="80.0" y1="780.0" x2="110.0" y2="780.0" stroke="#7c3aed" stroke-width="4" marker-end="url(#arrowA)"/>
+    <text data-graph-role="decoration" x="120.0" y="784.0" class="legend">spawn path</text>
+    <line data-graph-role="decoration" x1="214.96" y1="780.0" x2="244.96" y2="780.0" stroke="#10b981" stroke-width="4" marker-end="url(#arrowB)"/>
+    <text data-graph-role="decoration" x="254.96" y="784.0" class="legend">child stays private</text>
+    <line data-graph-role="decoration" x1="400.56000000000006" y1="780.0" x2="430.56000000000006" y2="780.0" stroke="#f97316" stroke-width="4" marker-end="url(#arrowE)"/>
+    <text data-graph-role="decoration" x="440.56000000000006" y="784.0" class="legend">parent shell</text>
+  </g>
+  <g id="footer" data-graph-role="reserved" data-graph-bounds="80,848,514,864">
+  <text x="80.0" y="860.0" class="footnote">Child errors return as Error: ... on the same tool-output path</text>
+  </g>
+</svg>

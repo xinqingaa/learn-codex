@@ -34,6 +34,10 @@ Add a `task` tool: when called, the harness spawns a **sub-agent** — it has it
 
 A sub-agent is not a different kind of agent. It is **the same loop run again on a clean input**.
 
+![Same loop, two contexts](images/same-loop-two-contexts.svg)
+
+The two threads share one `agentLoop`; purple `task()` is the spawn, red `conclusion` is the only thing allowed across the boundary.
+
 ---
 
 ## How It Works
@@ -78,13 +82,19 @@ input.push({ type: "function_call_output", call_id: call.call_id, output: result
 
 Assembled: the parent receives a task → decides to delegate → `spawnSubagent` re-runs `agentLoop` on a clean input → the child finishes and returns a conclusion → the conclusion re-enters the parent thread as a `function_call_output` → the parent continues with it.
 
+![task is another branch in the same loop](images/dispatch-branch.svg)
+
+`task` does not start a second kind of loop. Stop or continue still depends on `function_call`; if the name is `task`, spawn, otherwise the parent runs `shell` itself. If the child fails, the error string returns on that same tool-output path.
+
 **Core insight**: a sub-agent's value isn't "one more model" — it's the **context boundary**. The dozens of intermediate turns of a side quest stay outside that boundary, and the main thread sees only a single conclusion. That is why attention doesn't drift.
 
 ---
 
 ## Try It
 
-**No API key needed**: without `OPENAI_API_KEY`, the built-in offline model acts out the whole "parent delegates → child reads `package.json` in a clean context → only the conclusion returns" flow.
+> **Teaching-demo note**: with an API key, the code runs whatever shell commands the model emits. Prefer a throwaway directory. Offline mode only reads `package.json` at the repo root.
+
+**No API key needed**: without `OPENAI_API_KEY` the **offline script** runs — it **ignores your prompt** and always acts out "parent calls `task` → child `cat package.json` from a 1-item context → only the conclusion text re-enters the parent", the same beat as the web simulator. Type anything.
 
 **Setup** (first run):
 
@@ -96,17 +106,25 @@ cp .env.example .env        # fill in OPENAI_API_KEY and MODEL_ID to run the rea
 **Run**:
 
 ```sh
-npx tsx s06_subagents/code.ts                # offline demo model
-OPENAI_API_KEY=sk-... npx tsx s06_subagents/code.ts   # real model
+npx tsx s06_subagents/code.ts                # offline script (ignores the prompt)
+OPENAI_API_KEY=sk-... npx tsx s06_subagents/code.ts   # real model (delegation follows the question)
 ```
 
-Try these prompts:
+With a key, try these prompts:
 
 1. `Use a subtask to find out what test/build tooling this repo uses`
 2. `Delegate: read the files under spec/ and summarize the authoring rules`
 3. `Research how the web/ docs site is built, but keep my main thread clean`
 
-Watch for: do `[subagent spawned]` / `[subagent done]` appear? Are the child's commands printed with a `[sub]` prefix? Does the parent only continue with the single conclusion the child returned?
+Watch for: each turn prints the full `output` first. Compare `── parent turn` / `── sub turn` and the **thread item counts**. While `task` is running, the parent thread should pause; `$ cat package.json` belongs to a `sub turn` only. The parent finishes with a single conclusion string. A second prompt in the same process **does not spawn again**.
+
+---
+
+## In Short: Still the Same Loop
+
+s01 through s05 did not replace the loop. Neither does s06. Stop or continue still depends on `function_call`; `task` is just another name in the dispatch table. What actually changes is **the array you feed in** and **the tool list**: the child gets a fresh `input = [task]`, has no `task` tool, and returns only conclusion text as one `function_call_output` on the parent thread.
+
+A sub-agent is not a different kind of agent, and it is not a second model. It is `agentLoop` re-entered on a clean input.
 
 ---
 
@@ -155,4 +173,4 @@ Codex Cloud's model can be read as the sub-agent idea pushed to its limit: **eve
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v5, en@v5 -->
