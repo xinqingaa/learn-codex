@@ -118,6 +118,14 @@ OPENAI_API_KEY=sk-... npx tsx s05_plan_tool/code.ts   # 真实模型（工具跟
 
 ---
 
+## 小总结：同一条循环
+
+前五章没有换循环。停不停看有没有 `function_call`；问不问人是审批；碰不碰得到是沙箱；按名字分发是工具表；`update_plan` 只改 harness 里的清单。图里画的是职责叠层——教学代码每章会收窄工具集，并不是把 s03/s04 原样叠进 s05。
+
+![s01–s05 Agent Loop](images/s01-s05-loop.svg)
+
+---
+
 ## 接下来
 
 Agent 现在会规划了。但如果某一步本身就是个大任务——「重构整个认证模块」——光靠在一份清单里打勾不够。这一步背后是几十个小操作，全堆在同一个对话里，照样把上下文淹没。
@@ -163,4 +171,4 @@ Codex 的会话会被持久化成 rollout（见 s09），计划作为会话状�
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->

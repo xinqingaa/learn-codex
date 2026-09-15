@@ -118,6 +118,14 @@ Watch for: each turn prints the full `output` array. `update_plan` only changes 
 
 ---
 
+## In short: still one loop
+
+Chapters 1–5 do not replace the loop. Zero `function_call`s means stop; approval decides whether to ask; the sandbox decides what can be touched; dispatch routes by name; `update_plan` only rewrites the harness checklist. The figure is a stack of responsibilities — each chapter's teaching code narrows the toolset, and does not paste s03/s04 into s05.
+
+![s01–s05 Agent Loop](images/s01-s05-loop.svg)
+
+---
+
 ## What's Next
 
 The agent can plan now. But if a single step is itself a huge task — "refactor the whole auth module" — checking a box on a list isn't enough. Behind that one step are dozens of small operations, and piling them all into the same conversation drowns the context anyway.
@@ -163,4 +171,4 @@ Codex persists a session as a rollout (see s09), and the plan, as part of sessio
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->
