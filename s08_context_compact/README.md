@@ -66,7 +66,37 @@ for (let i = thread.length - 1; i >= 0; i--) {
 if (split === 0) return; // 历史还不够老，没什么可压
 ```
 
-**第 3 步**：把切出来的旧历史总结成一段 brief（调一次模型；离线时返回脚本化摘要），包成一条新的 user 消息。
+**第 3 步**：把切出来的旧历史总结成一段 brief，包成一条新的 user 消息。
+
+brief 就是摘要正文：`summarize()` 返回的那串字符串。压完之后整段塞进一条新的 user 消息，后面 agent 对「过去」的全部认知，就来自这一条。
+
+这段 brief 从哪来？**再调一次模型**——不是本地截断，也不是正则抽取。教学版的 `summarize()` 把旧历史序列化后发给模型，系统提示和 agent 那次完全不同：不要工具、只要短文本，并要求写成最多 5 条 bullet。
+
+```ts
+async function summarize(oldTurns: unknown[]): Promise<string> {
+  const transcript = oldTurns.map((i) => JSON.stringify(i)).join("\n");
+  const resp = await openai.responses.create({
+    model: MODEL,
+    instructions:
+      "Summarize this coding-agent transcript in at most 5 bullets. Keep the " +
+      "current goal, files touched and pending work. Respond with text only.",
+    input: transcript,
+  });
+  // ...取出 output_text 作为 brief
+}
+```
+
+这里的 **bullet = 项目符号列表项**（`- xxx`），不是压缩流程里的另一种对象。提示词只是在约束格式：别写成一篇长文，最多五条，并尽量保住「当前目标 / 动过的文件 / 还没做完的事」。真实模型可能返回：
+
+```
+- Goal: run the step log through later phases
+- Files: none touched; only ran a verbose node -e logger
+- Pending: continue from phase three
+```
+
+这几条加在一起就是 brief。离线 demo 甚至连列表都没有，直接返回一段话，照样当 brief 用——没有 API key 时不打这次总结请求，用脚本化摘要保证 demo 可复现。
+
+然后把 brief 包成一条 user 消息：
 
 ```ts
 const oldTurns = thread.slice(0, split);
@@ -110,7 +140,23 @@ async function compactThread(thread: unknown[]): Promise<void> {
 }
 ```
 
-**核心洞察**：压缩没有改变 agent 的形状——循环还是那个循环，工具还是那些工具。它只是在「调用模型」之前加了一道「腾地方」的闸门。离线 demo 会连着跑好几个「阶段」，每个阶段都往 thread 里灌一大段 verbose 输出，你能清楚看到 token 数一路涨过预算、触发 `[auto-compact]`，然后从 700 多掉回几十——而 agent 依旧接着干活，因为它看到的「过去」已经换成了那条摘要。
+同一次会话里其实有两类模型调用，别混在一起：
+
+| | Agent 那次（`callModel`） | Compact 那次（`summarize`） |
+|---|---|---|
+| 目的 | 继续干活 | 把旧历史压成 brief |
+| 工具 | 有 shell | **没有**，纯文本总结 |
+| 系统提示 | coding agent，Act don't explain | 最多 5 条 bullet，保住目标 / 文件 / 未完成工作 |
+| 输入 | 当前 thread（压缩后是「摘要 + 当前轮」） | 被切掉的旧历史全文 |
+| 输出 | 工具调用或最终回复 | 一段短摘要 |
+
+这也是 `/compact` 要额度的原因：压缩本身就是一次完整的 API 请求。贵的是**输入**——几乎整段旧历史都要再喂进去读一遍；输出很短，通常不贵。自动 compact 和手动 `/compact` 花的是同一种额度，只是谁按的按钮不同。
+
+但后面每一轮 agent 调用都会便宜一截：原来每轮都要重传那一大段旧历史，现在只传一条摘要。长会话里，先付一次总结费，换之后每轮都少付。
+
+还有一个必须「提前压」的原因：总结请求本身也要装进上下文窗口。如果等窗口已经爆了再 compact，连这次 `summarize` 都发不出去。所以 `TOKEN_BUDGET` 必须设在硬上限之下——教学版设成 700 是为了几轮就触发；真 Codex 是看真实 usage 距离窗口还有多远。
+
+**核心洞察**：压缩没有改变 agent 的形状——循环还是那个循环，工具还是那些工具。它只是在「调用模型」之前加了一道「腾地方」的闸门；腾地方的手段本身也是一次模型调用。离线 demo 会连着跑好几个「阶段」，每个阶段都往 thread 里灌一大段 verbose 输出，你能清楚看到 token 数一路涨过预算、触发 `[auto-compact]`，然后从 700 多掉回几十——而 agent 依旧接着干活，因为它看到的「过去」已经换成了那条摘要。
 
 ---
 
@@ -138,7 +184,7 @@ OPENAI_API_KEY=sk-... npx tsx s08_context_compact/code.ts   # 真实模型
 
 1. 直接跑一遍，盯着 `[context ~N tokens / budget 700]` 和 `[auto-compact]` 两行：第几轮开始超预算？压缩后掉到多少？
 2. 把 `TOKEN_BUDGET` 改小（比如 `300`），看压缩是不是来得更早、更频繁。
-3. 设上真实 `OPENAI_API_KEY` 再跑，看真实模型生成的摘要长什么样。
+3. 设上真实 `OPENAI_API_KEY` 再跑，看真实模型是不是按几条 bullet 写出 brief（离线 demo 则是一段话）。
 
 观察重点：压缩后 thread 里只剩「一条摘要项 + 当前轮」，但 agent 依然能接着干活——它对「过去」的全部认知，就是那条摘要。
 
@@ -174,7 +220,7 @@ s09 Memory & Sessions → 把每一轮追加写进 `.codex/rollout.jsonl`；下�
 <details>
 <summary>三、除了自动触发，还有手动 `/compact`</summary>
 
-教学版只演示「超过预算就自动压缩」。Codex 的 TUI 还提供一个手动的 `/compact` 斜杠命令，让用户在觉得上下文变笨、或者想主动清理时随时触发同一套压缩流程。自动与手动走的是同一条「总结 → 替换 → 继续」的路，区别只在触发源：一个是 harness 按 token 用量主动发起，一个是用户主动发起。
+教学版只演示「超过预算就自动压缩」。Codex 的 TUI 还提供一个手动的 `/compact` 斜杠命令，让用户在觉得上下文变笨、或者想主动清理时随时触发同一套压缩流程。自动与手动走的是同一条「总结 → 替换 → 继续」的路，区别只在触发源：一个是 harness 按 token 用量主动发起，一个是用户主动发起。因为总结就是一次模型调用，`/compact` 也要额度——付的是把旧历史再读一遍的输入 token。
 
 </details>
 
@@ -189,4 +235,4 @@ s09 Memory & Sessions → 把每一轮追加写进 `.codex/rollout.jsonl`；下�
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

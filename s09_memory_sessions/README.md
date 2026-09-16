@@ -27,6 +27,10 @@
 
 把会话写成一个**只追加（append-only）的 JSONL 日志**：每产生一个新 item（user 消息、工具调用、工具输出、最终回复），就立刻把它序列化成一行，追加到 `rollout-<id>.jsonl`。进程可以随时死掉，磁盘上的日志还在——于是一整套**会话生命周期**都建立在这份日志上。
 
+这里的「序列化」容易听成「把整个对话写成一个大 JSON」。两者都是把对象变成文本存盘，**差别在粒度**。一整坨对话 JSON 是把当前整个 `thread` 写成一个数组，每来一条新消息就**整文件重写**；JSONL（JSON Lines）是每个 item 单独成一行，新 item 只在文件末尾追加，前面已经落盘的行一动不动。教学版和 Codex 选的都是后者。
+
+也不选 MySQL / PostgreSQL。Codex 是**本机 CLI**：一个开发者、一台机器、一份会话一份日志。访问模式几乎只有「追加一行、整段重放、复制、移动、删除」，不是「跨用户 JOIN、按任意字段检索一万条会话」。数据库能做这些事，但要先跑一个服务、管账号、做 schema——对这个场景是多余的。会话日志里还常有源码和密钥，默认留在 `~/.codex/sessions/`，不出本机。
+
 | 概念 | 作用 | 教学版实现 |
 |------|------|-----------|
 | `rollout-<id>.jsonl` | 一个会话的只追加日志 | 每个 item 一行 JSON |
@@ -64,6 +68,52 @@ const archivedPath = (id: string) => join(ARCHIVE_DIR, `rollout-${id}.jsonl`);
 ```
 
 **第 2 步**：开新会话写日志头（`session_meta`），item 一产生就 write-through 追加成一行。
+
+如果把整个 `thread` 存成「一整坨 JSON」，文件会是一个大数组，下一轮得读出来、`push`、再整份 `writeFile`。历史越长越慢；写到一半进程挂了，文件可能截断，**整份会话都解析失败**。JSONL 把同一段历史拆成互不包裹的行：
+
+```jsonl
+{"type":"session_meta","id":"sess_abc","cwd":"/Users/lrq/work","started":"2026-09-16T17:06:00.000Z"}
+{"role":"user","content":"Show the working directory."}
+{"type":"function_call","name":"shell","arguments":"{\"command\":\"pwd\"}"}
+{"type":"function_call_output","call_id":"call_1","output":"/Users/lrq/work"}
+{"type":"message","content":[{"type":"output_text","text":"..."}]}
+```
+
+新 item 来了，只做这件事：
+
+```ts
+appendFileSync(path, JSON.stringify(item) + "\n");
+```
+
+教学版时间写在日志头的 `started` 里，后面每一行就是当时推进 thread 的那个对象，并不给每条再盖一个时间戳。resume 时按行 `split("\n")`，每行 `JSON.parse` 一次，跳过 `session_meta`，拼回精确的 thread。
+
+| | 一整坨 JSON | JSONL 只追加 |
+|---|---|---|
+| 文件长什么样 | 一个大数组 `[...]` | 每行一个对象，互不包裹 |
+| 来了新 item | 重写整个文件 | 末尾加一行 |
+| 写入成本 | 历史越长越慢 | 永远是追加一行 |
+| 写到一半崩溃 | 整个文件可能坏掉，会话全丢 | 已经落盘的行还在，最多丢最后没写完的那一行 |
+| 人怎么看 | 得整个 parse 才知道最新一条 | `tail -1` 就是最新一条 |
+| fork | 复制整份大 JSON | 复制所有行，换个新文件头 |
+
+格式选完，存储引擎也要选。本地 JSONL 和 MySQL / PostgreSQL 不是「谁更专业」，是**访问模式对不上**：
+
+| | 本地 JSONL | MySQL / PostgreSQL |
+|---|---|---|
+| 部署 | 没有服务，目录在就行 | 要跑数据库进程、账号、迁移 |
+| 写入 | 追加一行 | `INSERT`，还要连库 |
+| 恢复 | 按行 replay 成 thread | `SELECT` 再拼 |
+| fork / archive | `cp` / `mv` | `INSERT … SELECT` / 改状态位 |
+| 人怎么看 | `cat` / `tail` / `grep` | 得写 SQL 或做管理界面 |
+| 并发 / 跨机 | 弱：同一文件多进程写不安全，不同机器不同步 | 强：事务、索引、复制 |
+| 跨会话查询 | 弱：基本靠扫文件或 grep | 强：按用户、路径、时间、工具名检索 |
+| 隐私 | 默认在本机 home | 容易变成远程库，代码和密钥出了本机 |
+
+**本地磁盘适合**：单人 CLI、会话就是「一条日志」、生命周期能用文件操作表达、日志可能含源码和密钥、希望零运维、希望 `tail` 就能审计。这正是 Codex 和教学版的场景。
+
+**MySQL / PostgreSQL 适合**：多租户 SaaS、团队共享会话、要按「谁改过 `auth.ts`」这类条件查、多进程多机同时写、要和组织账号 / 审计 / 备份体系接在一起。云端 Agent、协作产品更常走这条。
+
+中间还有 SQLite：仍是本地一个文件，带索引和事务，适合「本机但要按字段查很多会话」。Codex 连 SQLite 都没用，因为 `resume` / `fork` / `archive` / `delete` 已经能用目录操作表达，JSONL 对人更友好。
 
 ```ts
 function startRollout(id: string, forkedFrom?: string): string {
@@ -200,7 +250,14 @@ s10 Instructions → 内置 base + 项目 `AGENTS.md` + `config.toml` 偏好，�
 <details>
 <summary>五、为什么是 append-only JSONL</summary>
 
-教学版和 Codex 都选了「只追加 + 每行一条 JSON」这种格式，原因很实在：崩溃安全（已写入的行不会因中途退出而损坏）、写入便宜（追加一行是 O(1)）、对人类友好（可以直接 `cat` / `tail` 审计每一步），而且天然适合做「复制出一条分支、整段重放、交给别的工具分析」的会话存档。开头那行 `session_meta`（id、cwd、模型与配置等）让 resume 能**精确**重建线程，而不是重新理解一段文字。
+教学版和 Codex 都选了「只追加 + 每行一条 JSON」这种格式，而不是把整个 `thread` 写成一个大 JSON 数组再整文件重写。原因很实在：崩溃安全（已写入的行不会因中途退出而损坏）、写入便宜（追加一行是 O(1)）、对人类友好（可以直接 `cat` / `tail` 审计每一步），而且天然适合做「复制出一条分支、整段重放、交给别的工具分析」的会话存档。开头那行 `session_meta`（id、cwd、模型与配置等）让 resume 能**精确**重建线程，而不是重新理解一段文字。
+
+</details>
+
+<details>
+<summary>六、为什么是本地磁盘，不是 MySQL / PostgreSQL</summary>
+
+真实 Codex 把 rollout 放在 `$CODEX_HOME/sessions/`，不接任何数据库。这不是「文件比数据库原始」，而是产品形态决定的：CLI 跑在开发者自己的机器上，一份会话对应一个文件，生命周期子命令就是对这个目录的增删移查。引入 MySQL / PostgreSQL 要带上服务、网络、账号和 schema，换来的并发与跨会话检索，本地单人场景用不上；会话里又常有仓库内容和密钥，默认出本机反而不合适。等产品变成多租户云端 Agent、要按人 / 仓库 / 时间检索或跨机共享会话，再把这份日志同步进数据库才划算——那是另一套 harness，不是 Codex CLI 这条路径。
 
 </details>
 
@@ -208,4 +265,4 @@ s10 Instructions → 内置 base + 项目 `AGENTS.md` + `config.toml` 偏好，�
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v3, en@v3 -->

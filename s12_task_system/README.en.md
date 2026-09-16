@@ -37,6 +37,31 @@ Upgrade the plan from "a thought in the model's head" to a **shared task board h
 
 There's exactly one core rule: **a task may not be claimed until every entry in its `blockedBy` is `completed`**. Ordering no longer relies on the model's memory — it's a hard constraint on the board. In the offline demo you'll see the model try to jump the gun and claim the blocked `t2`, only to be refused by the board; once `t1` completes, `t2` and `t4` unlock automatically.
 
+The task board is **not** "a more complete `update_plan`", and it is **not** a scheduler wrapped around `agentLoop`. Three layers stack; the loop stays at the bottom:
+
+```
+agentLoop          the engine: call tool → run it → feed the result back (unchanged since s01)
+    │
+    ├─ shell           does the real work
+    ├─ update_plan     visibility: list the steps, the harness can see them, but cannot stop skipping (s05, in Codex source)
+    └─ task-board tools  enforcement: create / claim / complete; refuse if deps aren't ready (extra in this chapter)
+            │
+            ▼
+       TaskBoard (a graph in harness memory)
+```
+
+The model still decides which tool to call next; the board only says yes or no on `claim_task`. A refusal lands in context as a tool result, so the model has to claim something else.
+
+| | `update_plan` (s05) | task board (s12) |
+|---|---|---|
+| who implemented it | **already in Codex source** | **written extra for this tutorial**, not a replica of a built-in Codex feature |
+| what the harness does | sees and renders | sees, and **refuses illegal claims** |
+| deps / owner | none | `blockedBy` + `owner` |
+| model skips a step | allowed | `claim_task` is refused |
+| role | visibility: the plan is visible to the harness and the context | shared truth: the board decides who goes first |
+
+"A teaching step up" means: Codex the product / `codex-rs` implements `update_plan`, the stateful checklist; it does **not** implement a full task board with a dependency graph and refused claims. This chapter **adds one hard constraint** on that same pending / in_progress / completed state machine, so "order becomes a rule, not diligence" is runnable and visible, and so later chapters can put multiple agents on one board (s15–s17). It is not a missing piece of Codex source, and it does not claim Codex already has this board.
+
 ---
 
 ## How It Works
@@ -98,7 +123,7 @@ const DISPATCH: Record<string, (args) => string> = {
 };
 ```
 
-**Core insight**: `update_plan` is a sticky note the model writes for itself; a task board is a **rule the harness enforces**. A sticky note can be rewritten on a whim, but a `claim_task` refusal is set in stone — if the dependencies aren't ready, you simply can't claim it. Turning "order" from the model's diligence into the harness's constraint is exactly what makes multi-agent collaboration (s15–s17) possible later: everyone answers to the same board and the same rules.
+**Core insight**: `update_plan` is a sticky note the model writes for itself; a task board is a **rule the harness enforces**. A richer checklist is not the point — **turning diligence into enforcement** is. A sticky note can be rewritten on a whim, but a `claim_task` refusal is set in stone — if the dependencies aren't ready, you simply can't claim it. Turning "order" from the model's diligence into the harness's constraint is exactly what makes multi-agent collaboration (s15–s17) possible later: everyone answers to the same board and the same rules.
 
 ---
 
@@ -141,14 +166,20 @@ s13 Background Tasks → push slow operations into the **background**: the agent
 <details>
 <summary>Into the Codex source</summary>
 
-> The following is based on the overall structure of OpenAI's open-source [`openai/codex`](https://github.com/openai/codex) repo (`codex-rs`, written in Rust). The chapter's task board turns "a plan" into a dependency graph; the closest built-in mechanism in Codex is `update_plan`, and the differences are persistence and dependency enforcement.
+> The following is based on the overall structure of OpenAI's open-source [`openai/codex`](https://github.com/openai/codex) repo (`codex-rs`, written in Rust). The built-in Codex tool that corresponds to "a plan" is `update_plan`. This chapter's `TaskBoard` is **not** a hidden feature copied from that source — it is an extra dependency-enforcement layer the tutorial adds on top of `update_plan`'s state machine, so you can watch the harness refuse.
 
-**The chapter's `TaskBoard` ≈ a "dependency-hardened" version of Codex's plan tool.** Each item below compares them.
+**The chapter's `TaskBoard` = Codex `update_plan`'s state machine + a dependency check the tutorial writes on top.** Each item below compares them.
 
 <details>
-<summary>1. Codex's built-in is update_plan, not a full task board</summary>
+<summary>1. Codex source implements update_plan, not a full task board</summary>
 
-Codex's built-in planning tool for the model is `update_plan` (see s05): the model rewrites and returns a whole list of steps (each with a `pending / in_progress / completed` status), and the core turn loop handles it inside the harness, updating session state — **no sandbox, no execution**. It has status and progress, but **no `blockedBy` dependency graph, no owner, no enforced "refuse to claim."** The chapter's task board adds exactly that dependency-checking constraint on top of `update_plan`'s state machine — a teaching step up, not a replica of a native Codex feature.
+Spell out what exists and what does not:
+
+- **Codex source has**: `update_plan` (see s05). The model rewrites and returns a whole list of steps (each `pending / in_progress / completed`); the core turn loop handles it inside the harness and updates session state — **no sandbox, no execution**. Status and progress, yes.
+- **Codex source does not have**: `create_task` / `claim_task` / `complete_task`, a `blockedBy` dependency graph, `owner`, or "refuse the claim if deps aren't done."
+- **This chapter adds**: `TaskBoard` and those five tools. It is not "a simplified copy of a task board already in the source"; it is a teaching **extra step** — the same three-state machine plus a hard constraint, so "the harness enforces order" is runnable and observable.
+
+So "a teaching step up" = the tutorial steps up. It does not mean the source hides a stronger implementation we skipped.
 
 </details>
 
@@ -173,8 +204,8 @@ Both the chapter and Codex expose task operations as **model-callable tools**, n
 
 </details>
 
-**In one line**: the chapter's task board = Codex `update_plan`'s state machine + a layer of dependency enforcement + (left to s09) persistence. It turns "what to do first" from the model's diligence into the harness's rule — the minimal precondition for multiple executors to collaborate on one shared plan.
+**In one line**: in Codex source the plan is `update_plan` (visibility); this chapter's task board is extra dependency enforcement the tutorial writes (the right to refuse). Both hang off the same `agentLoop`; neither is a second loop. Turning "what to do first" from the model's diligence into the harness's rule is the minimal precondition for multiple executors to collaborate on one shared plan.
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

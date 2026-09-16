@@ -27,6 +27,10 @@ The model has no persistent state of its own; all "memory" lives in the context,
 
 Write the session as an **append-only JSONL log**: every time a new item is produced (user message, tool call, tool output, final reply), serialize it to a line and append it to `rollout-<id>.jsonl`. The process can die at any moment; the log on disk survives — and a whole **session lifecycle** is built on top of that log.
 
+"Serialize" here is easy to hear as "dump the whole conversation into one big JSON". Both turn objects into text on disk; **the difference is granularity**. A single conversation JSON writes the current `thread` as one array and **rewrites the whole file** on every new message. JSONL (JSON Lines) makes each item its own line: a new item is only appended at the end, and every line already on disk stays untouched. The chapter and Codex both pick the latter.
+
+They also skip MySQL / PostgreSQL. Codex is a **local CLI**: one developer, one machine, one log file per session. The access pattern is almost only "append a line, replay the whole thing, copy, move, delete" — not "JOIN across users, search ten thousand sessions by arbitrary fields". A database can do those file operations, but only after you run a server, manage accounts, and keep a schema — surplus for this scene. Session logs also often contain source and secrets; they stay in `~/.codex/sessions/` by default and never leave the machine.
+
 | concept | role | teaching implementation |
 |---------|------|-------------------------|
 | `rollout-<id>.jsonl` | one session's append-only log | one JSON item per line |
@@ -64,6 +68,52 @@ const archivedPath = (id: string) => join(ARCHIVE_DIR, `rollout-${id}.jsonl`);
 ```
 
 **Step 2**: a new session writes its header (`session_meta`); each item is written through as a line the moment it's produced.
+
+If you stored the whole `thread` as "one big JSON", the file would be a single array: the next turn would have to read it, `push`, and `writeFile` the whole thing again. The longer the history, the slower the write; crash halfway and the file can truncate, **so the entire session fails to parse**. JSONL splits the same history into independent lines:
+
+```jsonl
+{"type":"session_meta","id":"sess_abc","cwd":"/Users/lrq/work","started":"2026-09-16T17:06:00.000Z"}
+{"role":"user","content":"Show the working directory."}
+{"type":"function_call","name":"shell","arguments":"{\"command\":\"pwd\"}"}
+{"type":"function_call_output","call_id":"call_1","output":"/Users/lrq/work"}
+{"type":"message","content":[{"type":"output_text","text":"..."}]}
+```
+
+A new item does only this:
+
+```ts
+appendFileSync(path, JSON.stringify(item) + "\n");
+```
+
+In the teaching version the timestamp lives on the header's `started`; every later line is the object that was just pushed onto the thread — items themselves don't get a second timestamp. Resume splits on `"\n"`, `JSON.parse`s each line, skips `session_meta`, and rebuilds the exact thread.
+
+| | one big JSON | append-only JSONL |
+|---|---|---|
+| what the file looks like | one large array `[...]` | one object per line, not wrapped together |
+| a new item arrives | rewrite the whole file | append one line at the end |
+| write cost | slower as history grows | always one append |
+| crash mid-write | the whole file can break, session gone | already-written lines survive; at worst you lose the last incomplete line |
+| how a human inspects it | must parse the whole document to see the latest item | `tail -1` *is* the latest item |
+| fork | copy the whole JSON blob | copy every line, write a new header |
+
+Format is one choice; the storage engine is another. Local JSONL versus MySQL / PostgreSQL is not "which is more professional" — **the access patterns don't match**:
+
+| | local JSONL | MySQL / PostgreSQL |
+|---|---|---|
+| deploy | no server; a directory is enough | a database process, accounts, migrations |
+| write | append one line | `INSERT`, plus a connection |
+| recover | replay lines into a thread | `SELECT` and reassemble |
+| fork / archive | `cp` / `mv` | `INSERT … SELECT` / flip a status flag |
+| how a human inspects it | `cat` / `tail` / `grep` | write SQL or build an admin UI |
+| concurrency / multi-machine | weak: unsafe multi-writer on one file; machines don't sync | strong: transactions, indexes, replication |
+| cross-session query | weak: mostly scan files or grep | strong: search by user, path, time, tool name |
+| privacy | default: the local home directory | easy to become a remote store; code and secrets leave the machine |
+
+**Local disk fits** a single-user CLI, where a session *is* one log, the lifecycle is file operations, the log may contain source and secrets, you want zero ops, and `tail` should be enough to audit. That is Codex and this chapter.
+
+**MySQL / PostgreSQL fit** a multi-tenant SaaS, team-shared sessions, queries like "who touched `auth.ts`", many processes and machines writing at once, and a hook into org accounts / audit / backups. Cloud agents and collaboration products usually take this path.
+
+SQLite sits in the middle: still one local file, but with indexes and transactions, for "on this machine, but I need to query many sessions by field". Codex doesn't even use SQLite, because `resume` / `fork` / `archive` / `delete` already map to directory operations, and JSONL is kinder to a human reader.
 
 ```ts
 function startRollout(id: string, forkedFrom?: string): string {
@@ -200,7 +250,14 @@ Once sessions pile up, they need managing. `codex archive <SESSION>` **tucks a s
 <details>
 <summary>5. Why append-only JSONL</summary>
 
-Both the chapter and Codex choose an "append-only, one JSON object per line" format for solid reasons: crash safety (already-written lines aren't corrupted by a mid-write exit), cheap writes (appending a line is O(1)), human-friendliness (you can `cat` / `tail` it to audit every step), and it is a natural artifact for "copying out a branch, replaying it wholesale, or handing it to other tools". The leading `session_meta` line (id, cwd, model and configuration, and so on) lets resume rebuild the thread **exactly**, instead of re-interpreting a blob of text.
+Both the chapter and Codex choose "append-only + one JSON per line", not rewriting the whole `thread` as one large JSON array. The reasons are concrete: crash-safe (already-written lines survive a mid-exit), cheap to write (appending a line is O(1)), human-friendly (you can `cat` / `tail` to audit every step), and a natural fit for "copy out a branch, replay the whole thing, hand it to another tool" session archives. The opening `session_meta` line (id, cwd, model and config, and so on) lets resume rebuild the thread **exactly**, rather than re-interpreting a blob of prose.
+
+</details>
+
+<details>
+<summary>6. Why local disk, not MySQL / PostgreSQL</summary>
+
+Real Codex keeps rollouts under `$CODEX_HOME/sessions/` and talks to no database. That is not "files are more primitive than a database" — the product shape decides it. The CLI runs on the developer's own machine, one session is one file, and the lifecycle subcommands are create / delete / move / query against that directory. Bringing in MySQL / PostgreSQL adds a server, a network, accounts, and a schema, in exchange for concurrency and cross-session search this single-user scene does not need; the logs often hold repo contents and secrets, so leaving the machine by default is the wrong trade. When the product becomes a multi-tenant cloud agent that must search by person / repo / time or share sessions across machines, syncing this log into a database starts to pay off — that is a different harness, not the Codex CLI path.
 
 </details>
 
@@ -208,4 +265,4 @@ Both the chapter and Codex choose an "append-only, one JSON object per line" for
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v3, en@v3 -->

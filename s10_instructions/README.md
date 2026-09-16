@@ -57,6 +57,17 @@ s01 够用。但 Agent 越长大，三个痛点越明显：
 
 关键设计：**文本合并**和**配置解析**是两条独立路径。前者决定模型「读到什么」，后者决定它「是谁、想多深」。
 
+容易混成一句话：「除了 AGENTS.md，还可以把提示词做成配置再拼装。」方向对，但 `config.toml` **不是**另一段提示词。收成两句更准：
+
+- **`AGENTS.md` 是提示词的一层**，和内置 base 拼成 `instructions`。换项目不用改 harness。真实 Codex 还会再并一份全局的 `~/.codex/AGENTS.md`。
+- **`config.toml` 是另一套配置**，用来选模型、推理档位、审批和沙箱。`--profile deep` 改的是 `effort`，不会把任何文字追加进 system prompt。
+
+| | 进不进 `instructions` | 改它影响什么 |
+|---|---|---|
+| 内置 base | 进，永远在最前 | 模型读到的身份和工具用法 |
+| `AGENTS.md` | 进，追加在 base 后面 | 模型读到的项目规矩 |
+| `config.toml` / `--profile` / env | **不进** | 这次调用的 `model`、`effort`、策略 |
+
 ---
 
 ## 工作原理
@@ -81,7 +92,7 @@ function loadAgentsMd(): string | null {
 }
 ```
 
-**第 3 步**：配置层。一个 `config.toml` 式的对象，含 `profiles` 和 `model_providers`。
+**第 3 步**：配置层。一个 `config.toml` 式的对象，含 `profiles` 和 `model_providers`。这些键**不会**拼进 `instructions`，只在下一步被解析成取值。
 
 ```ts
 const CONFIG: CodexConfig = {
@@ -126,7 +137,7 @@ function buildInstructions(): { text: string; layers: string[] } {
 }
 ```
 
-**第 6 步**：把解析结果喂给 API——模型、instructions、推理档位都来自上面的解析，不再是字面量。
+**第 6 步**：把两条路径的结果分别喂给 API——`instructions` 来自文本合并，`model` / `effort` 来自配置解析，都不再是字面量。
 
 ```ts
 const resp = await openai.responses.create({
@@ -137,7 +148,9 @@ const resp = await openai.responses.create({
 });
 ```
 
-**核心洞察**：prompt 不再是焊死的字符串，而是运行时的「文本合并 + 配置解析」。换项目（换一份 `AGENTS.md`）或换档位（换一个 `--profile`），同一个 harness 的行为就变了。离线 demo 里，本章自带的 `AGENTS.md` 要求「收尾前先跑 `git status`」，脚本化模型照做了——这证明拼装出来的 prompt 真的驱动了模型的行为，而不是一段摆设。
+同一套 harness，换一份 `AGENTS.md` 或换一个 `--profile`，行为就变了，但变的不是同一处：前者改模型读到的字，后者改这次调用的参数。
+
+**核心洞察**：prompt 不再是焊死的字符串，而是运行时的「文本合并 + 配置解析」。拼装不等于「把所有东西都写成提示词」——AGENTS.md 进 prompt，config 不进。离线 demo 里，本章自带的 `AGENTS.md` 要求「收尾前先跑 `git status`」，脚本化模型照做了——这证明拼装出来的 prompt 真的驱动了模型的行为，而不是一段摆设。
 
 ---
 
@@ -168,7 +181,7 @@ OPENAI_API_KEY=sk-... npx tsx s10_instructions/code.ts   # 真实模型
 2. 分别加 `--profile fast` 和 `--profile deep` 跑一次，看 `effort` 怎么从 `medium` 变成 `low` / `high`。
 3. 编辑 `s10_instructions/AGENTS.md`（比如把规则改成「收尾前先跑 `git diff`」），再跑，看启动面板和模型行为怎么立刻跟着变。
 
-观察重点：`resolved:` 里的 `model` / `effort` 来自哪一层？改掉 `AGENTS.md` 之后，拼装出的 prompt 和模型行为是不是马上跟着变了？
+观察重点：`resolved:` 里的 `model` / `effort` 来自配置解析，不会出现在上面打印的 system prompt 正文里；改掉 `AGENTS.md` 之后，拼装出的 prompt 和模型行为是不是马上跟着变了？
 
 ---
 
@@ -202,7 +215,7 @@ s11 Error Recovery → 给 `callModel` 包一层「分类重试」：限流退�
 <details>
 <summary>三、config.toml：model、effort、policies、profiles、providers</summary>
 
-教学版的 `CONFIG` 对象对应真实的 `~/.codex/config.toml`。它支持的键包括 `model`、`model_reasoning_effort`、`approval_policy`、`sandbox_mode`，以及 **`profiles`**（一组命名预设，用 `--profile` 选择，可覆盖根上的取值）和 **`model_providers`**（自定义提供方，含 `wire_api`，用于把 Codex 指到兼容的网关而非默认 API）。教学版把这些都放进一个对象字面量，是为了不引入 TOML 解析也能讲清「分层 + 覆盖」的结构。
+教学版的 `CONFIG` 对象对应真实的 `~/.codex/config.toml`。它支持的键包括 `model`、`model_reasoning_effort`、`approval_policy`、`sandbox_mode`，以及 **`profiles`**（一组命名预设，用 `--profile` 选择，可覆盖根上的取值）和 **`model_providers`**（自定义提供方，含 `wire_api`，用于把 Codex 指到兼容的网关而非默认 API）。这些都是**调用参数**，不是再拼进 system prompt 的一段文字。教学版把这些都放进一个对象字面量，是为了不引入 TOML 解析也能讲清「分层 + 覆盖」的结构。
 
 </details>
 
@@ -213,8 +226,8 @@ s11 Error Recovery → 给 `callModel` 包一层「分类重试」：限流退�
 
 </details>
 
-**一句话**：Codex 的指令装配核心就是教学版这套「base + AGENTS.md 合并成 instructions，config 解析出 model/effort/policies，按优先级覆盖」。所有额外机制——多模型的内置提示、多来源的 AGENTS.md、TOML 与 profiles/providers、更细的覆盖规则——都是为了让这套装配在真实多项目、多模型的使用里既灵活又可预期。先吃透「分层 + 覆盖 = 可配置的 prompt」这一条，其余都是工程加固。
+**一句话**：Codex 的指令装配核心就是教学版这套「base + AGENTS.md 合并成 instructions，config 解析出 model/effort/policies，按优先级覆盖」。AGENTS.md 是提示词的一层；config.toml 是另一套配置，不进 prompt。所有额外机制——多模型的内置提示、多来源的 AGENTS.md、TOML 与 profiles/providers、更细的覆盖规则——都是为了让这套装配在真实多项目、多模型的使用里既灵活又可预期。先吃透「分层 + 覆盖 = 可配置的 prompt，且文本和配置分道」这一条，其余都是工程加固。
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

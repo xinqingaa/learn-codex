@@ -37,6 +37,31 @@
 
 核心规则只有一条：**`blockedBy` 里的依赖没全部 `completed`，这个任务就不许认领**。顺序不再靠模型记性，而是板上的一条硬约束。离线 demo 里你能看到：模型想抢跑认领被阻塞的 `t2`，被任务板直接拒绝；等 `t1` 完成，`t2`、`t4` 自动解锁。
 
+任务板**不是**「更完整的 `update_plan`」，也**不是**包在 `agentLoop` 外面的调度器。三层叠在一起，loop 始终在最底：
+
+```
+agentLoop          发动机：调工具 → 执行 → 喂回去（s01 起从未改过）
+    │
+    ├─ shell           真干活
+    ├─ update_plan     能见度：列步骤，harness 看得见，但拦不住跳步（s05，Codex 源码里有）
+    └─ 任务板工具      强制力：create / claim / complete，依赖没就绪就拒绝（本章额外实现）
+            │
+            ▼
+       TaskBoard（harness 内存里的图）
+```
+
+模型还是自己决定下一步调哪个工具；板只在 `claim_task` 时说「行」或「不行」。拒绝作为工具结果进上下文，模型只能改认别的。
+
+| | `update_plan`（s05） | 任务板（s12） |
+|---|---|---|
+| 谁实现的 | **Codex 源码里就有** | **教程额外写的**，不是 Codex 内建功能的复刻 |
+| harness 做什么 | 看见、渲染 | 看见，并且 **拒绝非法认领** |
+| 依赖 / owner | 没有 | `blockedBy` + `owner` |
+| 模型跳步 | 可以 | `claim_task` 被拒 |
+| 定位 | 能见度：计划对 harness 和上下文可见 | 共享真相：谁先谁后由板裁决 |
+
+「教学上的加强版」的意思是：Codex 产品 / `codex-rs` 实现了 `update_plan` 这张有状态的清单；**没有**实现带依赖图和拒绝认领的完整任务板。本章在那套「pending / in_progress / completed」状态机上**多写了一层硬约束**，用来把「顺序从自觉变成规则」讲清楚，并给后面多 Agent 认同一块板（s15–s17）铺路——不是漏写了 Codex 源码，也不是声称 Codex 里已经有这块板。
+
 ---
 
 ## 工作原理
@@ -98,7 +123,7 @@ const DISPATCH: Record<string, (args) => string> = {
 };
 ```
 
-**核心洞察**：`update_plan` 是模型写给自己的便签，任务板是 **harness 强制执行的规则**。便签可以被模型随手改掉，而 `claim_task` 的拒绝是板上钉钉的——依赖没就绪就是认领不到。把「顺序」从模型的自觉变成 harness 的约束，这正是后面多 Agent 协作（s15–s17）能成立的前提：大家认的是同一块板、同一套规则。
+**核心洞察**：`update_plan` 是模型写给自己的便签，任务板是 **harness 强制执行的规则**。清单变完整不是重点，**规则从自觉变成强制**才是重点。便签可以被模型随手改掉，而 `claim_task` 的拒绝是板上钉钉的——依赖没就绪就是认领不到。把「顺序」从模型的自觉变成 harness 的约束，这正是后面多 Agent 协作（s15–s17）能成立的前提：大家认的是同一块板、同一套规则。
 
 ---
 
@@ -141,14 +166,20 @@ s13 Background Tasks → 把慢操作丢到**后台**跑：Agent 不等它，继
 <details>
 <summary>深入 Codex 源码</summary>
 
-> 以下基于 OpenAI 开源的 [`openai/codex`](https://github.com/openai/codex) 仓库（`codex-rs`，Rust 实现）的整体结构。教学版的任务板是把「计划」做成了一张带依赖的图；Codex 内建最接近的机制是 `update_plan`，差异在持久化与依赖强制上。
+> 以下基于 OpenAI 开源的 [`openai/codex`](https://github.com/openai/codex) 仓库（`codex-rs`，Rust 实现）的整体结构。Codex 源码里和「计划」对应的内建工具是 `update_plan`。本章的 `TaskBoard` **不是**从源码里抄出来的隐藏功能，而是教程在 `update_plan` 的状态机上额外加的依赖强制，用来演示「harness 能拒绝」。
 
-**教学版的 `TaskBoard` ≈ Codex 计划工具的「依赖加强版」。** 下面逐项对照。
+**教学版的 `TaskBoard` = Codex `update_plan` 的状态机 + 教程多写的一层依赖检查。** 下面逐项对照。
 
 <details>
-<summary>一、Codex 内建的是 update_plan，不是完整任务板</summary>
+<summary>一、Codex 源码实现了 update_plan，没有实现完整任务板</summary>
 
-Codex 给模型的内建计划工具是 `update_plan`（见 s05）：模型把一整份步骤列表（每项带 `pending / in_progress / completed` 状态）重写发回，核心 turn 循环在 harness 内部直接处理它、更新会话状态，**不走沙箱也不落地执行**。它有状态、有进度，但**没有 `blockedBy` 依赖图、没有 owner、没有「拒绝认领」的强制**。教学版的任务板正是在 `update_plan` 的状态机之上，加了依赖检查这一层硬约束——这是教学上的进阶，不是 Codex 原生功能的复刻。
+说清楚「有 / 没有」：
+
+- **Codex 源码有**：`update_plan`（见 s05）。模型把一整份步骤列表（每项带 `pending / in_progress / completed`）重写发回，核心 turn 循环在 harness 内部处理、更新会话状态，**不走沙箱也不落地执行**。有状态、有进度。
+- **Codex 源码没有**：`create_task` / `claim_task` / `complete_task`、`blockedBy` 依赖图、`owner`、以及「依赖没齐就拒绝认领」。
+- **本章额外实现**：`TaskBoard` 和这五个工具。它不是「把源码里已有的任务板简化了」，而是教学上**多走一步**——在同一套三状态机上加上硬约束，让「harness 强制顺序」可运行、可观察。
+
+所以「教学上的加强版」= 教程加强，不是源码里还有一份更强的实现没讲。
 
 </details>
 
@@ -173,8 +204,8 @@ Codex 的 `update_plan` 只表达「我现在做到哪一步」，不阻止模�
 
 </details>
 
-**一句话**：教学版的任务板 = Codex `update_plan` 的状态机 + 一层依赖强制 + （留给 s09 的）持久化。它把「先做什么」从模型的自觉变成 harness 的规则——这是让多个执行者能对同一份计划协作的最小前提。
+**一句话**：Codex 源码里的计划是 `update_plan`（能见度）；本章任务板是教程额外写的依赖强制（拒绝权）。两者都挂在同一个 `agentLoop` 上，都不是第二套循环。把「先做什么」从模型的自觉变成 harness 的规则——这是让多个执行者能对同一份计划协作的最小前提。
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

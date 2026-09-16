@@ -57,6 +57,17 @@ Split the system prompt into **layers**, assembled on demand at runtime; hand "w
 
 The key design: **text merging** and **config resolution** are two independent paths. The first decides what the model *reads*; the second decides *who it is and how hard it thinks*.
 
+It's easy to collapse this into one sentence: "besides AGENTS.md, you can also turn the prompt into config and assemble it." The direction is right, but `config.toml` is **not** another piece of prompt. Two sentences are more accurate:
+
+- **`AGENTS.md` is a prompt layer**, concatenated with the built-in base into `instructions`. Switch projects without touching the harness. Real Codex also merges a global `~/.codex/AGENTS.md`.
+- **`config.toml` is a separate config**, for choosing model, reasoning effort, approval, and sandbox. `--profile deep` changes `effort`; it does not append any prose to the system prompt.
+
+| | Goes into `instructions`? | Changing it affects |
+|---|---|---|
+| built-in base | yes, always first | the identity and tool usage the model reads |
+| `AGENTS.md` | yes, appended after base | the project rules the model reads |
+| `config.toml` / `--profile` / env | **no** | this call's `model`, `effort`, and policies |
+
 ---
 
 ## How It Works
@@ -81,7 +92,7 @@ function loadAgentsMd(): string | null {
 }
 ```
 
-**Step 3**: the config layer. A `config.toml`-style object with `profiles` and `model_providers`.
+**Step 3**: the config layer. A `config.toml`-style object with `profiles` and `model_providers`. These keys are **not** concatenated into `instructions`; the next step only resolves them into values.
 
 ```ts
 const CONFIG: CodexConfig = {
@@ -126,7 +137,7 @@ function buildInstructions(): { text: string; layers: string[] } {
 }
 ```
 
-**Step 6**: feed the resolved values to the API — model, instructions and reasoning effort all come from the resolution above, never from literals.
+**Step 6**: feed each path's result to the API separately — `instructions` from the text merge, `model` / `effort` from config resolution, never from literals.
 
 ```ts
 const resp = await openai.responses.create({
@@ -137,7 +148,9 @@ const resp = await openai.responses.create({
 });
 ```
 
-**Core insight**: the prompt is no longer a welded string — it's a runtime *text merge + config resolution*. Switch project (a different `AGENTS.md`) or switch effort (a different `--profile`) and the same harness behaves differently. In the offline demo, this chapter's bundled `AGENTS.md` asks the agent to "run `git status` before wrapping up" — and the scripted model does exactly that. That proves the assembled prompt genuinely drives the model's behavior, not just decorative text.
+The same harness behaves differently with a different `AGENTS.md` or a different `--profile`, but not in the same place: the first changes the words the model reads; the second changes this call's parameters.
+
+**Core insight**: the prompt is no longer a welded string — it's a runtime *text merge + config resolution*. Assembly does not mean "everything becomes prompt text" — AGENTS.md goes into the prompt; config does not. In the offline demo, this chapter's bundled `AGENTS.md` asks the agent to "run `git status` before wrapping up" — and the scripted model does exactly that. That proves the assembled prompt genuinely drives the model's behavior, not just decorative text.
 
 ---
 
@@ -168,7 +181,7 @@ Try these experiments:
 2. Run once with `--profile fast` and once with `--profile deep`, and watch `effort` change from `medium` to `low` / `high`.
 3. Edit `s10_instructions/AGENTS.md` (say, change the rule to "run `git diff` before wrapping up"), run again, and watch the startup panel and the model's behavior change immediately.
 
-Watch for: which layer does the `model` / `effort` in `resolved:` come from? After you edit `AGENTS.md`, do the assembled prompt and the model's behavior change right away?
+Watch for: the `model` / `effort` on the `resolved:` line come from config resolution and do **not** appear in the system-prompt body printed above; after you edit `AGENTS.md`, do the assembled prompt and the model's behavior change right away?
 
 ---
 
@@ -202,7 +215,7 @@ The chapter only reads "one AGENTS.md in this chapter's directory". Codex's conv
 <details>
 <summary>3. config.toml: model, effort, policies, profiles, providers</summary>
 
-The chapter's `CONFIG` object corresponds to the real `~/.codex/config.toml`. It supports keys including `model`, `model_reasoning_effort`, `approval_policy`, `sandbox_mode`, plus **`profiles`** (a set of named presets selected with `--profile` that override the root values) and **`model_providers`** (custom providers, with `wire_api`, for pointing Codex at a compatible gateway instead of the default API). The chapter puts all of this in one object literal so the "layering + override" structure is clear without pulling in a TOML parser.
+The chapter's `CONFIG` object corresponds to the real `~/.codex/config.toml`. It supports keys including `model`, `model_reasoning_effort`, `approval_policy`, `sandbox_mode`, plus **`profiles`** (a set of named presets selected with `--profile` that override the root values) and **`model_providers`** (custom providers, with `wire_api`, for pointing Codex at a compatible gateway instead of the default API). These are **call parameters**, not another block of prose merged into the system prompt. The chapter puts all of this in one object literal so the "layering + override" structure is clear without pulling in a TOML parser.
 
 </details>
 
@@ -213,8 +226,8 @@ The chapter demonstrates the override order with "`env` > `--profile` > config r
 
 </details>
 
-**In one line**: the core of Codex's instruction assembly is exactly the chapter's "merge base + AGENTS.md into instructions, resolve model/effort/policies from config, override by precedence". Every extra mechanism — per-model built-in prompts, multi-source AGENTS.md, TOML with profiles/providers, finer override rules — exists to keep that assembly flexible and predictable across real multi-project, multi-model use. Master "layering + override = a configurable prompt" and the rest is engineering hardening.
+**In one line**: the core of Codex's instruction assembly is exactly the chapter's "merge base + AGENTS.md into instructions, resolve model/effort/policies from config, override by precedence". AGENTS.md is a prompt layer; config.toml is a separate config and does not enter the prompt. Every extra mechanism — per-model built-in prompts, multi-source AGENTS.md, TOML with profiles/providers, finer override rules — exists to keep that assembly flexible and predictable across real multi-project, multi-model use. Master "layering + override = a configurable prompt, with text and config on separate tracks" and the rest is engineering hardening.
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->

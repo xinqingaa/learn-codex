@@ -66,7 +66,37 @@ for (let i = thread.length - 1; i >= 0; i--) {
 if (split === 0) return; // history isn't old enough to compact
 ```
 
-**Step 3**: summarize the old turns into a short brief (one model call; offline it returns a scripted summary) and wrap it as a new user message.
+**Step 3**: summarize the old turns into a short brief and wrap it as a new user message.
+
+The brief is just the summary text: the string `summarize()` returns. After compaction, that whole string is stuffed into a new user message; everything the agent later knows about the "past" comes from this one item.
+
+Where does the brief come from? **Another model call** — not local truncation, not a regex extract. The chapter's `summarize()` serializes the old history and sends it to the model with a completely different system prompt from the agent turn: no tools, text only, and "at most 5 bullets".
+
+```ts
+async function summarize(oldTurns: unknown[]): Promise<string> {
+  const transcript = oldTurns.map((i) => JSON.stringify(i)).join("\n");
+  const resp = await openai.responses.create({
+    model: MODEL,
+    instructions:
+      "Summarize this coding-agent transcript in at most 5 bullets. Keep the " +
+      "current goal, files touched and pending work. Respond with text only.",
+    input: transcript,
+  });
+  // ...take output_text as the brief
+}
+```
+
+Here **bullet = bullet point** (`- xxx`). It is not a separate object in the compaction pipeline. The prompt is only constraining format: don't write an essay, at most five items, and try to keep "current goal / files touched / pending work". A real model might return:
+
+```
+- Goal: run the step log through later phases
+- Files: none touched; only ran a verbose node -e logger
+- Pending: continue from phase three
+```
+
+Those items together *are* the brief. The offline demo doesn't even use a list — it returns a paragraph and still treats it as the brief. With no API key there is no summarization request; a scripted summary keeps the demo deterministic.
+
+Then wrap the brief as a user message:
 
 ```ts
 const oldTurns = thread.slice(0, split);
@@ -110,7 +140,23 @@ async function compactThread(thread: unknown[]): Promise<void> {
 }
 ```
 
-**Core insight**: compaction doesn't change the agent's shape — the loop is the same loop, the tools are the same tools. It only adds a "make some room" gate before "call the model". The offline demo runs several scripted "phases", each dumping a big verbose log into the thread, so you can watch the token count climb past the budget, fire `[auto-compact]`, and drop from 700+ back to double digits — while the agent keeps working, because the "past" it sees is now that summary.
+The same session actually makes two kinds of model call — don't mix them up:
+
+| | Agent call (`callModel`) | Compact call (`summarize`) |
+|---|---|---|
+| purpose | keep working | crush old history into a brief |
+| tools | has shell | **none** — text-only summary |
+| system prompt | coding agent, Act don't explain | at most 5 bullets; keep goal / files / pending work |
+| input | the current thread (after compact: "summary + current turn") | the entire cut-off old history |
+| output | tool calls or a final reply | a short summary |
+
+That's why `/compact` costs quota: compaction *is* a full API request. The expensive part is **input** — almost the entire old history is fed in to be read again; the output is short and usually cheap. Auto-compact and manual `/compact` spend the same kind of quota; only who pressed the button differs.
+
+Every later agent turn gets cheaper, though: those old tokens used to be re-sent every round, and now only the summary is. On a long session you pay once for the brief and save on every subsequent call.
+
+There's also a reason you must compact *early*: the summarization request itself has to fit in the context window. If you wait until the window has already overflowed, even `summarize` can't be sent. So `TOKEN_BUDGET` must sit below the hard ceiling — the chapter sets it to 700 so a few turns are enough to trigger; real Codex watches actual usage against the window.
+
+**Core insight**: compaction doesn't change the agent's shape — the loop is the same loop, the tools are the same tools. It only adds a "make some room" gate before "call the model"; making room is itself a model call. The offline demo runs several scripted "phases", each dumping a big verbose log into the thread, so you can watch the token count climb past the budget, fire `[auto-compact]`, and drop from 700+ back to double digits — while the agent keeps working, because the "past" it sees is now that summary.
 
 ---
 
@@ -138,7 +184,7 @@ Try these experiments:
 
 1. Just run it and watch the `[context ~N tokens / budget 700]` and `[auto-compact]` lines: which turn first crosses the budget? How far does it drop?
 2. Lower `TOKEN_BUDGET` (say `300`) and see whether compaction arrives earlier and more often.
-3. Set a real `OPENAI_API_KEY` and run again to see the summary a real model writes.
+3. Set a real `OPENAI_API_KEY` and run again to see whether the real model writes the brief as a few bullets (the offline demo is a paragraph).
 
 Watch for: after compaction the thread holds only "one summary item + the current turn", yet the agent keeps working — everything it knows about the "past" is that summary.
 
@@ -174,7 +220,7 @@ The chapter's `summarize()` sends the old history to the model and asks for a sh
 <details>
 <summary>3. Besides the automatic trigger, there's a manual `/compact`</summary>
 
-The chapter only shows "compact automatically when over budget". Codex's TUI also offers a manual `/compact` slash command so the user can trigger the same flow whenever the context feels sluggish or they want to clean up. Automatic and manual take the same "summarize → replace → continue" path; only the trigger differs — one is fired by the harness based on token usage, the other by the user.
+The chapter only shows "compact automatically when over budget". Codex's TUI also offers a manual `/compact` slash command so the user can trigger the same flow whenever the context feels sluggish or they want to clean up. Automatic and manual take the same "summarize → replace → continue" path; only the trigger differs — one is fired by the harness based on token usage, the other by the user. Because summarization is a model call, `/compact` costs quota too — you pay the input tokens to re-read the old history.
 
 </details>
 
@@ -189,4 +235,4 @@ The chapter deliberately splits at the "last user message" and keeps the current
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<!-- translation-sync: zh@v2, en@v2 -->
