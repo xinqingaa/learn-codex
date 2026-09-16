@@ -143,7 +143,7 @@ export const VERSION_META: Record<string, {
     title: "Background Tasks",
     subtitle: "Slow Work Goes to the Background",
     coreAddition: "Async background execution",
-    keyInsight: "The agent keeps reasoning while slow commands finish elsewhere — codex exec taken further.",
+    keyInsight: "unified_exec waits a yield window, returns a session_id if still running, and harvests later with write_stdin — client events never auto-wake the model.",
     layer: "concurrency",
     prevVersion: "s12",
   },

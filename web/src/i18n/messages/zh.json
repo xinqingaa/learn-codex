@@ -146,7 +146,7 @@
     "s10": "Runtime Instruction Assembly",
     "s11": "Error Recovery Paths",
     "s12": "Task Board Dependencies",
-    "s13": "Background Task Lanes",
+    "s13": "Yield Window & Harvest",
     "s14": "Automation Scheduler",
     "s15": "Team Mailbox Workbench",
     "s16": "Team Protocol Cards",

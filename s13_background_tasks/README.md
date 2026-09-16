@@ -1,9 +1,9 @@
-# s13: 后台任务 — 慢操作丢后台，Agent 不等
+# s13: 后台任务 — 慢操作 yield 出去，Agent 不等
 
 [中文](README.md) · [English](README.en.md)
 
 `s01` → ... → [s12](../s12_task_system/) → `s13` → [s14](../s14_automations/) → `s15` → ... → s20
-> *"Detach the slow command, keep reasoning, harvest it later"* — 慢命令后台跑，结果后续轮再收。
+> *"Yield the slow command, keep reasoning, harvest later"* — 先等一个 yield 窗口，没跑完就交 session_id，后续轮再收。
 >
 > **Harness 层**：并发与自动化 —— 异步执行，不阻塞主循环。
 
@@ -23,76 +23,80 @@ Agent 的 `shell` 工具也一样。`npm install` 要几分钟，`npm run build`
 
 ![Background Tasks](images/background-tasks.svg)
 
-把慢命令**拆成两步**：先用 `run_background` 把它 `spawn` 到后台（立刻返回一个任务 id，**不阻塞**），Agent 继续用 `shell` 干别的活；等过几轮，再用 `check_background` 按 id 把结果**收回来**。循环还是 s01 那个循环，只多了两个工具：
+Codex 原版把慢命令交给 **`unified_exec`**：`exec_command` 先 `spawn` 子进程，再等一个 **yield 窗口**（默认约 10 秒）。窗口内结束，这一次工具调用就交输出；还在跑，才把 `session_id` 交回去。之后模型用 `write_stdin`（空 `chars` = 轮询）再等一个窗口，把新输出或最终结果收回来。循环还是 s01 那个循环，只多了这两个工具：
 
 | 工具 | 作用 | 返回 |
 |------|------|------|
-| `run_background` | 把慢命令 `spawn` 成子进程，登记进任务表 | 立刻返回 `bg_N`，附「还在跑，稍后查」 |
-| `check_background` | 按 id 轮询任务表 | `still running` 或 `finished` + 捕获的输出 |
-| `shell` | 跑快命令（同步，不变） | 立即返回输出 |
+| `exec_command` | `spawn` 子进程，最多等到 `yield_time_ms` | 窗口内结束：输出 + `exit_code`；还在跑：`session_id` + 目前输出 |
+| `write_stdin` | 按 `session_id` 再等一个 yield 窗口（`chars` 为空 = 轮询） | 新输出，或 `exit_code` + 收割到的输出 |
+| `shell` | 跑快命令（教学版仍同步；原版命令都走异步） | 立即返回输出 |
 
-关键点：`run_background` 返回的不是结果，而是一个**句柄**。模型拿到 `bg_1` 就知道「这活还在跑」，于是先去做别的；后续某一轮再 `check_background(bg_1)`，要么「还没好」，要么「好了，这是输出」。**等待的时间被填满了**，而不是空转。离线 demo 里你能看到：第一次查是 `still running`，做完另一件活再查，就变成了 `finished` 并把输出收回来。
+关键点：`exec_command` **不是立刻返回一个 id 就走**。它会先等 yield 窗口——快命令往往这一次就结束了；只有慢命令才会带着 `session_id` 回到模型。模型拿到「still running」才去干别的，后续某一轮再 `write_stdin`。**等待被别的工作填满**，而不是空转。
+
+同时 harness 会给**客户端**打一条事件流（`ExecCommandBegin` / `ExecCommandEnd`）。那是给 TUI 看的，**不会自动灌进模型上下文**。离线 demo 里你能看到：第一次 `exec_command` 是 `still running` + `session_id: 1`，穿插干活后再 `write_stdin`，才把 `build artifacts ready` 收回来；控制台的 `[event]` 行模型看不见。
 
 ---
 
 ## 工作原理
 
-在 s01 循环 + s02 分发表上，加一张后台任务表和两个工具，分步来看：
+在 s01 循环 + s02 分发表上，加上 Codex 同款的 yield / 收割，分步来看：
 
-**第 1 步**：一张任务表，登记每个后台进程的 id、命令、状态、累积输出。
+**第 1 步**：一张会话表，登记每个后台进程的 `session_id`、命令、状态、累积输出，以及已经给过模型看的偏移。
 
 ```ts
-type BgTask = { id: string; command: string; status: "running" | "done"; output: string };
-const bgTasks = new Map<string, BgTask>();
+type ExecSession = {
+  sessionId: number; command: string; status: "running" | "done";
+  output: string; seen: number; exitCode: number | null;
+};
+const sessions = new Map<number, ExecSession>();
 ```
 
-**第 2 步**：`startBackground` 用 `spawn` 起子进程——它是**异步**的，调用即返回。输出流持续累积，进程退出时把状态置为 `done`。
+**第 2 步**：`exec_command` 用 `spawn` 起子进程，然后 **等到 yield 截止或进程退出**。调用会返回，但不是瞬间返回——窗口内的等待发生在这一次工具调用里。
 
 ```ts
-function startBackground(command: string): string {
-  const id = `bg_${++bgSeq}`;
-  const task: BgTask = { id, command, status: "running", output: "" };
-  bgTasks.set(id, task);
-  const child = spawn(command, { cwd: CWD, shell: true });   // 立刻返回，不阻塞
-  child.stdout?.on("data", (d) => (task.output += String(d)));
-  child.stderr?.on("data", (d) => (task.output += String(d)));
-  child.on("close", (code) => { task.status = "done"; task.output += `\n(exit ${code})`; });
-  return `Started ${id} in the background. Poll it with check_background.`;
+async function execCommand(cmd: string, yieldTimeMs: number): Promise<string> {
+  const session = spawnSession(cmd);
+  const start = Date.now();
+  await waitYield(session, yieldTimeMs);
+  return formatExecResult(session, Date.now() - start);
 }
 ```
 
-**第 3 步**：`checkBackground` 按 id 查表。还在跑就回「running」，跑完了就把累积的输出交回去——这就是「收割」。
+**第 3 步**：窗口结束时，跑完了就交 `exit_code` 和输出；还在跑就把 `session_id` 交回去。`write_stdin` 按这个 id 再等一个窗口，把从上次切面之后的新输出收回来——这就是「收割」。教学版只实现空 `chars` 轮询；原版非空 `chars` 会写进进程的 PTY。
 
 ```ts
-async function checkBackground(id: string): Promise<string> {
-  await flushIo();                       // 让事件循环把子进程回调跑完再读状态
-  const t = bgTasks.get(id);
-  if (!t) return `Error: no such background task ${id}`;
-  return t.status === "running"
-    ? `${id} still running: ${t.command}`
-    : `${id} finished: ${t.command}\n--- output ---\n${t.output}`;
+async function writeStdin(sessionId: number, chars: string, yieldTimeMs: number): Promise<string> {
+  const session = sessions.get(sessionId);
+  if (!session) return `Error: no such session ${sessionId}`;
+  if (chars) {
+    return `Error: this teaching demo only supports empty write_stdin polls; ` +
+      `real Codex writes non-empty chars to the process PTY.`;
+  }
+  const start = Date.now();
+  await waitYield(session, yieldTimeMs);
+  return formatExecResult(session, Date.now() - start);
 }
 ```
 
-**第 4 步**：把两个工具注册进分发表，循环不变。模型先用 `run_background` 起慢活，穿插 `shell` 快活，再 `check_background` 收割。
+**第 4 步**：把两个工具注册进分发表，循环不变。模型先 `exec_command`，穿插 `shell` 快活，再 `write_stdin` 收割。
 
 ```ts
 const DISPATCH = {
-  shell: (a) => runShell(a.command),                 // 快：同步
-  run_background: (a) => startBackground(a.command), // 慢：后台
-  check_background: (a) => checkBackground(a.id),    // 查：收割
+  shell: (a) => runShell(a.command),
+  exec_command: (a) => execCommand(a.cmd, a.yield_time_ms),
+  write_stdin: (a) => writeStdin(a.session_id, a.chars, a.yield_time_ms),
 };
 ```
 
-**核心洞察**：同步工具把「调用」和「等待结果」绑成一件事；后台工具把它**拆成两件**——「启动」立刻返回句柄，「收割」留到后面。中间这段时间，Agent 的主循环空不出来去等，而是被别的工作填满。有个实现细节很能说明问题：前台 `execSync` 会**堵住 Node 的事件循环**，所以 `checkBackground` 开头要 `await` 一小下，让子进程的「退出 / 数据」回调先跑完——否则系统层面进程明明结束了，Node 却还没来得及把状态更新成 `done`。
+**核心洞察**：同步工具把「调用」和「等到结束」绑成一件事；`unified_exec` 把它拆成「这一次工具调用最多等多久」。yield 窗口内结束，对模型来说就是一次普通工具结果；窗口到了还在跑，模型拿到的是句柄，不是完成通知。客户端事件流和模型上下文是两层：TUI 可以实时刷输出，模型只能在下一次 `exec_command` / `write_stdin` 的工具结果里看到切面。会话已经空闲时进程退出，原版也**不会**因此自动再开一轮推理。
 
 ---
 
 ## 试一下
 
-> **教学 demo 提示**：离线 demo 的后台命令是 `sleep 1.5 && echo ...`，前台是 `echo` / `sleep 2`，不改任何真实文件。
+> **教学 demo 提示**：离线 demo 的慢命令是 `sleep 1.5 && echo ...`，`yield_time_ms` 是 400，前台是 `echo` / `sleep 2`，不改任何真实文件。
 
-**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，内置离线模型会把「后台起构建 → 穿插干快活 → 第一次查还没好 → 再干一件活 → 第二次查收割输出」完整演一遍。
+**无需 API key 也能跑**：没有 `OPENAI_API_KEY` 时，内置离线模型会把「`exec_command` yield 后仍在跑 → 穿插干快活 → 第一次 `write_stdin` 还没好 → 再干一件活 → 第二次 `write_stdin` 收割输出」完整演一遍。
 
 **准备**（首次运行）：
 
@@ -114,7 +118,7 @@ OPENAI_API_KEY=sk-... npx tsx s13_background_tasks/code.ts   # 真实模型
 2. `Start the test suite in the background, then keep refactoring src`
 3. `Install dependencies in the background and scaffold the app meanwhile`
 
-观察重点：慢命令是不是走了 `run_background` 并立刻返回了 `bg_N`？第一次 `check_background` 是不是 `still running`？Agent 在等待间隙有没有继续做别的，最后一次检查有没有把输出收割回来？
+观察重点：慢命令是不是走了 `exec_command`，并且先等了一个 yield 窗口才返回 `session_id`？第一次 `write_stdin` 是不是 `still running`？控制台的 `[event] ExecCommandBegin/End` 是不是只打给客户端？最后一次 `write_stdin` 有没有把输出收割回来？
 
 ---
 
@@ -127,40 +131,40 @@ s14 Automations → 给 Agent 装一个**闹钟**：一个迷你调度器，按 
 <details>
 <summary>深入 Codex 源码</summary>
 
-> 以下基于 OpenAI 开源的 [`openai/codex`](https://github.com/openai/codex) 仓库（`codex-rs`，Rust 实现）的整体结构。教学版的「spawn + 轮询收割」是异步执行的最小骨架；Codex 的核心是**全异步**的，差异在执行模型与结果回传的方式上。
+> 以下基于 OpenAI 开源的 [`openai/codex`](https://github.com/openai/codex) 仓库（`codex-rs`，Rust 实现）的整体结构。教学版的工具名和语义对齐 `unified_exec`：`exec_command` + `write_stdin` + `yield_time_ms`。下面只写源码里实际有的行为，不把客户端事件流说成「推给模型」。
 
-**教学版的 `run_background` / `check_background` ≈ Codex 异步执行模型的最小切面。** 下面逐项对照。
-
-<details>
-<summary>一、Codex 核心是全异步（tokio），不是「同步 + 偶尔后台」</summary>
-
-教学版默认同步（`execSync` 阻塞），只对「慢命令」单独开后台。Codex 的 Rust 核心跑在 **tokio 异步运行时**上：每一次命令执行都是 `spawn` 出一个子进程、返回一个句柄，核心循环 `await` 它而不是阻塞它。也就是说在 Codex 里「后台」不是一种特殊模式，而是**默认**——所有执行都是异步任务，区别在于有些被立刻 `await`（前台、要结果才能继续），有些被挂起稍后再收（后台）。教学版用「同步为常态、后台为例外」反过来讲，是为了让「把等待拆开」这个动作更显眼。
-
-</details>
+**教学版 ≈ Codex `unified_exec` 的模型侧切面。** 下面逐项对照。
 
 <details>
-<summary>二、流式事件让「收割」不必靠轮询</summary>
+<summary>一、模型侧就是 exec_command / write_stdin，不是立刻返回 id</summary>
 
-教学版的模型要主动 `check_background` 轮询才知道后台好了没。Codex 的核心循环消费的是一条**事件流**：子进程的输出、退出都会作为事件进入流里，harness 可以在后续某个 turn 把「后台任务完成」作为一个事件**推**给模型，而不是等模型想起来去问。教学版用「模型主动轮询」还原的是同一件事的数据流，只是把「推」换成了「拉」——更显式，也更好教。
+Codex 给模型的后台入口是 `unified_exec`：`exec_command` 默认 `yield_time_ms ≈ 10000`（首次调用常见上限约 30 秒），`write_stdin` 默认 yield 更短，空 `chars` 是后台轮询。进程在窗口内退出，这一次工具结果就是输出 + `exit_code`，没有 session；窗口到了还在跑，才返回 `session_id`，进程留在 `UnifiedExecProcessManager` 里。教学版沿用这两个工具名和这套「先等窗口、再交句柄」的语义；为了 demo 能在几秒内跑完，离线脚本把 yield 缩到 400ms。
 
 </details>
 
 <details>
-<summary>三、codex exec：没有 TUI 的非交互运行</summary>
+<summary>二、EventMsg 是给客户端的，不是不停推给模型</summary>
 
-`codex exec`（非交互模式）用**同一个**核心循环，但不启动 TUI、没有人类在中间：它把一个 prompt 跑到底，把事件流打印到 stdout 就退出。这正是后台/异步执行真正派上用场的地方——没有交互式用户可等，所有工作都必须被异步推进、到点收割。教学版的离线 demo 其实就是一种极简的「exec 式」运行：给它一个目标，它自己把后台任务跑完、收割、收尾，全程无需人盯着。
+子进程的输出、退出会变成 `ExecCommandBegin`、`ExecCommandOutputDelta`、`ExecCommandEnd` 进入 harness 的 **客户端事件流**，TUI / `codex exec` 的 stdout 靠它刷进度。模型上下文里没有这条流。模型要再看进度，必须再调 `write_stdin`（或用户新开一轮）。教学版把 Begin/End 打成 `[event]` 行，就是为了把「给 UI 的流」和「给模型的工具结果」拆开；它**没有**在进程退出时自动往 `input[]` 里塞一条完成通知。
 
 </details>
 
 <details>
-<summary>四、审批与沙箱仍然管着每一次执行</summary>
+<summary>三、空闲时完成后不会自动叫醒模型</summary>
 
-不管前台还是后台，Codex 里每一条命令落地前都要过 `approval_policy` 和 `sandbox_mode`（s03/s04）：异步不改变「能不能跑、在哪跑」，只改变「什么时候等结果」。教学版为了聚焦异步机制，把审批/沙箱略成了一句字符串匹配；真实实现里，后台 spawn 出的子进程同样跑在沙箱里、受同一套策略约束。
-
-</details>
-
-**一句话**：Codex 的执行本就是异步的——命令一律 `spawn` 成任务，前台后台只差在「立刻 await 还是稍后收」。教学版把这个模型压成两个工具（`run_background` 启动、`check_background` 收割），加上 `codex exec` 这个无交互入口，就是「慢操作不阻塞主循环」的全部要义。
+进程退出时，exit watcher 会发 `ExecCommandEnd`。若当时这一轮已经结束、会话空闲，原版 **不会**因此再开一轮推理——事件停在客户端。模型要看到结果，得靠后续的 `write_stdin`、用户再发一句，或客户端另外把完成消息交回去。把「完成后自动 wake」做成原版能力是不准确的；那是开着的增强，不是现成行为。教学版同样不自动 wake。
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<details>
+<summary>四、Codex 核心是全异步；教学版仍把快活留在同步 shell</summary>
+
+Codex 的 Rust 核心跑在 **tokio** 上：命令一律 `spawn` 子进程，前台后台只差在「这一次工具调用立刻 await 到结束，还是 yield 后再收」。教学版为了让「拆开等待」看得见，把快命令留在 `execSync` 的 `shell` 里，只让慢命令走 `exec_command`。真实实现里没有这种快/慢分家，审批（`approval_policy`）和沙箱（`sandbox_mode`）对每一次落地执行同样生效。教学版还略去了 PTY、非空 stdin、并行工具调用这些工程细节。
+
+</details>
+
+**一句话**：Codex 的后台是 yield 窗口 + `session_id` + `write_stdin` 收割；实时输出走客户端事件流，不走模型上下文。教学版把同一套模型侧接口在 TypeScript 里跑起来，并刻意把「UI 事件 ≠ 模型输入」打在控制台上。
+
+</details>
+
+<!-- translation-sync: zh@v2, en@v2 -->

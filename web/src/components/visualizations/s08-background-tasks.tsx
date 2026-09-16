@@ -12,38 +12,39 @@ interface StepInfo {
 
 const STEP_INFO: StepInfo[] = [
   {
-    title: "Three Lanes",
+    title: "Two Layers",
     description:
-      "The agent has a main thread and can spawn daemon background threads for parallel work.",
+      "The agent loop talks to the model with tool results. A separate EventMsg stream feeds the TUI.",
   },
   {
-    title: "Main Thread Working",
+    title: "Agent Loop",
     description:
-      "The main agent loop runs as usual, processing user requests.",
+      "The s01 loop is unchanged: the model calls tools, the harness executes them and feeds results back.",
   },
   {
-    title: "Spawn Background",
+    title: "exec_command Yields",
     description:
-      "Background tasks run as daemon threads. The main loop doesn't wait for them.",
+      "exec_command spawns a child and waits a yield window. If the process is still running, it returns session_id.",
   },
   {
-    title: "Multiple Backgrounds",
-    description: "Multiple background tasks can run concurrently.",
+    title: "Keep Working",
+    description:
+      "The loop fills the wait with other work. The child keeps running after the tool call has already returned.",
   },
   {
-    title: "Task Completes",
+    title: "Client Sees Exit",
     description:
-      "Background task finishes. Its result goes to the notification queue.",
+      "When the process exits, ExecCommandEnd goes to the client stream. That is not model input.",
   },
   {
-    title: "Queue Fills",
+    title: "Events Stay on the Client",
     description:
-      "Results accumulate in the queue, invisible to the model during this turn.",
+      "The TUI can show live progress. Stock Codex does not auto-wake the model when the session is idle.",
   },
   {
-    title: "Drain Queue",
+    title: "write_stdin Harvests",
     description:
-      "Just before the next LLM call, all queued notifications are injected as tool_results. Non-blocking, async.",
+      "The model sees the output only when it polls write_stdin (empty chars) and gets the next snapshot or exit_code.",
   },
 ];
 
@@ -76,7 +77,7 @@ const WORK_BLOCKS: WorkBlock[] = [
     startFraction: 0,
     endFraction: 1,
     color: "#8b5cf6",
-    label: "Main agent loop",
+    label: "Agent loop",
     appearsAtStep: 1,
   },
   {
@@ -84,7 +85,7 @@ const WORK_BLOCKS: WorkBlock[] = [
     startFraction: 0.18,
     endFraction: 0.75,
     color: "#10b981",
-    label: "Run tests",
+    label: "exec_command",
     appearsAtStep: 2,
     completesAtStep: 5,
   },
@@ -93,7 +94,7 @@ const WORK_BLOCKS: WorkBlock[] = [
     startFraction: 0.35,
     endFraction: 0.58,
     color: "#3b82f6",
-    label: "Lint code",
+    label: "child still runs",
     appearsAtStep: 3,
     completesAtStep: 4,
   },
@@ -119,16 +120,16 @@ interface QueueCard {
 
 const QUEUE_CARDS: QueueCard[] = [
   {
-    id: "lint-result",
-    label: "Lint: 0 errors",
-    appearsAtStep: 4,
-    drainsAtStep: 6,
+    id: "begin-event",
+    label: "ExecCommandBegin",
+    appearsAtStep: 2,
+    drainsAtStep: 99,
   },
   {
-    id: "test-result",
-    label: "Tests: 42 passed",
-    appearsAtStep: 5,
-    drainsAtStep: 6,
+    id: "end-event",
+    label: "ExecCommandEnd",
+    appearsAtStep: 4,
+    drainsAtStep: 99,
   },
 ];
 
@@ -170,11 +171,11 @@ export default function BackgroundTasks({ title }: { title?: string }) {
   return (
     <section className="min-h-[500px] space-y-4">
       <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-        {title || "Background Task Lanes"}
+        {title || "Yield Window & Harvest"}
       </h2>
 
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-        <svg viewBox="0 0 780 380" className="w-full" aria-label="Background task lanes">
+        <svg viewBox="0 0 780 380" className="w-full" aria-label="unified_exec yield and harvest">
           <defs>
             <marker
               id="forkArrow"
@@ -243,9 +244,9 @@ export default function BackgroundTasks({ title }: { title?: string }) {
           {/* Lane backgrounds and labels */}
           {(
             [
-              { key: "main", y: LANE_Y.main, label: "Main Thread" },
-              { key: "bg1", y: LANE_Y.bg1, label: "Background 1" },
-              { key: "bg2", y: LANE_Y.bg2, label: "Background 2" },
+              { key: "main", y: LANE_Y.main, label: "Agent loop" },
+              { key: "bg1", y: LANE_Y.bg1, label: "Child process" },
+              { key: "bg2", y: LANE_Y.bg2, label: "Yield window" },
             ] as const
           ).map(({ key, y, label }) => (
             <g key={key}>
@@ -399,7 +400,7 @@ export default function BackgroundTasks({ title }: { title?: string }) {
                 fontWeight="600"
                 fill="white"
               >
-                LLM API call
+                write_stdin
               </text>
             </motion.g>
           )}
@@ -423,7 +424,7 @@ export default function BackgroundTasks({ title }: { title?: string }) {
             fontWeight="600"
             fill={palette.labelFill}
           >
-            Notification
+            Client
           </text>
           <text
             x={TIMELINE_LEFT - 10}
@@ -433,7 +434,7 @@ export default function BackgroundTasks({ title }: { title?: string }) {
             fontWeight="600"
             fill={palette.labelFill}
           >
-            Queue
+            EventMsg
           </text>
 
           {/* Queue cards */}
@@ -477,7 +478,7 @@ export default function BackgroundTasks({ title }: { title?: string }) {
                       fontWeight="600"
                       fill={isDark ? "#fbbf24" : "#b45309"}
                     >
-                      tool_result
+                      EventMsg
                     </text>
                     <text
                       x={65}
@@ -520,7 +521,7 @@ export default function BackgroundTasks({ title }: { title?: string }) {
                     fontWeight="600"
                     fill={isDark ? "#34d399" : "#047857"}
                   >
-                    tool_result
+                    EventMsg
                   </text>
                   <text
                     x={cardX + 65}
@@ -538,45 +539,7 @@ export default function BackgroundTasks({ title }: { title?: string }) {
             })}
           </AnimatePresence>
 
-          {/* Drain arrows from queue to main thread at step 6 */}
-          {currentStep >= 6 && (
-            <motion.g
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.1 }}
-            >
-              <motion.line
-                x1={fractionToX(llmCallFraction) + 20}
-                y1={QUEUE_Y}
-                x2={fractionToX(llmCallFraction) + 20}
-                y2={LANE_Y.main + LANE_HEIGHT + 4}
-                stroke="#f59e0b"
-                strokeWidth={1.5}
-                markerEnd="url(#drainArrow)"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.5 }}
-              />
-            </motion.g>
-          )}
-
-          {/* Empty queue label when drained */}
-          {currentStep >= 6 && (
-            <motion.text
-              x={TIMELINE_LEFT + TIMELINE_WIDTH / 2}
-              y={QUEUE_Y + 30}
-              textAnchor="middle"
-              dominantBaseline="middle"
-              fontSize="10"
-              fontFamily="monospace"
-              fill={palette.labelFill}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-            >
-              queue drained -- injected into next LLM call
-            </motion.text>
-          )}
+          {/* Client events stay on this stream; they are not drained into the model. */}
         </svg>
 
         {/* Legend */}
@@ -584,25 +547,25 @@ export default function BackgroundTasks({ title }: { title?: string }) {
           <div className="flex items-center gap-1.5">
             <div className="h-3 w-3 rounded" style={{ background: "#8b5cf6" }} />
             <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
-              Main thread
+              Agent loop
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-3 w-3 rounded" style={{ background: "#10b981" }} />
             <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
-              Background 1
+              Child process
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-3 w-3 rounded" style={{ background: "#3b82f6" }} />
             <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
-              Background 2
+              Yield window
             </span>
           </div>
           <div className="flex items-center gap-1.5">
             <div className="h-3 w-3 rounded" style={{ background: "#f59e0b" }} />
             <span className="text-[10px] text-zinc-500 dark:text-zinc-400">
-              LLM boundary
+              write_stdin harvest
             </span>
           </div>
         </div>

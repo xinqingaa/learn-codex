@@ -1,45 +1,58 @@
 {
   "version": "s13",
   "title": "Background Tasks",
-  "description": "Long-running work moves to a thread while the agent keeps the main loop responsive.",
+  "description": "Slow commands go through unified_exec: wait a yield window, return a session_id if still running, harvest later with write_stdin.",
   "steps": [
     {
       "type": "user_message",
       "content": "Run a long repository scan and tell me when it finishes.",
-      "annotation": "The user asks for work that may exceed the normal foreground loop."
+      "annotation": "The user asks for work that will outlive a single yield window."
     },
     {
       "type": "assistant_text",
-      "content": "I'll start the scan in the background so we can keep the conversation responsive.",
-      "annotation": "The model chooses the background path instead of blocking on the tool result."
+      "content": "I'll start the scan with exec_command. If it is still running after the yield window, I'll keep working and harvest with write_stdin.",
+      "annotation": "The model chooses unified_exec instead of blocking on a synchronous shell."
     },
     {
       "type": "tool_call",
-      "toolName": "shell",
+      "toolName": "exec_command",
       "content": "rg \"TODO|FIXME\" .",
-      "toolInput": "{\"background\":true}",
-      "annotation": "The tool call is wrapped with a background flag."
+      "toolInput": "{\"cmd\":\"rg \\\"TODO|FIXME\\\" .\",\"yield_time_ms\":400}",
+      "annotation": "exec_command spawns the child and waits up to yield_time_ms."
     },
     {
       "type": "system_event",
-      "content": "background_tasks[task_42] = spawn(run_shell)",
-      "annotation": "The runtime starts a thread and returns immediately."
+      "content": "[event] ExecCommandBegin session_id=1",
+      "annotation": "The client event stream (TUI) sees Begin. This is not model input."
     },
     {
       "type": "tool_result",
-      "toolName": "shell",
-      "content": "Started background task task_42.",
-      "annotation": "A placeholder result is appended to the main conversation."
+      "toolName": "exec_command",
+      "content": "session_id: 1\nstatus: still running\npoll with write_stdin({ session_id: 1, chars: \"\" })",
+      "annotation": "The yield window ended. The model gets a handle, not the final output."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "write_stdin",
+      "content": "poll session 1",
+      "toolInput": "{\"session_id\":1,\"chars\":\"\",\"yield_time_ms\":400}",
+      "annotation": "Empty chars is a poll: wait another yield window and harvest."
     },
     {
       "type": "system_event",
-      "content": "<task_notification id=\"task_42\" status=\"done\">Found 12 matches.</task_notification>",
-      "annotation": "The completed thread injects a notification back into the next loop."
+      "content": "[event] ExecCommandEnd session_id=1 exit=0",
+      "annotation": "Exit is emitted to the client stream. The idle session does not auto-wake the model."
+    },
+    {
+      "type": "tool_result",
+      "toolName": "write_stdin",
+      "content": "exit_code: 0\n--- output ---\nFound 12 matches.",
+      "annotation": "The model sees the result only because it polled write_stdin."
     },
     {
       "type": "assistant_text",
       "content": "The scan finished with 12 matches. I'll summarize the most important ones now.",
-      "annotation": "The agent consumes the background result as fresh context."
+      "annotation": "The agent consumes the harvested tool result, not a pushed notification."
     }
   ]
 }

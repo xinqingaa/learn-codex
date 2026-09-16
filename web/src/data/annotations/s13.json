@@ -2,33 +2,33 @@
   "version": "s13",
   "decisions": [
     {
-      "id": "explicit-background-boundary",
-      "title": "Background Work Is an Execution Mode, Not a New Tool",
-      "description": "The lesson keeps the familiar tool surface and adds a background execution flag around slow operations. That makes the new mechanism visible: the same bash call can either block the loop or be moved to a thread. The agent learns that responsiveness is a runtime concern, not a reason to invent a separate tool for every slow task.",
-      "alternatives": "A dedicated background_bash tool would be simpler to route, but it would hide the more general idea that any slow operation can be scheduled asynchronously.",
+      "id": "yield-then-handle",
+      "title": "A Slow Command Yields a Session, It Does Not Return Instantly",
+      "description": "Codex unified_exec waits a yield window inside exec_command. Fast commands often finish in that same tool call. Only a still-running process returns session_id. Responsiveness is 'how long this tool call may wait', not a background flag on the old shell tool.",
+      "alternatives": "A fire-and-forget run_background tool that returns an id immediately would be simpler to demo, but it is not how Codex talks to the model.",
       "zh": {
-        "title": "后台任务是执行模式，而不是新工具",
-        "description": "课程保留原有工具表面，只在慢操作外增加后台执行标记。这样能清楚看到：同一个 bash 调用既可以阻塞主循环，也可以放入线程。Agent 学到的是响应性属于运行时问题，而不是每个慢任务都要发明一个新工具。"
+        "title": "慢命令先 yield 再交 session，不是立刻返回 id",
+        "description": "Codex 的 unified_exec 在 exec_command 里先等一个 yield 窗口。快命令往往这一次就结束；只有还在跑的进程才返回 session_id。响应性是「这一次工具调用最多等多久」，不是给旧的 shell 加一个 background 标记。"
       }
     },
     {
-      "id": "notification-reentry",
-      "title": "Completed Threads Re-enter as Notifications",
-      "description": "Background results are injected as task notifications instead of pretending to be immediate tool results. This preserves the chronology of the conversation: the model first sees that work started, and later sees that a task completed.",
-      "alternatives": "The thread could mutate the last tool result in place, but that would make the transcript impossible to reason about and hard to replay.",
+      "id": "client-events-not-model",
+      "title": "EventMsg Is for the Client, Not Pushed into the Model",
+      "description": "ExecCommandBegin and ExecCommandEnd ride the client event stream so the TUI can show live progress. They are not injected into the model context. The model sees another snapshot only when it calls write_stdin (or the user starts a new turn).",
+      "alternatives": "Auto-injecting a completion notification on process exit would look more event-driven, but stock Codex does not do that — idle exit does not start a new inference turn.",
       "zh": {
-        "title": "线程完成后以通知形式回到循环",
-        "description": "后台结果会作为任务通知注入，而不是伪装成立即返回的 tool result。这样保留了对话时间线：模型先看到任务已启动，之后再看到任务完成。"
+        "title": "EventMsg 给客户端，不推给模型",
+        "description": "ExecCommandBegin / ExecCommandEnd 走客户端事件流，供 TUI 刷进度，不会灌进模型上下文。模型要再看一眼，只能再调 write_stdin（或用户新开一轮）。"
       }
     },
     {
-      "id": "shared-result-store",
-      "title": "A Small Shared Store Keeps Threads Observable",
-      "description": "The implementation tracks background task state and results in explicit dictionaries. That keeps the code teachable while still exposing the hard parts of concurrency: ids, lifecycle state, and safe collection.",
-      "alternatives": "A full queue or job database would be more production-ready, but it would obscure the minimal moving parts needed to understand threaded agent work.",
+      "id": "write-stdin-harvest",
+      "title": "Harvest Is write_stdin, Empty chars Means Poll",
+      "description": "The session table keeps the live child and the output already shown. write_stdin with empty chars waits another yield window and returns the next snapshot or the exit. Non-empty chars in real Codex write to the PTY; this chapter only implements the poll path.",
+      "alternatives": "A dedicated check_background(id) tool would match a teaching poll API, but Codex reuses write_stdin as both stdin and harvest.",
       "zh": {
-        "title": "小型共享存储让线程可观察",
-        "description": "实现用显式字典记录后台任务状态和结果。这样代码仍然易学，同时暴露并发中的关键问题：任务 id、生命周期状态和结果收集。"
+        "title": "收割走 write_stdin，空 chars 就是轮询",
+        "description": "会话表里留着还在跑的子进程和已经给过模型的输出。空 chars 的 write_stdin 再等一个 yield 窗口，返回下一片输出或退出码。原版非空 chars 会写进 PTY；本章只实现轮询这条路。"
       }
     }
   ]

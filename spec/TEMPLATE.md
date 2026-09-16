@@ -73,7 +73,7 @@ Responses API · `reasoning.effort` (low/medium/high) · function tools · `appl
 | s10 | instructions | Runtime instruction assembly | build the system prompt from built-ins + `AGENTS.md` (project) + a `config.toml`-like profile |
 | s11 | error_recovery | Classified retry | wrap callModel; classify errors (rate-limit, overflow, abort) and apply backoff / compact-retry / give-up |
 | s12 | task_system | Shared task board | a TaskBoard (create/claim/complete) the agent reads and updates as it plans work |
-| s13 | background_tasks | Async background execution | run a slow shell command in the background; model continues, harvests the result on a later turn |
+| s13 | background_tasks | unified_exec yield + harvest | exec_command waits a yield window; still-running returns session_id; write_stdin polls; result harvested on a later turn |
 | s14 | automations | Scheduled / triggered runs | a tiny scheduler that enqueues a task on a cron-like tick and runs the agent on it |
 | s15 | agent_teams | Teammate mailboxes | two named agents exchange messages via mailboxes to split a task |
 | s16 | team_protocols | Coordination contracts | typed message envelope (request/response/broadcast) + a lead that routes work |

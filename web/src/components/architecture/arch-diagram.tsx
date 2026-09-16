@@ -12,7 +12,7 @@ const CLASS_DESCRIPTIONS: Record<string, string> = {
   Task: "File-based persistent task with dependencies",
   TaskManager: "File-based persistent task CRUD with dependencies",
   BackgroundTask: "Single background execution unit",
-  BackgroundManager: "Non-blocking thread execution + notification queue",
+  BackgroundManager: "unified_exec yield window + write_stdin harvest",
   TeammateManager: "Multi-agent team lifecycle and coordination",
   Teammate: "Individual agent identity and state tracking",
   SharedBoard: "Cross-agent shared state coordination",

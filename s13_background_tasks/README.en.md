@@ -1,9 +1,9 @@
-# s13: Background Tasks — Detach the Slow Command, the Agent Doesn't Wait
+# s13: Background Tasks — Yield the Slow Command, the Agent Doesn't Wait
 
 [中文](README.md) · [English](README.en.md)
 
 `s01` → ... → [s12](../s12_task_system/) → `s13` → [s14](../s14_automations/) → `s15` → ... → s20
-> *"Detach the slow command, keep reasoning, harvest it later"* — run slow commands in the background, collect the result on a later turn.
+> *"Yield the slow command, keep reasoning, harvest later"* — wait one yield window; if it is still running, return a session_id and harvest on a later turn.
 >
 > **Harness layer**: concurrency & automation — asynchronous execution that doesn't block the main loop.
 
@@ -23,76 +23,80 @@ Reading a file is milliseconds — no waiting. `git status` returns in a second 
 
 ![Background Tasks](images/background-tasks.svg)
 
-Split the slow command into **two steps**: first `run_background` `spawn`s it (returning a task id immediately, **without blocking**), and the agent keeps doing other work with `shell`; a few turns later, `check_background` **harvests** the result by id. The loop is still s01's loop, with just two new tools:
+Real Codex hands slow commands to **`unified_exec`**: `exec_command` `spawn`s a child process, then waits a **yield window** (about 10 seconds by default). If it finishes inside that window, this tool call returns the output; if it is still running, the model gets a `session_id`. Later it calls `write_stdin` (empty `chars` = poll), waits another window, and harvests new output or the final result. The loop is still s01's loop, with just these two new tools:
 
 | tool | purpose | returns |
 |------|---------|---------|
-| `run_background` | `spawn` a slow command as a child process, register it | a `bg_N` id right away, plus "still running, check later" |
-| `check_background` | poll the registry by id | `still running`, or `finished` + the captured output |
-| `shell` | run fast commands (synchronous, unchanged) | output immediately |
+| `exec_command` | `spawn` a child, wait at most `yield_time_ms` | finished in time: output + `exit_code`; still running: `session_id` + output so far |
+| `write_stdin` | wait another yield window on that `session_id` (empty `chars` = poll) | new output, or `exit_code` + harvested output |
+| `shell` | run fast commands (still synchronous in this chapter; real Codex is async for every command) | output immediately |
 
-The key point: `run_background` returns not a result but a **handle**. Getting `bg_1` tells the model "this is still running," so it does something else first; on a later turn it calls `check_background(bg_1)` and gets either "not done yet" or "done, here's the output." **The waiting time gets filled** instead of idled away. In the offline demo you'll see the first check come back `still running`, and after doing another piece of work, the second check returns `finished` with the output harvested.
+The key point: `exec_command` **does not return an id and walk away**. It waits the yield window first — fast commands often finish in that same call; only a slow command comes back with a `session_id`. Getting "still running" is what tells the model to do something else, then `write_stdin` on a later turn. **The waiting time gets filled** instead of idled away.
+
+At the same time the harness emits a **client** event stream (`ExecCommandBegin` / `ExecCommandEnd`). That stream is for the TUI. **It is not injected into the model context.** In the offline demo you'll see the first `exec_command` come back `still running` with `session_id: 1`, interleaved work, then a `write_stdin` that harvests `build artifacts ready`; the `[event]` lines on stdout are invisible to the model.
 
 ---
 
 ## How It Works
 
-On top of s01's loop + s02's dispatch table, add a background-task registry and two tools, step by step:
+On top of s01's loop + s02's dispatch table, add Codex's own yield / harvest, step by step:
 
-**Step 1**: a registry holding each background process's id, command, status, and accumulated output.
+**Step 1**: a session table holding each background process's `session_id`, command, status, accumulated output, and how much of that output the model has already seen.
 
 ```ts
-type BgTask = { id: string; command: string; status: "running" | "done"; output: string };
-const bgTasks = new Map<string, BgTask>();
+type ExecSession = {
+  sessionId: number; command: string; status: "running" | "done";
+  output: string; seen: number; exitCode: number | null;
+};
+const sessions = new Map<number, ExecSession>();
 ```
 
-**Step 2**: `startBackground` uses `spawn` to launch the child process — it's **asynchronous**, returning the moment it's called. Output streams accumulate, and when the process exits the status flips to `done`.
+**Step 2**: `exec_command` uses `spawn` to launch the child, then **waits until the yield deadline or the process exits**. The call does return — but not instantly. The wait happens inside this one tool invocation.
 
 ```ts
-function startBackground(command: string): string {
-  const id = `bg_${++bgSeq}`;
-  const task: BgTask = { id, command, status: "running", output: "" };
-  bgTasks.set(id, task);
-  const child = spawn(command, { cwd: CWD, shell: true });   // returns at once, no blocking
-  child.stdout?.on("data", (d) => (task.output += String(d)));
-  child.stderr?.on("data", (d) => (task.output += String(d)));
-  child.on("close", (code) => { task.status = "done"; task.output += `\n(exit ${code})`; });
-  return `Started ${id} in the background. Poll it with check_background.`;
+async function execCommand(cmd: string, yieldTimeMs: number): Promise<string> {
+  const session = spawnSession(cmd);
+  const start = Date.now();
+  await waitYield(session, yieldTimeMs);
+  return formatExecResult(session, Date.now() - start);
 }
 ```
 
-**Step 3**: `checkBackground` looks up the registry by id. Still running → "running"; finished → hand back the accumulated output — that's the "harvest."
+**Step 3**: when the window ends, a finished process returns `exit_code` and output; a live one returns `session_id`. `write_stdin` waits another window on that id and harvests output since the last snapshot. This chapter only implements empty-`chars` polls; in real Codex, non-empty `chars` are written to the process PTY.
 
 ```ts
-async function checkBackground(id: string): Promise<string> {
-  await flushIo();                       // let the loop run the child callbacks before reading
-  const t = bgTasks.get(id);
-  if (!t) return `Error: no such background task ${id}`;
-  return t.status === "running"
-    ? `${id} still running: ${t.command}`
-    : `${id} finished: ${t.command}\n--- output ---\n${t.output}`;
+async function writeStdin(sessionId: number, chars: string, yieldTimeMs: number): Promise<string> {
+  const session = sessions.get(sessionId);
+  if (!session) return `Error: no such session ${sessionId}`;
+  if (chars) {
+    return `Error: this teaching demo only supports empty write_stdin polls; ` +
+      `real Codex writes non-empty chars to the process PTY.`;
+  }
+  const start = Date.now();
+  await waitYield(session, yieldTimeMs);
+  return formatExecResult(session, Date.now() - start);
 }
 ```
 
-**Step 4**: register both tools into the dispatch table; the loop is unchanged. The model starts the slow work with `run_background`, interleaves fast `shell` work, then harvests with `check_background`.
+**Step 4**: register both tools into the dispatch table; the loop is unchanged. The model starts with `exec_command`, interleaves fast `shell` work, then harvests with `write_stdin`.
 
 ```ts
 const DISPATCH = {
-  shell: (a) => runShell(a.command),                 // fast: synchronous
-  run_background: (a) => startBackground(a.command), // slow: background
-  check_background: (a) => checkBackground(a.id),    // poll: harvest
+  shell: (a) => runShell(a.command),
+  exec_command: (a) => execCommand(a.cmd, a.yield_time_ms),
+  write_stdin: (a) => writeStdin(a.session_id, a.chars, a.yield_time_ms),
 };
 ```
 
-**Core insight**: a synchronous tool fuses "invoke" and "wait for the result" into one thing; a background tool **splits it in two** — "start" returns a handle immediately, "harvest" is deferred. In between, the agent's main loop isn't freed up to wait; it's filled with other work. One implementation detail makes the point vividly: a foreground `execSync` **blocks Node's event loop**, so `checkBackground` `await`s a beat at the top to let the child's "exit / data" callbacks run first — otherwise the process has finished at the OS level but Node hasn't yet flipped the status to `done`.
+**Core insight**: a synchronous tool fuses "invoke" and "wait until exit" into one thing; `unified_exec` splits it into "how long this tool call is allowed to wait." Finish inside the yield window, and the model sees an ordinary tool result; still running when the window ends, and the model gets a handle, not a completion notice. The client event stream and the model context are two layers: the TUI can stream output live, while the model only sees a snapshot in the next `exec_command` / `write_stdin` result. If the process exits after the turn has already gone idle, real Codex also **does not** start a new inference turn on its own.
 
 ---
 
 ## Try It
 
-> **Teaching demo note**: the offline demo's background command is `sleep 1.5 && echo ...`, and the foreground commands are `echo` / `sleep 2`. No real files are touched.
+> **Teaching demo note**: the offline demo's slow command is `sleep 1.5 && echo ...`, `yield_time_ms` is 400, and the foreground commands are `echo` / `sleep 2`. No real files are touched.
 
-**No API key needed**: without `OPENAI_API_KEY`, the built-in offline model runs the whole arc — "start a build in the background → interleave fast work → first check not done → do another piece of work → second check harvests the output."
+**No API key needed**: without `OPENAI_API_KEY`, the built-in offline model runs the whole arc — "`exec_command` still running after the yield → interleave fast work → first `write_stdin` not done → do another piece of work → second `write_stdin` harvests the output."
 
 **Setup** (first run):
 
@@ -114,7 +118,7 @@ Try these prompts:
 2. `Start the test suite in the background, then keep refactoring src`
 3. `Install dependencies in the background and scaffold the app meanwhile`
 
-Watch for: does the slow command go through `run_background` and return a `bg_N` immediately? Is the first `check_background` a `still running`? Does the agent keep doing other work in the gap, and does the last check harvest the output?
+Watch for: does the slow command go through `exec_command`, wait a yield window, then return a `session_id`? Is the first `write_stdin` `still running`? Are the `[event] ExecCommandBegin/End` lines client-only? Does the last `write_stdin` harvest the output?
 
 ---
 
@@ -127,40 +131,40 @@ s14 Automations → give the agent an **alarm clock**: a tiny scheduler that enq
 <details>
 <summary>Into the Codex source</summary>
 
-> The following is based on the overall structure of OpenAI's open-source [`openai/codex`](https://github.com/openai/codex) repo (`codex-rs`, written in Rust). The chapter's "spawn + poll to harvest" is the minimal skeleton of asynchronous execution; Codex's core is **fully async**, and the differences are in the execution model and how results come back.
+> The following is based on the overall structure of OpenAI's open-source [`openai/codex`](https://github.com/openai/codex) repo (`codex-rs`, written in Rust). The chapter's tool names and semantics follow `unified_exec`: `exec_command` + `write_stdin` + `yield_time_ms`. What follows is behavior the source actually has — it does not treat the client event stream as "push to the model."
 
-**The chapter's `run_background` / `check_background` ≈ a minimal slice of Codex's async execution model.** Each item below compares them.
-
-<details>
-<summary>1. Codex's core is fully async (tokio), not "sync with an occasional background"</summary>
-
-The chapter defaults to synchronous (blocking `execSync`) and only detaches "slow commands." Codex's Rust core runs on the **tokio async runtime**: every command execution `spawn`s a child process and returns a handle, and the core loop `await`s it rather than blocking. So in Codex "background" isn't a special mode — it's the **default**: all execution is an async task, and the only difference is whether it's `await`ed right away (foreground — you need the result to continue) or suspended and collected later (background). The chapter flips this to "sync by default, background as the exception" to make the act of "splitting the wait" more visible.
-
-</details>
+**This chapter ≈ the model-facing slice of Codex `unified_exec`.** Each item below compares them.
 
 <details>
-<summary>2. A streaming event loop means harvesting doesn't need polling</summary>
+<summary>1. The model-facing API is exec_command / write_stdin, not an instant id</summary>
 
-The chapter's model has to actively `check_background` to learn whether the background task finished. Codex's core loop consumes a **stream of events**: a child process's output and exit enter the stream as events, and the harness can **push** a "background task finished" event to the model on a later turn, rather than waiting for the model to remember to ask. The chapter's "model actively polls" is the same data flow with "push" swapped for "pull" — more explicit, and easier to teach.
+Codex's background entry point for the model is `unified_exec`: `exec_command` defaults to `yield_time_ms ≈ 10000` (first call often capped around 30 seconds), and `write_stdin` uses a shorter default yield, with empty `chars` as a background poll. If the process exits inside the window, that tool result is output + `exit_code` and there is no session; if it is still running, a `session_id` comes back and the process stays in `UnifiedExecProcessManager`. The chapter keeps those two tool names and the "wait the window, then maybe return a handle" semantics; so the demo can finish in a few seconds, the offline script shrinks the yield to 400ms.
 
 </details>
 
 <details>
-<summary>3. codex exec: non-interactive runs with no TUI</summary>
+<summary>2. EventMsg is for the client, not a continuous push to the model</summary>
 
-`codex exec` (non-interactive mode) uses the **same** core loop but starts no TUI and has no human in the middle: it runs one prompt to completion, prints the event stream to stdout, and exits. This is exactly where background/async execution earns its keep — with no interactive user to wait on, all work must be advanced asynchronously and harvested when due. The chapter's offline demo is really a minimal "exec-style" run: give it a goal and it runs the background task to completion, harvests it, and wraps up, with nobody watching.
+Child-process output and exit become `ExecCommandBegin`, `ExecCommandOutputDelta`, and `ExecCommandEnd` on the harness's **client event stream**, which is what the TUI / `codex exec` stdout uses to show progress. That stream is not in the model context. To see more, the model has to call `write_stdin` again (or the user has to start a new turn). The chapter prints Begin/End as `[event]` lines so "stream for the UI" and "tool result for the model" stay separate; it does **not** append a completion notice into `input[]` when the process exits.
 
 </details>
 
 <details>
-<summary>4. Approval & sandboxing still govern every execution</summary>
+<summary>3. Completion while idle does not auto-wake the model</summary>
 
-Foreground or background, every command in Codex passes `approval_policy` and `sandbox_mode` (s03/s04) before it runs: going async changes "when you wait for the result," not "whether it may run, and where." To keep the focus on the async mechanism, the chapter reduces approval/sandboxing to a string match; in the real implementation, a background-spawned child runs in the same sandbox under the same policy.
-
-</details>
-
-**In one line**: Codex's execution is asynchronous by nature — every command is `spawn`ed as a task, and foreground vs background only differ in "await now or collect later." The chapter compresses that model into two tools (`run_background` to start, `check_background` to harvest), plus `codex exec` as the no-interaction entry point — and that's the whole idea behind "slow operations don't block the main loop."
+When the process exits, the exit watcher emits `ExecCommandEnd`. If the turn has already finished and the session is idle, stock Codex **does not** start another inference turn — the event stops at the client. The model sees the result only through a later `write_stdin`, a new user message, or a client that injects a completion message itself. Calling auto-wake-on-exit a built-in Codex behavior is inaccurate; it is an open enhancement, not shipping behavior. The chapter also does not auto-wake.
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<details>
+<summary>4. Codex's core is fully async; this chapter still keeps fast work on a sync shell</summary>
+
+Codex's Rust core runs on **tokio**: every command `spawn`s a child process, and foreground vs background only differ in "await this tool call through to exit, or yield and harvest later." To make "splitting the wait" visible, the chapter leaves fast commands on `execSync` `shell` and only sends slow ones through `exec_command`. The real implementation does not split fast/slow that way, and `approval_policy` / `sandbox_mode` still gate every execution that actually runs. The chapter also skips PTY, non-empty stdin, and parallel tool calls.
+
+</details>
+
+**In one line**: Codex background work is a yield window + `session_id` + `write_stdin` harvest; live output rides the client event stream, not the model context. The chapter runs that same model-facing interface in TypeScript, and prints "UI event ≠ model input" on stdout on purpose.
+
+</details>
+
+<!-- translation-sync: zh@v2, en@v2 -->
