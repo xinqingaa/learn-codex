@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="500" viewBox="0 0 1100 500" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1100" height="500" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">压缩从哪里切</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">上下文是有序序列，工具调用与它的结果成对出现；切分点落在两者之间，故障会在十几轮之后才显形</text>
+<rect x="60" y="140" width="70" height="46" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="95.0" y="169" font-size="12.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">用户</text>
+<rect x="140" y="140" width="70" height="46" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="175.0" y="169" font-size="12.5" fill="#4c1d95" text-anchor="middle" font-weight="600">调用</text>
+<rect x="220" y="140" width="70" height="46" rx="6" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="255.0" y="169" font-size="12.5" fill="#134e4a" text-anchor="middle" font-weight="600">结果</text>
+<rect x="300" y="140" width="70" height="46" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="335.0" y="169" font-size="12.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">回复</text>
+<rect x="380" y="140" width="70" height="46" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="415.0" y="169" font-size="12.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">用户</text>
+<rect x="460" y="140" width="70" height="46" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="495.0" y="169" font-size="12.5" fill="#4c1d95" text-anchor="middle" font-weight="600">调用</text>
+<rect x="540" y="140" width="70" height="46" rx="6" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="575.0" y="169" font-size="12.5" fill="#134e4a" text-anchor="middle" font-weight="600">结果</text>
+<rect x="620" y="140" width="70" height="46" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="655.0" y="169" font-size="12.5" fill="#4c1d95" text-anchor="middle" font-weight="600">调用</text>
+<rect x="700" y="140" width="70" height="46" rx="6" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="735.0" y="169" font-size="12.5" fill="#134e4a" text-anchor="middle" font-weight="600">结果</text>
+<rect x="780" y="140" width="70" height="46" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="815.0" y="169" font-size="12.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">用户</text>
+<rect x="860" y="140" width="70" height="46" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="895.0" y="169" font-size="12.5" fill="#4c1d95" text-anchor="middle" font-weight="600">调用</text>
+<rect x="940" y="140" width="70" height="46" rx="6" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="975.0" y="169" font-size="12.5" fill="#134e4a" text-anchor="middle" font-weight="600">结果</text>
+<text x="60" y="124" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">时间 →</text>
+<line x1="535.0" y1="122" x2="535.0" y2="204" stroke="#dc2626" stroke-width="2.4" stroke-dasharray="5 4"/>
+<text x="529.0" y="114" font-size="12.5" fill="#dc2626" text-anchor="end" font-weight="700">坏切点</text>
+<line x1="775.0" y1="122" x2="775.0" y2="204" stroke="#059669" stroke-width="2.4"/>
+<text x="781.0" y="114" font-size="12.5" fill="#059669" text-anchor="start" font-weight="700">好切点：最后一条用户消息之前</text>
+<rect x="60" y="236" width="470" height="132" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="72" y="269.0" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="600">坏切点的故障链（症状离病因很远）</text>
+<text x="72" y="284.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">压缩发生在第 30 轮，切散了第 12 轮的一对调用与结果</text>
+<text x="72" y="300.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">压缩本身不报错，摘要也生成得好好的</text>
+<text x="72" y="315.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">下一次请求返回「某个输出项找不到对应调用」</text>
+<text x="72" y="331.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">错误信息里不会提到压缩，你看到的是第 31 轮挂了</text>
+<text x="72" y="346.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">若归进「未知错误重试几次」，每次重试都带着同一份坏序列</text>
+<rect x="560" y="236" width="500" height="132" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="572" y="269.0" font-size="13.5" fill="#064e3b" text-anchor="start" font-weight="600">好切点为什么安全</text>
+<text x="572" y="284.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">用户消息一定处在轮次边界上</text>
+<text x="572" y="300.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">——一轮的定义就是从用户消息开始、到模型不再调工具为止</text>
+<text x="572" y="315.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">所以在它之前切，绝不会拆散任何一对调用与结果</text>
+<text x="572" y="331.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">当前这一轮原样保留，因为它正在被使用</text>
+<text x="572" y="346.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">被切掉的那段整体交给一次「无工具」的模型调用总结</text>
+<text x="60" y="412" font-size="12.5" fill="#0f172a" text-anchor="start" font-weight="400">闸门放在「调模型之前」而不是「收到超长错误之后」：总结本身也是一次模型调用，它的输入是那一大段旧历史，</text>
+<text x="60" y="434" font-size="12.5" fill="#0f172a" text-anchor="start" font-weight="400">也要装进同一个窗口。等窗口满了再压，这次总结请求也发不出去——agent 彻底卡死。这才是「提前压」的真正原因。</text>
+<text x="60" y="466" font-size="12.5" fill="#64748b" text-anchor="start" font-weight="400">判断阈值用精确 token 用量而不是估算，差别不在精度本身，而在于它允许你把安全边际压到多小。</text>
+</svg>

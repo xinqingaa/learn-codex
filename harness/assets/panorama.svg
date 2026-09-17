@@ -1,0 +1,110 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1160" height="950" viewBox="0 0 1160 950" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1160" height="950" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">Agent Loop 运行时全景</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">所有机制只挂在三个位置上：模型调用外套、分发外套、注册表内侧；虚线框完全在循环之外</text>
+<rect x="40" y="92" width="176" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="128.0" y="117.25" font-size="12.5" fill="#475569" text-anchor="middle" font-weight="600">人敲一句话</text>
+<path d="M128,132 L128,172" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="266" y="92" width="176" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="354.0" y="117.25" font-size="12.5" fill="#475569" text-anchor="middle" font-weight="600">定时器 · 开新线程</text>
+<path d="M354,132 L354,172" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="492" y="92" width="176" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="580.0" y="117.25" font-size="12.5" fill="#475569" text-anchor="middle" font-weight="600">定时器 · 续旧线程</text>
+<path d="M580,132 L580,172" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="718" y="92" width="176" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="806.0" y="117.25" font-size="12.5" fill="#475569" text-anchor="middle" font-weight="600">上游派生的干净输入</text>
+<path d="M806,132 L806,172" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="944" y="92" width="176" height="40" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="1032.0" y="117.25" font-size="12.5" fill="#475569" text-anchor="middle" font-weight="600">远程前端驱动</text>
+<path d="M1032,132 L1032,172" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="1120" y="84" font-size="12" fill="#64748b" text-anchor="end" font-weight="400">入口：循环不关心自己被谁叫醒</text>
+<rect x="40" y="172" width="1080" height="614" rx="14" fill="#fdfeff" stroke="#2563eb" stroke-width="2.2"/>
+<text x="60" y="198" font-size="15" fill="#1e3a8a" text-anchor="start" font-weight="700">Agent Loop</text>
+<text x="60" y="216" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">状态源：一条只增不改的输入序列</text>
+<rect x="90" y="238" width="268" height="62" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="224.0" y="259.25" font-size="13.5" fill="#78350f" text-anchor="middle" font-weight="600">① 预算闸门</text>
+<text x="224.0" y="274.75" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">估当前 token 余量</text>
+<text x="224.0" y="290.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">逼近上限 → 先压缩历史</text>
+<rect x="90" y="318" width="268" height="62" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="224.0" y="339.25" font-size="13.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">② 组装指令</text>
+<text x="224.0" y="354.75" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">内置 base + 逐层项目约定</text>
+<text x="224.0" y="370.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">配置项不进这段文本</text>
+<rect x="90" y="398" width="268" height="62" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="224.0" y="419.25" font-size="13.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">③ 调用模型</text>
+<text x="224.0" y="434.75" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">外套：错误分类与退避</text>
+<text x="224.0" y="450.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">限流／超长／中止各走一条</text>
+<rect x="90" y="478" width="268" height="62" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="224.0" y="499.25" font-size="13.5" fill="#134e4a" text-anchor="middle" font-weight="600">④ 追加 + 落盘</text>
+<text x="224.0" y="514.75" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">整段原样追加</text>
+<text x="224.0" y="530.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">逐项写只追加日志</text>
+<rect x="90" y="558" width="268" height="62" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="224.0" y="579.25" font-size="13.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">⑤ 有工具调用吗</text>
+<text x="224.0" y="594.75" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">唯一分支判据</text>
+<text x="224.0" y="610.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">只看结构，不读语义</text>
+<path d="M224.0,300 L224.0,314" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M224.0,380 L224.0,394" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M224.0,460 L224.0,474" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M224.0,540 L224.0,554" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="90" y="668" width="268" height="48" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="224.0" y="689.75" font-size="13" fill="#064e3b" text-anchor="middle" font-weight="600">收尾退出</text>
+<text x="224.0" y="705.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">抽出最终文本；会话留在磁盘上</text>
+<path d="M224.0,620 L224.0,664" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#ag)"/>
+<text x="234.0" y="646" font-size="12" fill="#059669" text-anchor="start" font-weight="600">无</text>
+<rect x="400" y="558" width="168" height="62" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="484.0" y="579.25" font-size="13.5" fill="#4c1d95" text-anchor="middle" font-weight="600">分发</text>
+<text x="484.0" y="594.75" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">按名字查表</text>
+<text x="484.0" y="610.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">不判断能不能做</text>
+<path d="M358,589 L396,589" fill="none" stroke="#7c3aed" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="374" y="580" font-size="12" fill="#7c3aed" text-anchor="start" font-weight="600">有</text>
+<rect x="600" y="262" width="452" height="46" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="612" y="282.75" font-size="12.5" fill="#1e3a8a" text-anchor="start" font-weight="600">内部状态工具（计划）</text>
+<text x="612" y="297.75" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">只改 harness 状态，直接返回</text>
+<path d="M568,589 L596,285" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="600" y="322" width="452" height="46" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="612" y="342.75" font-size="12.5" fill="#4c1d95" text-anchor="start" font-weight="600">派生子循环</text>
+<text x="612" y="357.75" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">干净上下文，只回收一条结论</text>
+<path d="M568,589 L596,345" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="600" y="382" width="452" height="46" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="612" y="402.75" font-size="12.5" fill="#4c1d95" text-anchor="start" font-weight="600">慢命令</text>
+<text x="612" y="417.75" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">yield 窗口 → 句柄 → 后续收割</text>
+<path d="M568,589 L596,405" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="600" y="442" width="452" height="46" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="612" y="462.75" font-size="12.5" fill="#4c1d95" text-anchor="start" font-weight="600">协议桥</text>
+<text x="612" y="477.75" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">翻回原始工具名，打给外部进程</text>
+<path d="M568,589 L596,465" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="600" y="502" width="452" height="46" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="612" y="522.75" font-size="12.5" fill="#7f1d1d" text-anchor="start" font-weight="600">会落地的动作</text>
+<text x="612" y="537.75" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">命令／补丁 → 必须先过判定链</text>
+<path d="M568,589 L596,525" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="600" y="560" width="452" height="96" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="614" y="582" font-size="13" fill="#7f1d1d" text-anchor="start" font-weight="600">判定链（按固定顺序）</text>
+<text x="614" y="604" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">钩子信任 → 能力开关 → 总旁路 → 沙箱 → 审批与项目信任</text>
+<text x="614" y="624" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">末尾两枚保险丝只能把「放行」扳回「询问」，不能反向放松</text>
+<text x="614" y="645" font-size="12" fill="#7f1d1d" text-anchor="start" font-weight="600">输出三值：放行 / 询问 / 拒绝</text>
+<path d="M826.0,548 L826.0,556" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ar)"/>
+<rect x="400" y="700" width="652" height="56" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="412" y="725.75" font-size="13" fill="#134e4a" text-anchor="start" font-weight="600">结果回写：成功、拒绝、越界、超时、找不到工具，全写成一条工具结果</text>
+<text x="412" y="741.25" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">失败不是异常出口，是数据 · 只有用户主动中止是一等出口</text>
+<path d="M826.0,656 L826.0,696" fill="none" stroke="#0d9488" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="1052,285 1084,285 1084,728 1056,728" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="1052,345 1084,345 1084,728 1056,728" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="1052,405 1084,405 1084,728 1056,728" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="1052,465 1084,465 1084,728 1056,728" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<polyline points="400,728 62,728 62,269 86,269" fill="none" stroke="#2563eb" stroke-width="1.8" marker-end="url(#a)"/>
+<text x="70" y="750" font-size="12" fill="#2563eb" text-anchor="start" font-weight="600">回到开头</text>
+<rect x="40" y="816" width="1080" height="104" rx="12" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="60" y="842" font-size="14" fill="#475569" text-anchor="start" font-weight="700">循环之外</text>
+<text x="180" y="864" font-size="13" fill="#475569" text-anchor="start" font-weight="600">调度器</text>
+<text x="180" y="884" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">到期入队，从不亲自执行</text>
+<text x="416" y="864" font-size="13" fill="#475569" text-anchor="start" font-weight="600">配置解析</text>
+<text x="416" y="884" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">决定这次调用的参数取值</text>
+<text x="652" y="864" font-size="13" fill="#475569" text-anchor="start" font-weight="600">会话日志</text>
+<text x="652" y="884" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">比进程长寿，生命周期靠文件操作</text>
+<text x="888" y="864" font-size="13" fill="#475569" text-anchor="start" font-weight="600">前端与传输</text>
+<text x="888" y="884" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">同一引擎，多个入口</text>
+</svg>

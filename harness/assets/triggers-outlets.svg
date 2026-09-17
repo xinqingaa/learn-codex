@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="500" viewBox="0 0 1060 500" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1060" height="500" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">同一个循环，换驱动方与出口</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">无人值守不改变循环，改变的是三样东西：谁驱动它、它指向什么、结果怎么回来</text>
+<rect x="40" y="110" width="250" height="54" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="52" y="135.0" font-size="13" fill="#475569" text-anchor="start" font-weight="600">人</text>
+<text x="52" y="150.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">终端里敲提示词</text>
+<path d="M294,137 L356,137" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="176" width="250" height="54" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="52" y="201.0" font-size="13" fill="#475569" text-anchor="start" font-weight="600">定时器</text>
+<text x="52" y="216.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">系统定时器 / 应用调度</text>
+<path d="M294,203 L356,203" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="242" width="250" height="54" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="52" y="267.0" font-size="13" fill="#475569" text-anchor="start" font-weight="600">CI</text>
+<text x="52" y="282.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">在某个 runner 上跑一次</text>
+<path d="M294,269 L356,269" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="308" width="250" height="54" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="52" y="333.0" font-size="13" fill="#475569" text-anchor="start" font-weight="600">云端</text>
+<text x="52" y="348.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">托管环境里的一个任务</text>
+<path d="M294,335 L356,335" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="374" width="250" height="54" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="52" y="399.0" font-size="13" fill="#475569" text-anchor="start" font-weight="600">另一个 agent</text>
+<text x="52" y="414.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">把「跑一个任务」当成一次工具调用</text>
+<path d="M294,401 L356,401" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="360" y="130" width="250" height="258" rx="12" fill="#fdfeff" stroke="#2563eb" stroke-width="2.2"/>
+<text x="485" y="176" font-size="17" fill="#1e3a8a" text-anchor="middle" font-weight="700">同一个循环</text>
+<text x="485" y="206" font-size="12.5" fill="#64748b" text-anchor="middle" font-weight="400">一行不改</text>
+<text x="378" y="248" font-size="12.5" fill="#0f172a" text-anchor="start" font-weight="600">指向什么：</text>
+<text x="378" y="272" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 一段对话</text>
+<text x="378" y="294" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 一个 diff</text>
+<text x="378" y="316" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 一个被委派的任务</text>
+<text x="378" y="356" font-size="11" fill="#7c3aed" text-anchor="start" font-weight="400">换一份系统提示 + 换指向 = 换一个产品</text>
+<rect x="680" y="110" width="340" height="54" rx="8" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="692" y="135.0" font-size="13" fill="#475569" text-anchor="start" font-weight="600">终端文本</text>
+<text x="692" y="150.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">对人友好，对脚本是灾难</text>
+<path d="M614,137 L676,137" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="680" y="176" width="340" height="54" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="692" y="201.0" font-size="13" fill="#064e3b" text-anchor="start" font-weight="600">结构化事件流</text>
+<text x="692" y="216.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">每行一个 JSON：会话/轮次/项/用量/失败</text>
+<path d="M614,203 L676,203" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="680" y="242" width="340" height="54" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="692" y="267.0" font-size="13" fill="#064e3b" text-anchor="start" font-weight="600">受 schema 约束的结果</text>
+<text x="692" y="282.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">在生成阶段约束，不是事后校验重试</text>
+<path d="M614,269 L676,269" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="680" y="308" width="340" height="54" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="692" y="333.0" font-size="13" fill="#78350f" text-anchor="start" font-weight="600">行内评论</text>
+<text x="692" y="348.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">挂在 diff 的具体行上，绝不改文件</text>
+<path d="M614,335 L676,335" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="680" y="374" width="340" height="54" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="692" y="399.0" font-size="13" fill="#134e4a" text-anchor="start" font-weight="600">一份 diff 或一个 PR</text>
+<text x="692" y="414.0" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">云端任务的产物</text>
+<path d="M614,401 L676,401" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="40" y="442" font-size="12.5" fill="#0f172a" text-anchor="start" font-weight="400">机器可读的输出走标准输出，人读的进度走标准错误——CI 里一条重定向就能把事件流存成文件，而人在终端看时两者都在。</text>
+<text x="40" y="470" font-size="12.5" fill="#b45309" text-anchor="start" font-weight="400">「只报告不修改」如果只写在提示词里，它就会在某些时候被违反。正确做法是配上只读沙箱，让它物理上改不了。</text>
+</svg>

@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1180" height="570" viewBox="0 0 1180 570" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1180" height="570" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">一个动作的安全判定链</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">自治不是开关，是刻度盘；刻度盘的实现是一条有固定顺序的判定链，顺序本身比每道闸的内容更重要</text>
+<rect x="30" y="150" width="100" height="110" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="80.0" y="195.5" font-size="13" fill="#1e3a8a" text-anchor="middle" font-weight="600">一个动作</text>
+<text x="80.0" y="210.5" font-size="11" fill="#64748b" text-anchor="middle" font-weight="400">命令 / 补丁</text>
+<text x="80.0" y="225.5" font-size="11" fill="#64748b" text-anchor="middle" font-weight="400">/ 外部调用</text>
+<rect x="144" y="150" width="150" height="110" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="158" y="176" font-size="11.5" fill="#7f1d1d" text-anchor="start" font-weight="700">闸 0</text>
+<text x="158" y="202" font-size="14.5" fill="#7f1d1d" text-anchor="start" font-weight="600">钩子信任</text>
+<text x="158" y="226" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">配置里的代码</text>
+<text x="158" y="244" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">先问可不可信</text>
+<rect x="308" y="150" width="150" height="110" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="322" y="176" font-size="11.5" fill="#7f1d1d" text-anchor="start" font-weight="700">闸 1</text>
+<text x="322" y="202" font-size="14.5" fill="#7f1d1d" text-anchor="start" font-weight="600">能力开关</text>
+<text x="322" y="226" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">特性关着</text>
+<text x="322" y="244" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">轮不到谈沙箱</text>
+<rect x="472" y="150" width="150" height="110" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="486" y="176" font-size="11.5" fill="#064e3b" text-anchor="start" font-weight="700">闸 2</text>
+<text x="486" y="202" font-size="14.5" fill="#064e3b" text-anchor="start" font-weight="600">总旁路</text>
+<text x="486" y="226" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">设了就短路</text>
+<text x="486" y="244" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">后面全部</text>
+<rect x="636" y="150" width="150" height="110" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="650" y="176" font-size="11.5" fill="#7f1d1d" text-anchor="start" font-weight="700">闸 3</text>
+<text x="650" y="202" font-size="14.5" fill="#7f1d1d" text-anchor="start" font-weight="600">沙箱</text>
+<text x="650" y="226" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">物理边界，越界</text>
+<text x="650" y="244" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">连问都不必问</text>
+<rect x="800" y="150" width="150" height="110" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="814" y="176" font-size="11.5" fill="#7f1d1d" text-anchor="start" font-weight="700">闸 4</text>
+<text x="814" y="202" font-size="14.5" fill="#7f1d1d" text-anchor="start" font-weight="600">审批与信任</text>
+<text x="814" y="226" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">决定要不要</text>
+<text x="814" y="244" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">升级给人</text>
+<path d="M294,205 L304,205" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M458,205 L468,205" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M622,205 L632,205" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M786,205 L796,205" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M130,205 L140,205" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="964" y="150" width="160" height="110" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="978" y="176" font-size="14.5" fill="#7f1d1d" text-anchor="start" font-weight="700">保险丝</text>
+<text x="978" y="198" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="400">额外的独立复审层</text>
+<text x="978" y="213" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="400">「这个项目不可信」</text>
+<text x="978" y="228" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="400">这个事实</text>
+<text x="978" y="243" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="400"></text>
+<text x="978" y="258" font-size="10.5" fill="#7f1d1d" text-anchor="start" font-weight="400">只能把放行扳回询问</text>
+<path d="M950,205 L960,205" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="144" y="340" width="280" height="70" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="284.0" y="373.75" font-size="15" fill="#7f1d1d" text-anchor="middle" font-weight="600">拒绝</text>
+<text x="284.0" y="389.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">连问都不必问</text>
+<rect x="620" y="340" width="200" height="70" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="720.0" y="373.75" font-size="15" fill="#78350f" text-anchor="middle" font-weight="600">询问</text>
+<text x="720.0" y="389.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">升级给人</text>
+<rect x="880" y="340" width="240" height="70" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="1000.0" y="373.75" font-size="15" fill="#064e3b" text-anchor="middle" font-weight="600">放行</text>
+<text x="1000.0" y="389.25" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">直接执行</text>
+<path d="M219,260 L219,336" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ar)"/>
+<text x="227" y="300" font-size="11.5" fill="#dc2626" text-anchor="start" font-weight="600">拒绝</text>
+<polyline points="383,260 383,300 300,300 300,336" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ar)"/>
+<polyline points="711,260 711,312 400,312 400,336" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ar)"/>
+<polyline points="547,150 547,112 1152,112 1152,375 1124,375" fill="none" stroke="#059669" stroke-width="1.8" marker-end="url(#ag)" stroke-dasharray="5 4"/>
+<text x="600" y="106" font-size="12" fill="#059669" text-anchor="start" font-weight="400">显式的危险开关：设了直接放行，短路后面全部，语义干净</text>
+<polyline points="1044,260 1044,296 720,296 720,336" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M1000,260 L1000,336" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#ag)"/>
+<text x="40" y="452" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">顺序为什么关键：能力没开，根本轮不到谈沙箱；总旁路存在的意义就是短路，所以必须排在被短路的东西前面；</text>
+<text x="40" y="476" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">物理边界比「问不问人」更硬，越界的写连问都不必问；审批垫底，决定一个本来能跑的动作要不要再升级给人。</text>
+<text x="40" y="510" font-size="12.5" fill="#64748b" text-anchor="start" font-weight="400">三值比两值好在哪：物理上越界和策略上需要确认，对用户是两种完全不同的信息——前者说「这条路走不通，换个思路」，后者说「要不要让它这么干」。</text>
+<text x="40" y="536" font-size="12.5" fill="#b45309" text-anchor="start" font-weight="400">安全机制的叠加必须单调收紧。任何一个能放松其他机制的开关，都会让整条链的行为无法推理。</text>
+</svg>

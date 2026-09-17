@@ -1,0 +1,58 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1280 760" width="1280" height="760">
+<style>text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }</style>
+<defs>
+<marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/></marker>
+<marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/></marker>
+<marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/></marker>
+<marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/></marker>
+<marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ea580c"/></marker>
+<marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/></marker>
+<marker id="arrow-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker>
+</defs>
+<rect width="1280" height="760" fill="#ffffff"/>
+<text x="640" y="36" fill="#111827" font-size="22" text-anchor="middle" font-weight="700">信任边界：审批与沙箱正交</text>
+<text x="640" y="60" fill="#6b7280" font-size="13" text-anchor="middle">一问「要不要问人」，一问「碰得到什么」。焊成一道闸会同时失去两种调节能力。</text>
+<rect x="40" y="88" width="580" height="400" rx="12" fill="#fff7ed" stroke="#fdba74" stroke-width="1.8"/>
+<text x="330" y="118" fill="#9a3412" font-size="18" text-anchor="middle" font-weight="700">审批 · 问不问</text>
+<rect x="64" y="140" width="532" height="68" rx="8" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+<text x="84" y="170" fill="#c2410c" font-size="14" text-anchor="start" font-weight="700">never</text>
+<text x="250" y="168" fill="#111827" font-size="14" text-anchor="start" font-weight="600">从不问</text>
+<text x="250" y="190" fill="#6b7280" font-size="12" text-anchor="start">无人值守常用</text>
+<rect x="64" y="220" width="532" height="68" rx="8" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+<text x="84" y="250" fill="#c2410c" font-size="14" text-anchor="start" font-weight="700">on-failure</text>
+<text x="250" y="248" fill="#111827" font-size="14" text-anchor="start" font-weight="600">先跑，失败再问</text>
+<text x="250" y="270" fill="#6b7280" font-size="12" text-anchor="start">失败常是沙箱拦住</text>
+<rect x="64" y="300" width="532" height="68" rx="8" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+<text x="84" y="330" fill="#c2410c" font-size="14" text-anchor="start" font-weight="700">on-request</text>
+<text x="250" y="328" fill="#111827" font-size="14" text-anchor="start" font-weight="600">只拦危险动作</text>
+<text x="250" y="350" fill="#6b7280" font-size="12" text-anchor="start">屋里 rm 仍要问</text>
+<rect x="64" y="380" width="532" height="68" rx="8" fill="#ffffff" stroke="#fed7aa" stroke-width="1.5"/>
+<text x="84" y="410" fill="#c2410c" font-size="14" text-anchor="start" font-weight="700">untrusted</text>
+<text x="250" y="408" fill="#111827" font-size="14" text-anchor="start" font-weight="600">非纯读都拦</text>
+<text x="250" y="430" fill="#6b7280" font-size="12" text-anchor="start">最多疑</text>
+<rect x="660" y="88" width="580" height="400" rx="12" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.8"/>
+<text x="950" y="118" fill="#6b21a8" font-size="18" text-anchor="middle" font-weight="700">沙箱 · 碰得到什么</text>
+<rect x="684" y="156" width="532" height="84" rx="8" fill="#ffffff" stroke="#e9d5ff" stroke-width="1.5"/>
+<text x="704" y="190" fill="#7c3aed" font-size="14" text-anchor="start" font-weight="700">read-only</text>
+<text x="704" y="214" fill="#4b5563" font-size="13" text-anchor="start">一切写入拒绝  ·  评审、只读问答</text>
+<rect x="684" y="256" width="532" height="84" rx="8" fill="#ffffff" stroke="#e9d5ff" stroke-width="1.5"/>
+<text x="704" y="290" fill="#7c3aed" font-size="14" text-anchor="start" font-weight="700">workspace-write</text>
+<text x="704" y="314" fill="#4b5563" font-size="13" text-anchor="start">可写根 = 启动目录  ·  日常开发默认档</text>
+<rect x="684" y="356" width="532" height="84" rx="8" fill="#ffffff" stroke="#e9d5ff" stroke-width="1.5"/>
+<text x="704" y="390" fill="#7c3aed" font-size="14" text-anchor="start" font-weight="700">danger-full-access</text>
+<text x="704" y="414" fill="#4b5563" font-size="13" text-anchor="start">关掉笼子  ·  一次性容器里才用</text>
+<rect x="40" y="512" width="380" height="120" rx="10" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+<text x="230" y="546" fill="#991b1b" font-size="15" text-anchor="middle" font-weight="700">屋里的危险</text>
+<text x="230" y="572" fill="#7f1d1d" font-size="13" text-anchor="middle">路径仍在可写根里，</text>
+<text x="230" y="594" fill="#7f1d1d" font-size="13" text-anchor="middle">沙箱拦不住 rm -rf 。靠审批。</text>
+<rect x="450" y="512" width="380" height="120" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="640" y="546" fill="#1e3a8f" font-size="15" text-anchor="middle" font-weight="700">出界</text>
+<text x="640" y="572" fill="#1e40af" font-size="13" text-anchor="middle">不靠人一条条点路径。</text>
+<text x="640" y="594" fill="#1e40af" font-size="13" text-anchor="middle">硬边界来自内核，不是字符串。</text>
+<rect x="860" y="512" width="380" height="120" rx="10" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+<text x="1050" y="546" fill="#166534" font-size="15" text-anchor="middle" font-weight="700">拒绝是数据</text>
+<text x="1050" y="572" fill="#14532d" font-size="13" text-anchor="middle">错误 item 喂回模型，</text>
+<text x="1050" y="594" fill="#14532d" font-size="13" text-anchor="middle">循环 continue，turn 不崩。</text>
+<text x="640" y="666" fill="#6b7280" font-size="13" text-anchor="middle">生产顺序：先在当前沙箱试跑 → 需要提权且策略允许再问人 → 批准后提权重跑。</text>
+<text x="640" y="690" fill="#6b7280" font-size="13" text-anchor="middle">分类由 harness 做。模型可以提议任何事，能不能执行由策略说了算。</text>
+</svg>

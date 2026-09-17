@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="560" viewBox="0 0 1060 560" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1060" height="560" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">「多执行者」其实是四件互相独立的事</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">注意力怎么隔离、信息怎么传递、顺序怎么保证、文件在哪写——混在一起想，会设计出一团乱麻</text>
+<rect x="40" y="108" width="980" height="80" rx="9" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="60" y="138" font-size="15" fill="#4c1d95" text-anchor="start" font-weight="700">1. 注意力边界</text>
+<text x="60" y="162" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">各带一份私有上下文；信箱传消息，过境的东西必须被显式说出来</text>
+<text x="1000" y="138" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：支线的几十轮中间过程淹没主线</text>
+<rect x="40" y="204" width="980" height="80" rx="9" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="60" y="234" font-size="15" fill="#7f1d1d" text-anchor="start" font-weight="700">2. 规则边界</text>
+<text x="60" y="258" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">任务带依赖集合；认领时检查，不满足就拒绝</text>
+<text x="1000" y="234" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：三个执行者各自跳步，没有任何地方看得出全局顺序被破坏</text>
+<rect x="40" y="300" width="980" height="80" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="60" y="330" font-size="15" fill="#78350f" text-anchor="start" font-weight="700">3. 并发正确性</text>
+<text x="60" y="354" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">请求带 id 对账；认领的复查与置位必须原子</text>
+<text x="1000" y="330" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：回执对不上账；两个执行者同时抢到同一份活</text>
+<rect x="40" y="396" width="980" height="80" rx="9" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="60" y="426" font-size="15" fill="#134e4a" text-anchor="start" font-weight="700">4. 地盘边界</text>
+<text x="60" y="450" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">各自一份工作目录；冲突推迟到交回那一刻由 git 诚实暴露</text>
+<text x="1000" y="426" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：并行写入互相覆盖，事后分不清哪行属于哪份活</text>
+<rect x="40" y="500" width="470" height="44" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="275.0" y="527.75" font-size="13.5" fill="#7f1d1d" text-anchor="middle" font-weight="600">前提：多执行者默认是亏的</text>
+<text x="60" y="536" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">每个执行者独立烧 token，总成本高于单个。</text>
+<rect x="550" y="500" width="470" height="44" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="785.0" y="527.5" font-size="13" fill="#064e3b" text-anchor="middle" font-weight="600">只在任务确实能拆、且每部分都有大量中间过程时才划算</text>
+<text x="570" y="536" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">主流产品默认只在用户明确要求并行时才派生——这个保守默认是对的。</text>
+</svg>

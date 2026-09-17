@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1020" height="520" viewBox="0 0 1020 520" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1020" height="520" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">一个引擎，许多前端</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">复杂度几乎全在传输与协议侧；关键抽象是会话标识——一个前端开的会话，另一个前端能接着跑</text>
+<circle cx="510" cy="280" r="112" fill="#eff6ff" stroke="#2563eb" stroke-width="2.4"/>
+<text x="510" y="246" font-size="19" fill="#1e3a8a" text-anchor="middle" font-weight="700">引擎</text>
+<text x="510" y="272" font-size="12.5" fill="#64748b" text-anchor="middle" font-weight="400">循环 + 会话存储</text>
+<text x="510" y="298" font-size="12" fill="#2563eb" text-anchor="middle" font-weight="600">每条会话一个 id</text>
+<text x="510" y="322" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="400">开新会话 / 在某条会话上跑一轮</text>
+<text x="510" y="342" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="400">= 同一个方法，不同参数</text>
+<rect x="40" y="110" width="280" height="66" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="56" y="138" font-size="13.5" fill="#1e3a8a" text-anchor="start" font-weight="600">终端</text>
+<text x="56" y="160" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">进程内直连，无传输</text>
+<path d="M324,143 L392,220.0" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="210" width="280" height="66" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="56" y="238" font-size="13.5" fill="#1e3a8a" text-anchor="start" font-weight="600">编辑器扩展</text>
+<text x="56" y="260" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">RPC 协议</text>
+<path d="M324,243 L392,275.0" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="310" width="280" height="66" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="56" y="338" font-size="13.5" fill="#1e3a8a" text-anchor="start" font-weight="600">桌面应用</text>
+<text x="56" y="360" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">RPC 协议</text>
+<path d="M324,343 L392,330.0" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="700" y="110" width="280" height="66" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="716" y="138" font-size="13.5" fill="#78350f" text-anchor="start" font-weight="600">远程终端</text>
+<text x="716" y="160" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">WebSocket / Unix socket</text>
+<path d="M628,220.0 L696,143" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="700" y="210" width="280" height="66" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="716" y="238" font-size="13.5" fill="#4c1d95" text-anchor="start" font-weight="600">被当作外部工具</text>
+<text x="716" y="260" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">外部工具协议（另一个 agent 调它）</text>
+<path d="M628,275.0 L696,243" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="700" y="310" width="280" height="66" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="716" y="338" font-size="13.5" fill="#134e4a" text-anchor="start" font-weight="600">托管云服务</text>
+<text x="716" y="360" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">网络 / 云边界</text>
+<path d="M628,330.0 L696,343" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="40" y="424" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">如果每种形态重写一套 agent，那是维护灾难，而且行为会不一致。</text>
+<text x="40" y="450" font-size="13" fill="#b45309" text-anchor="start" font-weight="400">安全提醒：本机终端里人在现场；远程驱动下没有人在现场——审批弹给谁、沙箱按谁的策略配，都要重新想一遍。</text>
+</svg>

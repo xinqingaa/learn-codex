@@ -1,0 +1,53 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="560" viewBox="0 0 1060 560" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1060" height="560" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">文本合并与配置解析是两条独立的路</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">一条决定模型读到什么，一条决定这次调用是什么参数；混成一件事，硬约束就会被降级成建议</text>
+<rect x="40" y="104" width="470" height="300" rx="12" fill="#fdfeff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="60" y="132" font-size="15" fill="#1e3a8a" text-anchor="start" font-weight="700">文本合并 → 指令字符串</text>
+<rect x="62" y="152" width="426" height="54" rx="7" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="78" y="175" font-size="13" fill="#1e3a8a" text-anchor="start" font-weight="600">内置基础指令</text>
+<text x="78" y="194" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">永远在最前：身份、工具用法</text>
+<rect x="62" y="218" width="426" height="54" rx="7" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="78" y="241" font-size="13" fill="#78350f" text-anchor="start" font-weight="600">项目约定（逐目录收集）</text>
+<text x="78" y="260" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">从项目根一路走到当前工作目录</text>
+<rect x="62" y="284" width="426" height="54" rx="7" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="78" y="307" font-size="13" fill="#78350f" text-anchor="start" font-weight="600">拼接顺序 = 覆盖顺序</text>
+<text x="78" y="326" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">越靠近当前目录的出现在越后面，因此赢</text>
+<path d="M275,206 L275,214" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<path d="M275,272 L275,280" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="62" y="360" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">monorepo 例：根写「全部用 TypeScript」，子包写「这个包是 Python」——后者赢。</text>
+<text x="62" y="380" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">整份拼接有字节上限，超了就停止追加。</text>
+<rect x="540" y="104" width="480" height="300" rx="12" fill="#fbfcfd" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="560" y="132" font-size="15" fill="#475569" text-anchor="start" font-weight="700">配置解析 → 一组取值</text>
+<rect x="562" y="152" width="436" height="32" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="576" y="173" font-size="12" fill="#7f1d1d" text-anchor="start" font-weight="600">命令行参数与显式覆盖</text>
+<text x="986" y="173" font-size="11" fill="#64748b" text-anchor="end" font-weight="400">最高</text>
+<rect x="562" y="192" width="436" height="32" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="576" y="213" font-size="12" fill="#78350f" text-anchor="start" font-weight="600">项目级配置（需项目可信 · 越近越优先）</text>
+<rect x="562" y="232" width="436" height="32" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="576" y="253" font-size="12" fill="#1e3a8a" text-anchor="start" font-weight="600">选中的预设文件</text>
+<rect x="562" y="272" width="436" height="32" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="576" y="293" font-size="12" fill="#1e3a8a" text-anchor="start" font-weight="600">用户级配置</text>
+<rect x="562" y="312" width="436" height="32" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="576" y="333" font-size="12" fill="#475569" text-anchor="start" font-weight="600">系统级配置</text>
+<rect x="562" y="352" width="436" height="32" rx="6" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6"/>
+<text x="576" y="373" font-size="12" fill="#475569" text-anchor="start" font-weight="600">内置默认值</text>
+<text x="986" y="373" font-size="11" fill="#64748b" text-anchor="end" font-weight="400">最低</text>
+<line x1="550" y1="152" x2="550" y2="384" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)" stroke-dasharray="4 3"/>
+<text x="546" y="268" font-size="10.5" fill="#64748b" text-anchor="end" font-weight="400">覆</text>
+<rect x="40" y="424" width="470" height="100" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="52" y="456.5" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="600">配置不进提示词</text>
+<text x="52" y="472.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">把「当前沙箱是只读，请不要写文件」拼进系统提示是错的：</text>
+<text x="52" y="487.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">它把一个硬约束降级成了一句建议。</text>
+<text x="52" y="503.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">沙箱该拦的不需要告诉模型；模型该知道的边界，从被拒绝时的错误信息里学。</text>
+<rect x="540" y="424" width="480" height="100" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="552" y="456.5" font-size="13.5" fill="#064e3b" text-anchor="start" font-weight="600">两条必须显式设计的边界</text>
+<text x="552" y="472.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">项目级配置需要项目被标记为可信才生效——否则克隆一个仓库就能改沙箱；</text>
+<text x="552" y="487.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">即使可信，也有一组机器级键不接受下层覆盖（模型后端、认证、遥测）。</text>
+<text x="552" y="503.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">调试这类系统最有用的能力：对每个键报告它最终取值来自哪一层。</text>
+</svg>

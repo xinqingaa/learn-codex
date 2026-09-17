@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="570" viewBox="0 0 1060 570" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1060" height="570" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">会话的一生，全都是文件操作</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">存储形态选对了，生命周期管理就自动变成一组文件操作；如果它需要在循环里加逻辑，说明形态选错了</text>
+<rect x="390" y="120" width="280" height="176" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="530" y="148" font-size="14.5" fill="#134e4a" text-anchor="middle" font-weight="700">只追加的行分隔日志</text>
+<text x="406" y="178" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">头：会话 id / 工作目录 / 启动时间</text>
+<text x="406" y="199" font-size="11" fill="#64748b" text-anchor="start" font-weight="400" font-family="'SF Mono','Menlo','Consolas',monospace">用户消息</text>
+<text x="406" y="220" font-size="11" fill="#64748b" text-anchor="start" font-weight="400" font-family="'SF Mono','Menlo','Consolas',monospace">工具调用</text>
+<text x="406" y="241" font-size="11" fill="#64748b" text-anchor="start" font-weight="400" font-family="'SF Mono','Menlo','Consolas',monospace">工具输出</text>
+<text x="406" y="262" font-size="11" fill="#64748b" text-anchor="start" font-weight="400" font-family="'SF Mono','Menlo','Consolas',monospace">模型回复</text>
+<text x="406" y="283" font-size="11" fill="#64748b" text-anchor="start" font-weight="400" font-family="'SF Mono','Menlo','Consolas',monospace">…</text>
+<text x="530" y="284" font-size="11" fill="#0d9488" text-anchor="middle" font-weight="400">项一产生就落盘，不等这一轮结束</text>
+<rect x="40" y="120" width="290" height="100" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="52" y="152.75" font-size="14" fill="#064e3b" text-anchor="start" font-weight="600">继续</text>
+<text x="52" y="168.25" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">读日志，跳过头</text>
+<text x="52" y="183.75" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">按行解析成序列，接着跑</text>
+<text x="52" y="199.25" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">文件本身不动</text>
+<path d="M334,170 L386,170" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="236" width="290" height="100" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="52" y="268.75" font-size="14" fill="#1e3a8a" text-anchor="start" font-weight="600">分叉</text>
+<text x="52" y="284.25" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">复制成新 id 的文件</text>
+<text x="52" y="299.75" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">头里记下从哪条岔出来的</text>
+<text x="52" y="315.25" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">原会话一个字节都不动</text>
+<path d="M334,286 L386,286" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="730" y="120" width="290" height="100" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="742" y="152.75" font-size="14" fill="#78350f" text-anchor="start" font-weight="600">归档</text>
+<text x="742" y="168.25" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">挪进隐藏目录</text>
+<text x="742" y="183.75" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">或翻一个可见性标志位</text>
+<text x="742" y="199.25" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">什么都没删</text>
+<path d="M674,170 L726,170" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="730" y="236" width="290" height="100" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="742" y="276.5" font-size="14" fill="#78350f" text-anchor="start" font-weight="600">取消归档</text>
+<text x="742" y="292.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">挪回来</text>
+<text x="742" y="307.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">重新出现在选择器里</text>
+<path d="M674,286 L726,286" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="730" y="348" width="290" height="100" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="742" y="388.5" font-size="14" fill="#7f1d1d" text-anchor="start" font-weight="600">删除</text>
+<text x="742" y="404.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">唯一不可逆的操作</text>
+<text x="742" y="419.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">所以是唯一需要显式确认的</text>
+<polyline points="670,288 702,288 702,398 726,398" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="40" y="352" width="290" height="96" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="52" y="382.5" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="600">为什么不是大 JSON 数组</text>
+<text x="52" y="398.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">写到一半崩溃 → 整份文件解析失败</text>
+<text x="52" y="413.5" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">你丢的不是最后一条，是全部</text>
+<text x="52" y="429.0" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">新增一项要重写整个文件</text>
+<text x="390" y="336" font-size="12.5" fill="#0f172a" text-anchor="start" font-weight="400">形态是被访问模式决定的，</text>
+<text x="390" y="356" font-size="12.5" fill="#0f172a" text-anchor="start" font-weight="400">不是被「哪个技术更先进」决定的：</text>
+<text x="390" y="380" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">追加一行、顺序读回、复制、移动、删除，</text>
+<text x="390" y="398" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">全是文件系统的原生操作。</text>
+<text x="390" y="416" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">事务、并发写、按任意字段检索、跨用户</text>
+<text x="390" y="434" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">关联，这个场景一个都没用到。</text>
+<text x="390" y="462" font-size="11.5" fill="#b45309" text-anchor="start" font-weight="400">什么时候该换数据库？当访问模式变了：</text>
+<text x="390" y="480" font-size="11.5" fill="#b45309" text-anchor="start" font-weight="400">多租户、跨机共享、按人／按时间检索。</text>
+<text x="40" y="530" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">归档和删除必须在语义上和界面上都严格分开：归档却删了数据是背叛预期，删除却只藏起来是安全问题。</text>
+</svg>

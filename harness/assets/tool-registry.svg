@@ -1,0 +1,51 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="560" viewBox="0 0 1060 560" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1060" height="560" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">同一张注册表，三种执行位置</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">对模型来说它们长得一模一样；真正的差别是副作用落在哪、哪道门管得住它</text>
+<rect x="40" y="110" width="236" height="300" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="158.0" y="202.0" font-size="14" fill="#1e3a8a" text-anchor="middle" font-weight="600">模型看到的清单</text>
+<text x="158.0" y="218.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">每个工具 = 一个名字</text>
+<text x="158.0" y="234.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">+ 一份带类型的参数 schema</text>
+<text x="158.0" y="250.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400"></text>
+<text x="158.0" y="266.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">读文件 / 写文件 / 打补丁</text>
+<text x="158.0" y="282.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">跑命令 / 联网搜索</text>
+<text x="158.0" y="298.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">看图 / 生成图 / 驱动浏览器</text>
+<text x="158.0" y="314.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400"></text>
+<text x="158.0" y="330.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">形状完全一致</text>
+<path d="M280,260 L320,260" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="324" y="190" width="196" height="140" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="422.0" y="226.0" font-size="14" fill="#4c1d95" text-anchor="middle" font-weight="600">分发表</text>
+<text x="422.0" y="242.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">按名字 → 处理函数</text>
+<text x="422.0" y="258.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">查不到就返回错误</text>
+<text x="422.0" y="274.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400"></text>
+<text x="422.0" y="290.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">只回答「调哪个」</text>
+<text x="422.0" y="306.0" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">不回答「能不能」</text>
+<path d="M524,260 L564,260" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="568" y="110" width="452" height="92" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="584" y="134" font-size="13.5" fill="#4c1d95" text-anchor="start" font-weight="600">本机执行</text>
+<text x="584" y="154" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">跑命令、读写文件、读本地图片</text>
+<text x="584" y="172" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">副作用落在你的文件系统与进程上</text>
+<text x="584" y="190" font-size="11.5" fill="#4c1d95" text-anchor="start" font-weight="400">策略： 完整走审批与沙箱</text>
+<polyline points="542,260 556,260 556,156 564,156" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="568" y="214" width="452" height="92" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="584" y="238" font-size="13.5" fill="#064e3b" text-anchor="start" font-weight="600">服务端托管</text>
+<text x="584" y="258" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">联网搜索、图片生成</text>
+<text x="584" y="276" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">不消耗你机器上的任何东西</text>
+<text x="584" y="294" font-size="11.5" fill="#064e3b" text-anchor="start" font-weight="400">策略： 无需逐次审批；风险在读进来的内容可能是恶意的</text>
+<polyline points="542,260 556,260 556,260 564,260" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="568" y="318" width="452" height="92" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="584" y="342" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="600">驱动外部目标</text>
+<text x="584" y="362" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">控制浏览器、控制桌面 GUI</text>
+<text x="584" y="380" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">副作用落在被驱动的那个目标上</text>
+<text x="584" y="398" font-size="11.5" fill="#7f1d1d" text-anchor="start" font-weight="400">策略： 文件沙箱完全管不到，需要独立的来源／权限策略</text>
+<polyline points="542,260 556,260 556,364 564,364" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="40" y="452" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">加一个工具的代价是常数：清单加一条 schema，分发表加一行。循环一动不动。</text>
+<text x="40" y="476" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">加能力时要问的不是「这个工具好不好用」，而是「它的副作用落在哪、现有的哪道门管得住它」。</text>
+<text x="40" y="500" font-size="13" fill="#b45309" text-anchor="start" font-weight="400">管不住，就说明需要新开一条策略维度，而不是把它硬塞进已有的档位里。</text>
+<text x="40" y="528" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">哪些工具被注册进表里，通常由启动时的一组特性开关决定——能力装配是配置驱动的，不是写死的。</text>
+</svg>

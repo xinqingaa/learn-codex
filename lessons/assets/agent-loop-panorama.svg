@@ -1,0 +1,167 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1720 1460" width="1720" height="1460">
+<style>text { font-family: 'Helvetica Neue', Helvetica, Arial, 'PingFang SC', 'Microsoft YaHei', 'Microsoft JhengHei', 'SimHei', sans-serif; }</style>
+<defs>
+<marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/></marker>
+<marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/></marker>
+<marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/></marker>
+<marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#dc2626"/></marker>
+<marker id="arrow-orange" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#ea580c"/></marker>
+<marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/></marker>
+<marker id="arrow-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto"><path d="M 0 0 L 10 5 L 0 10 z" fill="#334155"/></marker>
+</defs>
+<rect width="1720" height="1460" fill="#ffffff"/>
+<text x="860" y="36" fill="#111827" font-size="24" text-anchor="middle" font-weight="700">Agent Loop 运行时全景</text>
+<text x="860" y="60" fill="#6b7280" font-size="13" text-anchor="middle">最外层是循环；机制是守卫、分流与外套。虚线在循环外。</text>
+<rect x="48" y="78" width="1624" height="86" rx="10" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="64" y="100" fill="#1d4ed8" font-size="12" text-anchor="start" font-weight="600">循环外 · 触发源</text>
+<rect x="80" y="108" width="340" height="46" rx="8" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
+<text x="250.0" y="125.0" fill="#1e3a8f" font-size="14" text-anchor="middle" font-weight="600">用户消息</text>
+<text x="250.0" y="145.0" fill="#6b7280" font-size="12" text-anchor="middle">一次请求</text>
+<rect x="480" y="108" width="340" height="46" rx="8" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
+<text x="650.0" y="125.0" fill="#1e3a8f" font-size="14" text-anchor="middle" font-weight="600">cron</text>
+<text x="650.0" y="145.0" fill="#6b7280" font-size="12" text-anchor="middle">新开白纸线程</text>
+<rect x="880" y="108" width="340" height="46" rx="8" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
+<text x="1050.0" y="125.0" fill="#1e3a8f" font-size="14" text-anchor="middle" font-weight="600">heartbeat</text>
+<text x="1050.0" y="145.0" fill="#6b7280" font-size="12" text-anchor="middle">追加回同一线程</text>
+<rect x="1280" y="108" width="340" height="46" rx="8" fill="#ffffff" stroke="#bfdbfe" stroke-width="1.5"/>
+<text x="1450.0" y="125.0" fill="#1e3a8f" font-size="14" text-anchor="middle" font-weight="600">子循环</text>
+<text x="1450.0" y="145.0" fill="#6b7280" font-size="12" text-anchor="middle">干净 input</text>
+<path d="M 860 154 L 860 184" fill="none" stroke="#2563eb" stroke-width="1.8" marker-end="url(#arrow-blue)"/>
+<rect x="48" y="184" width="1624" height="1128" rx="14" fill="#f8fafc" stroke="#1e40af" stroke-width="2.5"/>
+<rect x="68" y="172" width="168" height="28" rx="6" fill="#1e40af" stroke="#1e40af" stroke-width="1.5"/>
+<text x="152" y="191" fill="#ffffff" font-size="14" text-anchor="middle" font-weight="700">Agent Loop</text>
+<rect x="80" y="228" width="210" height="72" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="185.0" y="258.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">① 预算检查</text>
+<text x="185.0" y="278.0" fill="#6b7280" font-size="12" text-anchor="middle">估算 thread token</text>
+<polygon points="400,225.0 475.0,264 400,303.0 325.0,264" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.8"/>
+<text x="400" y="260" fill="#92400e" font-size="13" text-anchor="middle" font-weight="600">超预算?</text>
+<text x="400" y="276" fill="#b45309" font-size="11" text-anchor="middle">是 / 否</text>
+<rect x="510" y="228" width="250" height="72" rx="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+<text x="635.0" y="258.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">compact</text>
+<text x="635.0" y="278.0" fill="#6b7280" font-size="12" text-anchor="middle">摘要替换旧历史</text>
+<rect x="800" y="218" width="280" height="92" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
+<text x="940.0" y="258.0" fill="#ffffff" font-size="14" text-anchor="middle" font-weight="600">② 调用模型</text>
+<text x="940.0" y="278.0" fill="#93c5fd" font-size="12" text-anchor="middle">可恢复的尝试</text>
+<path d="M 290 264 L 325 264" fill="none" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arrow-blue)"/>
+<path d="M 475 264 L 510 264" fill="none" stroke="#ea580c" stroke-width="1.6" marker-end="url(#arrow-orange)"/>
+<path d="M 760 264 L 800 264" fill="none" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arrow-blue)"/>
+<path d="M 400 303 L 400 330 L 780 330 L 780 310" fill="none" stroke="#6b7280" stroke-width="1.6" marker-end="url(#arrow-gray)"/>
+<text x="590" y="324" fill="#6b7280" font-size="11" text-anchor="middle">未超，直接调用</text>
+<rect x="1120" y="218" width="528" height="200" rx="10" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+<text x="1140" y="240" fill="#6b7280" font-size="12" text-anchor="start" font-weight="600">失败分类（abort 离开循环；其余回到 ②）</text>
+<rect x="1136" y="252" width="120" height="32" rx="6" fill="#fef2f2" stroke="#fecaca" stroke-width="1.5"/>
+<text x="1196" y="273" fill="#991b1b" font-size="12" text-anchor="middle" font-weight="600">abort</text>
+<text x="1270" y="273" fill="#374151" font-size="12" text-anchor="start">立刻停 turn，会话保留</text>
+<rect x="1136" y="292" width="120" height="32" rx="6" fill="#faf5ff" stroke="#e9d5ff" stroke-width="1.5"/>
+<text x="1196" y="313" fill="#6b21a8" font-size="12" text-anchor="middle" font-weight="600">rate_limit</text>
+<text x="1270" y="313" fill="#374151" font-size="12" text-anchor="start">抖动退避后重试</text>
+<rect x="1136" y="332" width="120" height="32" rx="6" fill="#fff7ed" stroke="#fed7aa" stroke-width="1.5"/>
+<text x="1196" y="353" fill="#9a3412" font-size="12" text-anchor="middle" font-weight="600">overflow</text>
+<text x="1270" y="353" fill="#374151" font-size="12" text-anchor="start">compact 后再试一次</text>
+<rect x="1136" y="372" width="120" height="32" rx="6" fill="#f3f4f6" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="1196" y="393" fill="#374151" font-size="12" text-anchor="middle" font-weight="600">unknown</text>
+<text x="1270" y="393" fill="#374151" font-size="12" text-anchor="start">少量重试后放弃</text>
+<path d="M 1080 264 L 1120 264" fill="none" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#arrow-red)"/>
+<text x="1100" y="254" fill="#dc2626" font-size="11" text-anchor="middle">抛错</text>
+<rect x="200" y="448" width="260" height="68" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+<text x="330.0" y="476.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">③ 追加进线程</text>
+<text x="330.0" y="496.0" fill="#6b7280" font-size="12" text-anchor="middle">reasoning 也原样保留</text>
+<rect x="520" y="448" width="280" height="68" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5"/>
+<text x="660.0" y="476.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">write-through JSONL</text>
+<text x="660.0" y="496.0" fill="#6b7280" font-size="12" text-anchor="middle">item 一产生就落盘</text>
+<path d="M 940 310 L 940 430 L 480 430 L 480 448" fill="none" stroke="#16a34a" stroke-width="1.6" marker-end="url(#arrow-green)"/>
+<path d="M 460 482 L 520 482" fill="none" stroke="#16a34a" stroke-width="1.6" marker-end="url(#arrow-green)"/>
+<polygon points="860,565.0 980.0,620 860,675.0 740.0,620" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
+<text x="860" y="612" fill="#1e3a8f" font-size="14" text-anchor="middle" font-weight="700">有 function_call?</text>
+<text x="860" y="634" fill="#3b82f6" font-size="12" text-anchor="middle">只看结构信号</text>
+<path d="M 660 482 L 860 482 L 860 565" fill="none" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arrow-blue)"/>
+<rect x="80" y="590" width="250" height="72" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+<text x="205.0" y="620.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">无 · 终态文本</text>
+<text x="205.0" y="640.0" fill="#6b7280" font-size="12" text-anchor="middle">抽出 message，结束本 turn</text>
+<path d="M 740 620 L 330 620" fill="none" stroke="#16a34a" stroke-width="1.6" marker-end="url(#arrow-green)"/>
+<text x="520" y="608" fill="#16a34a" font-size="12" text-anchor="middle" font-weight="600">否</text>
+<rect x="80" y="670" width="250" height="28" rx="6" fill="#dcfce7" stroke="#16a34a" stroke-width="1.2"/>
+<text x="205" y="689" fill="#166534" font-size="12" text-anchor="middle" font-weight="600">退出循环 · session 仍在</text>
+<text x="980" y="668" fill="#2563eb" font-size="12" text-anchor="middle" font-weight="600">是</text>
+<path d="M 860 675 L 860 718" fill="none" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arrow-blue)"/>
+<text x="80" y="742" fill="#1e40af" font-size="13" text-anchor="start" font-weight="600">⑤ 按工具身份分流（注册表内侧）</text>
+<rect x="80" y="754" width="244" height="64" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.4"/>
+<text x="202.0" y="780.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">计划 / 技能</text>
+<text x="202.0" y="800.0" fill="#6b7280" font-size="12" text-anchor="middle">改状态或注入正文</text>
+<rect x="340" y="754" width="244" height="64" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.4"/>
+<text x="462.0" y="780.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">await 子循环</text>
+<text x="462.0" y="800.0" fill="#6b7280" font-size="12" text-anchor="middle">干净上下文，只回结论</text>
+<rect x="600" y="754" width="244" height="64" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.4"/>
+<text x="722.0" y="780.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">spawn 并行</text>
+<text x="722.0" y="800.0" fill="#6b7280" font-size="12" text-anchor="middle">立刻返回，信箱交接</text>
+<rect x="860" y="754" width="244" height="64" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.4"/>
+<text x="982.0" y="780.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">yield 执行</text>
+<text x="982.0" y="800.0" fill="#6b7280" font-size="12" text-anchor="middle">窗口到点交 session_id</text>
+<rect x="1120" y="754" width="244" height="64" rx="8" fill="#ffffff" stroke="#d1d5db" stroke-width="1.4"/>
+<text x="1242.0" y="780.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">MCP 桥</text>
+<text x="1242.0" y="800.0" fill="#6b7280" font-size="12" text-anchor="middle">tools/call 用原名</text>
+<rect x="1380" y="754" width="244" height="64" rx="8" fill="#fff7ed" stroke="#fb923c" stroke-width="1.6"/>
+<text x="1502.0" y="780.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">落地执行</text>
+<text x="1502.0" y="800.0" fill="#6b7280" font-size="12" text-anchor="middle">再过审批 × 沙箱</text>
+<path d="M 860 718 L 860 754" fill="none" stroke="#2563eb" stroke-width="1.6"/>
+<path d="M 202 754 L 1502 754" fill="none" stroke="#93c5fd" stroke-width="1.2"/>
+<text x="80" y="848" fill="#9a3412" font-size="13" text-anchor="start" font-weight="600">⑥ 落地管线（dispatch 外套）· 非落地工具跳过，直接产出结果</text>
+<rect x="80" y="862" width="200" height="64" rx="8" fill="#fff7ed" stroke="#fdba74" stroke-width="1.5"/>
+<text x="180.0" y="888.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">分类风险</text>
+<text x="180.0" y="908.0" fill="#6b7280" font-size="12" text-anchor="middle">harness 判定，不信模型</text>
+<polygon points="390,858.0 460.0,894 390,930.0 320.0,894" fill="#fffbeb" stroke="#f59e0b" stroke-width="1.8"/>
+<text x="390" y="890" fill="#92400e" font-size="13" text-anchor="middle" font-weight="600">要问人?</text>
+<rect x="500" y="862" width="190" height="64" rx="8" fill="#fef2f2" stroke="#fca5a5" stroke-width="1.5"/>
+<text x="595.0" y="888.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">审批</text>
+<text x="595.0" y="908.0" fill="#6b7280" font-size="12" text-anchor="middle">拒绝 → 错误 item</text>
+<rect x="740" y="862" width="190" height="64" rx="8" fill="#faf5ff" stroke="#d8b4fe" stroke-width="1.5"/>
+<text x="835.0" y="888.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">沙箱</text>
+<text x="835.0" y="908.0" fill="#6b7280" font-size="12" text-anchor="middle">越界 → 错误 item</text>
+<rect x="980" y="862" width="200" height="64" rx="8" fill="#eff6ff" stroke="#93c5fd" stroke-width="1.5"/>
+<text x="1080.0" y="888.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">handler</text>
+<text x="1080.0" y="908.0" fill="#6b7280" font-size="12" text-anchor="middle">真正碰世界</text>
+<rect x="1240" y="862" width="360" height="64" rx="8" fill="#f3f4f6" stroke="#d1d5db" stroke-width="1.5"/>
+<text x="1420.0" y="888.0" fill="#111827" font-size="14" text-anchor="middle" font-weight="600">拒绝 / 越界也 continue</text>
+<text x="1420.0" y="908.0" fill="#6b7280" font-size="12" text-anchor="middle">function_call_output 喂回</text>
+<path d="M 280 894 L 320 894" fill="none" stroke="#ea580c" stroke-width="1.6" marker-end="url(#arrow-orange)"/>
+<path d="M 460 894 L 500 894" fill="none" stroke="#ea580c" stroke-width="1.6" marker-end="url(#arrow-orange)"/>
+<path d="M 690 894 L 740 894" fill="none" stroke="#7c3aed" stroke-width="1.6" marker-end="url(#arrow-purple)"/>
+<path d="M 930 894 L 980 894" fill="none" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arrow-blue)"/>
+<path d="M 1180 894 L 1240 894" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#arrow-gray)"/>
+<rect x="560" y="968" width="360" height="70" rx="8" fill="#eef2ff" stroke="#818cf8" stroke-width="1.5"/>
+<text x="740.0" y="997.0" fill="#312e81" font-size="14" text-anchor="middle" font-weight="600">⑦ 结果喂回线程</text>
+<text x="740.0" y="1017.0" fill="#6b7280" font-size="12" text-anchor="middle">然后回到 ①</text>
+<path d="M 1080 926 L 1080 1003 L 920 1003" fill="none" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arrow-blue)"/>
+<path d="M 1240 894 L 1240 948 L 920 948 L 920 968" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-dasharray="4,3"/>
+<path d="M 560 1003 L 64 1003 L 64 264 L 80 264" fill="none" stroke="#7c3aed" stroke-width="1.8" marker-end="url(#arrow-purple)"/>
+<text x="76" y="980" fill="#7c3aed" font-size="12" text-anchor="start" font-weight="600">下一轮</text>
+<rect x="80" y="1070" width="1568" height="88" rx="8" fill="#ffffff" stroke="#e5e7eb" stroke-width="1.5"/>
+<text x="96" y="1096" fill="#111827" font-size="13" text-anchor="start" font-weight="600">分流时不要混层</text>
+<text x="200" y="1128" fill="#4b5563" font-size="12" text-anchor="middle">计划工具走内部状态，不进沙箱</text>
+<text x="630" y="1128" fill="#4b5563" font-size="12" text-anchor="middle">spawn 立刻返回，await 才阻塞父循环</text>
+<text x="1080" y="1128" fill="#4b5563" font-size="12" text-anchor="middle">yield 窗口内结束 = 一次普通结果</text>
+<text x="1480" y="1128" fill="#4b5563" font-size="12" text-anchor="middle">MCP 对上是普通 function tool</text>
+<text x="80" y="1190" fill="#111827" font-size="13" text-anchor="start" font-weight="600">图例</text>
+<path d="M 80 1210 L 116 1210" fill="none" stroke="#2563eb" stroke-width="1.6" marker-end="url(#arrow-blue)"/>
+<text x="124" y="1214" fill="#4b5563" font-size="12" text-anchor="start">主路径</text>
+<path d="M 250 1210 L 286 1210" fill="none" stroke="#16a34a" stroke-width="1.6" marker-end="url(#arrow-green)"/>
+<text x="294" y="1214" fill="#4b5563" font-size="12" text-anchor="start">成功收尾 / 落盘</text>
+<path d="M 490 1210 L 526 1210" fill="none" stroke="#dc2626" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#arrow-red)"/>
+<text x="534" y="1214" fill="#4b5563" font-size="12" text-anchor="start">模型调用失败</text>
+<path d="M 730 1210 L 766 1210" fill="none" stroke="#7c3aed" stroke-width="1.6" marker-end="url(#arrow-purple)"/>
+<text x="774" y="1214" fill="#4b5563" font-size="12" text-anchor="start">循环反馈</text>
+<path d="M 950 1210 L 986 1210" fill="none" stroke="#ea580c" stroke-width="1.6" stroke-dasharray="4,3" marker-end="url(#arrow-orange)"/>
+<text x="994" y="1214" fill="#4b5563" font-size="12" text-anchor="start">落地才走的管线</text>
+<path d="M 1210 1210 L 1246 1210" fill="none" stroke="#6b7280" stroke-width="1.6" stroke-dasharray="5,3" marker-end="url(#arrow-gray)"/>
+<text x="1254" y="1214" fill="#4b5563" font-size="12" text-anchor="start">拒绝仍 continue</text>
+<text x="80" y="1254" fill="#6b7280" font-size="12" text-anchor="start">用户中止与 abort 同类：停当前 turn，不重试，session 还在。</text>
+<text x="80" y="1276" fill="#6b7280" font-size="12" text-anchor="start">生产里命令先在当前沙箱试跑，需要提权且策略允许再问人、批准后重跑。</text>
+<rect x="48" y="1332" width="800" height="88" rx="10" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.5"/>
+<text x="68" y="1360" fill="#92400e" font-size="14" text-anchor="start" font-weight="700">循环外 · 调度器</text>
+<text x="68" y="1384" fill="#78350f" font-size="13" text-anchor="start">到期只入队。cron 交白纸线程，heartbeat 追加旧线程。</text>
+<text x="68" y="1404" fill="#78350f" font-size="13" text-anchor="start">循环不看表。CLI 通常只有无头入口。</text>
+<rect x="872" y="1332" width="800" height="88" rx="10" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5"/>
+<text x="892" y="1360" fill="#5b21b6" font-size="14" text-anchor="start" font-weight="700">循环外 · 客户端事件流</text>
+<text x="892" y="1384" fill="#6b21a8" font-size="13" text-anchor="start">ExecBegin / Delta / End 只刷 TUI。</text>
+<text x="892" y="1404" fill="#6b21a8" font-size="13" text-anchor="start">不自动灌进模型上下文，空闲退出也不自动再开一轮。</text>
+</svg>

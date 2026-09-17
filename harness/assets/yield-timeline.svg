@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="500" viewBox="0 0 1060 500" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1060" height="500" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">慢命令不阻塞：yield 窗口与收割</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">要解耦的不是「同步 vs 异步」，而是「这一次工具调用最多等多久」和「这个进程要跑多久」</text>
+<line x1="60" y1="130" x2="1000" y2="130" stroke="#94a3b8" stroke-width="1.4" marker-end="url(#a)"/>
+<text x="1000" y="120" font-size="11.5" fill="#64748b" text-anchor="end" font-weight="400">时间</text>
+<rect x="80" y="150" width="120" height="34" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="140" y="172" font-size="12" fill="#064e3b" text-anchor="middle" font-weight="600">快命令</text>
+<line x1="240" y1="144" x2="240" y2="192" stroke="#059669" stroke-dasharray="4 3"/>
+<text x="248" y="174" font-size="11.5" fill="#059669" text-anchor="start" font-weight="400">窗口内就结束了 → 返回完整输出 + 退出码，和同步执行没有任何区别</text>
+<rect x="80" y="226" width="560" height="34" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="360" y="248" font-size="12" fill="#78350f" text-anchor="middle" font-weight="600">慢命令（装依赖 / 跑构建）</text>
+<line x1="240" y1="218" x2="240" y2="270" stroke="#d97706" stroke-width="2"/>
+<text x="246" y="212" font-size="11.5" fill="#d97706" text-anchor="start" font-weight="600">窗口到期</text>
+<path d="M240,278 L240,302" fill="none" stroke="#d97706" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="136" y="306" width="250" height="48" rx="8" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="261.0" y="334.75" font-size="11.5" fill="#78350f" text-anchor="middle" font-weight="600">返回：会话句柄 + 目前输出 + 仍在运行</text>
+<rect x="410" y="306" width="190" height="48" rx="8" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="505.0" y="335.25" font-size="12.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">模型去干别的事</text>
+<path d="M390,330 L406,330" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<line x1="640" y1="218" x2="640" y2="270" stroke="#059669" stroke-width="2"/>
+<rect x="626" y="306" width="300" height="48" rx="8" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="776.0" y="334.75" font-size="11.5" fill="#134e4a" text-anchor="middle" font-weight="600">后续某一轮收割：只取上次切面之后的增量</text>
+<path d="M606,330 L622,330" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<rect x="60" y="380" width="470" height="92" rx="10" fill="#f8fafc" stroke="#94a3b8" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="76" y="406" font-size="13.5" fill="#475569" text-anchor="start" font-weight="700">给界面的事件流</text>
+<text x="76" y="428" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">命令开始了 / 有新输出了 / 命令结束了</text>
+<text x="76" y="448" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">终端靠它刷进度条</text>
+<rect x="580" y="380" width="480" height="92" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="596" y="406" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="700">它不能自动灌进模型上下文</text>
+<text x="596" y="428" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">量：一次构建几万行，会瞬间吃掉整个窗口</text>
+<text x="596" y="448" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">控制权：模型该主动去看进度，而不是被进度淹没</text>
+<line x1="550" y1="426" x2="574" y2="426" stroke="#dc2626" stroke-width="2"/>
+<line x1="556" y1="416" x2="568" y2="436" stroke="#dc2626" stroke-width="2"/>
+<text x="60" y="466" font-size="12.5" fill="#0f172a" text-anchor="start" font-weight="400">要维护「已经给模型看过多少」的偏移量，每次收割只返回增量——否则模型会困惑于「这条日志怎么出现了三次」。</text>
+</svg>

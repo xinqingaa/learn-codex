@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1100" height="740" viewBox="0 0 1100 740" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1100" height="740" fill="#ffffff"/>
+<defs>
+<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
+<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
+<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
+</defs>
+<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">一次落地执行的完整旅程</text>
+<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">一条「改一个文件」的请求，从进来到结束——包括两次失败与重试</text>
+<rect x="120" y="104" width="900" height="36" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="134" y="128" font-size="13" fill="#1e3a8a" text-anchor="start" font-weight="700">① 进入</text>
+<text x="258" y="128" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">消息追加进序列，同时落盘</text>
+<path d="M570,140 L570,146" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="148" width="900" height="36" rx="6" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<text x="134" y="172" font-size="13" fill="#78350f" text-anchor="start" font-weight="700">② 预算闸门</text>
+<text x="258" y="172" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">超了预算 → 切在最后一条用户消息之前，把旧历史压成摘要</text>
+<path d="M570,184 L570,190" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="192" width="900" height="36" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="134" y="216" font-size="13" fill="#1e3a8a" text-anchor="start" font-weight="700">③ 组装指令</text>
+<text x="258" y="216" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">内置 base + 逐层项目约定；配置项走另一条链，不进这段文本</text>
+<path d="M570,228 L570,234" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="236" width="900" height="36" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="134" y="260" font-size="13" fill="#7f1d1d" text-anchor="start" font-weight="700">④ 调用模型</text>
+<text x="258" y="260" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">返回 429 → 带抖动退避 → 第二次通了</text>
+<path d="M570,272 L570,278" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="280" width="900" height="36" rx="6" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="134" y="304" font-size="13" fill="#134e4a" text-anchor="start" font-weight="700">⑤ 追加 + 落盘</text>
+<text x="258" y="304" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">整段原样追加，一个字节都不改写</text>
+<path d="M570,316 L570,322" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="324" width="900" height="36" rx="6" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<text x="134" y="348" font-size="13" fill="#1e3a8a" text-anchor="start" font-weight="700">⑥ 结构判据</text>
+<text x="258" y="348" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">有工具调用 → 不收尾，进入分发</text>
+<path d="M570,360 L570,366" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="368" width="900" height="36" rx="6" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<text x="134" y="392" font-size="13" fill="#4c1d95" text-anchor="start" font-weight="700">⑦ 分发</text>
+<text x="258" y="392" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">按名字查表，命中补丁工具；工具的身份决定它走哪条路</text>
+<path d="M570,404 L570,410" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="412" width="900" height="36" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="134" y="436" font-size="13" fill="#7f1d1d" text-anchor="start" font-weight="700">⑧ 判定链</text>
+<text x="258" y="436" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">钩子信任 → 能力 → 旁路 → 沙箱（路径在工作区内，放行）→ 审批（弹出 diff，人批准）</text>
+<path d="M570,448 L570,454" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="456" width="900" height="36" rx="6" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<text x="134" y="480" font-size="13" fill="#7f1d1d" text-anchor="start" font-weight="700">⑨ 执行</text>
+<text x="258" y="480" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">先在内存里算出每个文件的最终形态；一个文件上下文没匹配上 → 整个补丁被拒绝，磁盘一字节未动</text>
+<path d="M570,492 L570,498" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="500" width="900" height="36" rx="6" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<text x="134" y="524" font-size="13" fill="#134e4a" text-anchor="start" font-weight="700">⑩ 结果回写</text>
+<text x="258" y="524" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">返回一条精确到文件与位置的错误，作为普通工具结果追加进序列并落盘</text>
+<path d="M570,536 L570,542" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="544" width="900" height="36" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="134" y="568" font-size="13" fill="#064e3b" text-anchor="start" font-weight="700">⑪ 模型修正</text>
+<text x="258" y="568" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">下一轮读到那条错误 → 重新读文件 → 产出修正过的补丁 → 这次落盘成功</text>
+<path d="M570,580 L570,586" fill="none" stroke="#94a3b8" stroke-width="1.2" marker-end="url(#a)"/>
+<rect x="120" y="588" width="900" height="36" rx="6" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
+<text x="134" y="612" font-size="13" fill="#064e3b" text-anchor="start" font-weight="700">⑫ 收尾</text>
+<text x="258" y="612" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">再下一轮不再调用任何工具 → 抽出最终文本，退出；会话仍躺在磁盘上</text>
+<polyline points="1024,254 1064,254 1064,240 1024,240" fill="none" stroke="#dc2626" stroke-width="1.5" marker-end="url(#ar)"/>
+<text x="1072" y="240" font-size="10.5" fill="#dc2626" text-anchor="start" font-weight="400">退避重试</text>
+<polyline points="112,518 76,518 76,562 112,562" fill="none" stroke="#059669" stroke-width="1.5" marker-end="url(#ag)"/>
+<text x="40" y="584" font-size="10.5" fill="#059669" text-anchor="start" font-weight="400">模型自己纠错</text>
+<text x="40" y="674" font-size="13.5" fill="#0f172a" text-anchor="start" font-weight="600">贯穿整条路的一个性质：每一层说「不」的方式都是一样的——写一条结果喂回去。</text>
+<text x="40" y="702" font-size="12.5" fill="#64748b" text-anchor="start" font-weight="400">审批拒绝、沙箱越界、补丁不匹配、工具名不存在、依赖未满足、能力未开启，全都走这一条路。这个统一性不是巧合，它让循环只需要处理一种失败形态。</text>
+</svg>
