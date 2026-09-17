@@ -166,8 +166,8 @@ export const VERSION_META: Record<string, {
   s16: {
     title: "Team Protocols",
     subtitle: "Teammates Need Agreements",
-    coreAddition: "Shared coordination contracts",
-    keyInsight: "Multi-agent systems need explicit message contracts, not vibes.",
+    coreAddition: "Typed envelope + replyTo ledger",
+    keyInsight: "Codex stamps NEW_TASK / MESSAGE / FINAL_ANSWER; the chapter adds replyTo so N in-flight requests can reconcile.",
     layer: "collaboration",
     prevVersion: "s15",
   },

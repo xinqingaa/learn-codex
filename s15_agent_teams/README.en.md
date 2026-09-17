@@ -147,7 +147,7 @@ Watch for: children print `online` right after `spawn_agent` — root did not wa
 
 Teammates can spawn and talk, but the mail is still loose natural language: one line out, one line back, with no "this reply answers that request". When root hands out three tasks and three results flow back, tone is not a correlation key.
 
-s16 Team Protocols → wrap messages in typed envelopes (request / response / broadcast) so a lead can route work and collect results by id. That is the teaching counterpart of Codex's `NEW_TASK` / `MESSAGE` / `FINAL_ANSWER` headers, plus an id that ties one round-trip together.
+s16 Team Protocols → wrap messages in envelopes. Codex already stamps `NEW_TASK` / `MESSAGE` / `FINAL_ANSWER` when mail reaches the model; the chapter adds a `replyTo` ledger (Codex does not correlate N in-flight requests by id) so root can assign three tasks and still reconcile. `broadcast` is a teaching extra too.
 
 <details>
 <summary>Into the Codex source</summary>

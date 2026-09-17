@@ -147,7 +147,7 @@ OPENAI_API_KEY=sk-... npx tsx s15_agent_teams/code.ts   # 真实模型
 
 队友能派生、能通信了，但信还是松散的自然语言：一句发过去、一句回过来，没有「这条回复对应哪条请求」。root 同时派三份活、收回三份结果时，靠语气是对不上账的。
 
-s16 Team Protocols → 给消息套上类型化信封（request / response / broadcast），让一个 Lead 路由工作、按 id 收集结果。那对应 Codex 信封上的 `NEW_TASK` / `MESSAGE` / `FINAL_ANSWER`，以及用 id 把一次往返串起来。
+s16 Team Protocols → 给消息套上信封。Codex 投递给模型时已经有 `NEW_TASK` / `MESSAGE` / `FINAL_ANSWER` 头；教学版再加一层 `replyTo` 账本（Codex 没有按请求 id 对 N 路并发），让 root 同时派三份活也能对上号。`broadcast` 也是教学加的。
 
 <details>
 <summary>深入 Codex 源码</summary>

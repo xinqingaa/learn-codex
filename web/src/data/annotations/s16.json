@@ -2,33 +2,33 @@
   "version": "s16",
   "decisions": [
     {
-      "id": "typed-protocol-messages",
-      "title": "Typed Messages Replace Informal Chat",
-      "description": "Plan requests and shutdown requests are encoded as protocol messages with explicit kinds. The teammate can branch on message type instead of guessing intent from free-form text.",
-      "alternatives": "Plain natural-language messages are easier to write, but brittle once the team has multiple request types.",
+      "id": "typed-envelope-on-mailbox",
+      "title": "Type the Letter, Keep the Same Mailbox",
+      "description": "s15 already moves bytes through an in-process Mailbox. This chapter wraps those bytes in an Envelope (kind, id, triggerTurn) instead of inventing a new bus. request maps to Codex NEW_TASK/followup; response maps to harness-posted FINAL_ANSWER; send_message/MESSAGE stays the untyped s15 path.",
+      "alternatives": "A separate JSON-RPC or A2A channel would imply cross-process agents. Codex collaboration is intra-session mail, not Agent Cards over HTTP.",
       "zh": {
-        "title": "用类型化协议消息替代随意聊天",
-        "description": "计划请求和关闭请求会编码成带有明确 kind 的协议消息。队友可以根据消息类型分支处理，而不是从自由文本中猜意图。"
+        "title": "给信分型，不换信箱",
+        "description": "s15 已经用进程内 Mailbox 传字节。本章只是把字节包进 Envelope（kind、id、triggerTurn），不另起一条总线。request 对应 Codex NEW_TASK/followup；response 对应 harness 投的 FINAL_ANSWER；send_message/MESSAGE 仍是 s15 那条不分型的路。"
       }
     },
     {
-      "id": "request-id-correlation",
-      "title": "Request IDs Close the Loop",
-      "description": "Each protocol request creates a pending record with a request_id. Responses must carry the same id, which lets the lead match replies even when multiple teammates are active.",
-      "alternatives": "Matching by latest message works in demos, but fails as soon as two requests overlap.",
+      "id": "replyto-ledger-is-teaching",
+      "title": "replyTo Is a Teaching Ledger",
+      "description": "Root keeps a pending Map keyed by request id and matches responses by replyTo. Codex addresses by AgentPath and posts completion one hop to the parent — it does not correlate N in-flight requests. The ledger is the same kind of teaching step-up as s12's claim_task on top of update_plan.",
+      "alternatives": "Matching the latest reply works in a single-flight demo and breaks as soon as two requests overlap. Guessing from natural-language tone is worse.",
       "zh": {
-        "title": "Request ID 闭合协议循环",
-        "description": "每个协议请求都会创建带 request_id 的 pending 记录。响应必须携带同一个 id，因此即使多个队友同时工作，lead 也能匹配对应回复。"
+        "title": "replyTo 是教学账本",
+        "description": "root 用请求 id 做 pending Map，靠 replyTo 配对。Codex 按 AgentPath 寻址，完成通知一跳给父——并不对 N 路 in-flight 请求。这本账和 s12 在 update_plan 上加 claim_task 是同一类教学加强。"
       }
     },
     {
-      "id": "idle-protocol-handling",
-      "title": "Protocol Handling Runs During Idle Time",
-      "description": "Teammates can consume protocol messages while idle, so the lead can request plans or shutdowns without waiting for a separate user turn. This makes team control part of the runtime lifecycle.",
-      "alternatives": "Only checking protocols during active work would delay control messages and make shutdown unreliable.",
+      "id": "broadcast-is-teaching-extra",
+      "title": "Broadcast Is Extra; Unknown Ids Are Dropped",
+      "description": "Kickoff and stand-down fan out to every registered mailbox with no reply. Codex has no broadcast kind (completion is one hop to the parent). A response whose replyTo is not on the ledger is ignored, so a ghost or duplicate cannot tick the wrong row.",
+      "alternatives": "Per-recipient request for announcements doubles traffic and invents fake replies. Accepting unknown ids would corrupt the ledger under concurrency.",
       "zh": {
-        "title": "空闲期也处理协议",
-        "description": "队友在空闲状态也会消费协议消息，因此 lead 可以请求计划或关闭，而不必等待另一个用户回合。这让团队控制成为运行时生命周期的一部分。"
+        "title": "广播是教学加的；未知 id 丢掉",
+        "description": "开工/收工扇出到每个已注册邮箱，不回执。Codex 没有 broadcast kind（完成通知一跳给父）。replyTo 不在账本上的响应直接忽略，幽灵或重复不能勾错行。"
       }
     }
   ]

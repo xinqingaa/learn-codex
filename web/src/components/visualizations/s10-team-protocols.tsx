@@ -1,204 +1,64 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { type ReactNode } from "react";
 import { AnimatePresence, motion } from "framer-motion";
-import { ArrowRight, CheckCircle2, ClipboardCheck, FileText, LockKeyhole, UserCheck } from "lucide-react";
+import { Inbox, ListChecks, Radio } from "lucide-react";
 import { StepControls } from "@/components/visualizations/shared/step-controls";
 import { useSteppedVisualization } from "@/hooks/useSteppedVisualization";
 import { cn } from "@/lib/utils";
 
-type Protocol = "shutdown" | "plan";
+type RowStatus = "empty" | "pending" | "ignored" | "fulfilled";
 
-const REQUEST_ID = "req_abc";
-
-const SHUTDOWN_STEPS = [
+const STEPS = [
   {
-    title: "Agree on a Small Form",
-    desc: "A protocol is just a shared card shape: request type, request_id, and the expected answer.",
+    title: "Envelope Is the Contract",
+    desc: "s15 mail was a sentence. The envelope adds kind, id, triggerTurn — and teaching replyTo.",
   },
   {
-    title: "Leader Files a Request",
-    desc: "The leader writes a shutdown request card instead of force-stopping the teammate.",
+    title: "Broadcast Needs No Reply",
+    desc: "Kickoff fans out to every registered mailbox. Codex has no broadcast kind; this is a teaching extra.",
   },
   {
-    title: "Teammate Chooses",
-    desc: "The teammate can approve or reject, and the request_id keeps the answer attached to the right request.",
+    title: "Three Requests, One Ledger",
+    desc: "Root records req_002 / req_003 / req_004 before any reply arrives. request ≈ NEW_TASK (triggerTurn).",
   },
   {
-    title: "Clean Exit",
-    desc: "The approved response returns to the leader, and the teammate exits cleanly.",
-  },
-];
-
-const PLAN_STEPS = [
-  {
-    title: "Work Is Locked",
-    desc: "In plan mode, implementation stays locked until a plan card is approved.",
+    title: "Unknown replyTo Is Dropped",
+    desc: "A ghost with replyTo req_999 is not on the ledger, so collect ignores it.",
   },
   {
-    title: "Submit the Plan Card",
-    desc: "The teammate sends a concrete plan with the same request-response shape.",
-  },
-  {
-    title: "Approval Unlocks Action",
-    desc: "The leader approves the card, then implementation can begin.",
+    title: "Match by replyTo, Then Stand Down",
+    desc: "Harness-posted responses tick the matching row. Stand-down is another no-reply broadcast.",
   },
 ];
 
-const PROTOCOL_STATES: Record<Protocol, { label: string; detail: string }[]> = {
-  shutdown: [
-    { label: "drafted", detail: "Lead creates request_id" },
-    { label: "pending", detail: "card waits in inbox" },
-    { label: "deciding", detail: "teammate replies" },
-    { label: "closed", detail: "Lead matches response" },
-  ],
-  plan: [
-    { label: "locked", detail: "work cannot start" },
-    { label: "submitted", detail: "plan card is sent" },
-    { label: "approved", detail: "implementation unlocks" },
-  ],
-};
+const LEDGER: { id: string; to: string; task: string; at: number; ghost?: boolean }[] = [
+  { id: "req_002", to: "alice", task: "agent loop overview", at: 2 },
+  { id: "req_003", to: "bob", task: "tool use section", at: 2 },
+  { id: "req_004", to: "alice", task: "approval policy", at: 2 },
+  { id: "req_999", to: "bob", task: "ghost: no such request", at: 3, ghost: true },
+];
 
-function ToggleButton({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={cn(
-        "rounded-md px-3 py-1.5 text-xs font-medium transition-colors active:scale-95",
-        active
-          ? "bg-blue-500 text-white"
-          : "bg-zinc-100 text-zinc-600 hover:bg-zinc-200 dark:bg-zinc-800 dark:text-zinc-300 dark:hover:bg-zinc-700"
-      )}
-    >
-      {children}
-    </button>
-  );
+function statusFor(row: (typeof LEDGER)[number], step: number): RowStatus {
+  if (step < row.at) return "empty";
+  if (row.ghost) return step >= 3 ? "ignored" : "empty";
+  if (step >= 4) return "fulfilled";
+  return "pending";
 }
 
-function StateRail({
-  states,
-  currentStep,
-}: {
-  states: { label: string; detail: string }[];
-  currentStep: number;
-}) {
-  return (
-    <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/70">
-      <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-center sm:justify-between">
-        <div className="text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-          Protocol state
-        </div>
-        <div className="break-words font-mono text-[11px] text-zinc-500 dark:text-zinc-400">
-          request_id: {REQUEST_ID}
-        </div>
-      </div>
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-stretch">
-        {states.map((state, index) => {
-          const active = index === currentStep;
-          const done = index < currentStep;
-          return (
-            <div key={state.label} className="flex min-w-0 flex-1 items-stretch gap-2">
-              <motion.div
-                layout
-                animate={active ? { y: [0, -2, 0] } : { y: 0 }}
-                transition={{ duration: 0.8, repeat: active ? Infinity : 0 }}
-                className={cn(
-                  "min-w-0 flex-1 rounded-md border px-3 py-2 transition-colors",
-                  active
-                    ? "border-blue-300 bg-blue-50 text-blue-800 dark:border-blue-800 dark:bg-blue-950/35 dark:text-blue-200"
-                    : done
-                      ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200"
-                      : "border-zinc-200 bg-white text-zinc-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-400"
-                )}
-              >
-                <div className="break-words text-sm font-semibold">{state.label}</div>
-                <div className="mt-1 break-words text-[11px] leading-snug opacity-80">
-                  {state.detail}
-                </div>
-              </motion.div>
-              {index < states.length - 1 && (
-                <div className="hidden items-center text-zinc-300 dark:text-zinc-600 sm:flex">
-                  <ArrowRight size={15} />
-                </div>
-              )}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function Desk({
-  title,
-  icon,
-  active,
-  children,
-}: {
-  title: string;
-  icon: ReactNode;
-  active: boolean;
-  children: ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "min-h-[260px] rounded-lg border p-3 transition-colors",
-        active
-          ? "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
-          : "border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
-      )}
-    >
-      <div className="mb-3 flex min-w-0 items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
-        <span
-          className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-md",
-            active
-              ? "bg-blue-500 text-white"
-              : "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-300"
-          )}
-        >
-          {icon}
-        </span>
-        <span className="min-w-0 break-words">{title}</span>
-      </div>
-      {children}
-    </div>
-  );
-}
-
-function ProtocolCard({
-  title,
-  rows,
-  tone = "blue",
-}: {
-  title: string;
-  rows: string[];
-  tone?: "blue" | "amber" | "emerald" | "zinc";
-}) {
+function EnvelopeCard({ title, rows, tone }: { title: string; rows: string[]; tone: "purple" | "blue" | "green" | "amber" }) {
   const toneClass = {
+    purple: "border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-900 dark:bg-violet-950/40 dark:text-violet-200",
     blue: "border-blue-200 bg-blue-50 text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200",
+    green: "border-emerald-300 bg-emerald-100 text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100",
     amber: "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/40 dark:text-amber-200",
-    emerald:
-      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200",
-    zinc: "border-zinc-200 bg-zinc-50 text-zinc-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200",
   }[tone];
-
   return (
     <motion.div
       layout
-      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      exit={{ opacity: 0, y: -8, scale: 0.98 }}
-      transition={{ duration: 0.25 }}
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -8 }}
       className={cn("rounded-md border p-3 shadow-sm", toneClass)}
     >
       <div className="break-words font-mono text-xs font-semibold">{title}</div>
@@ -213,136 +73,160 @@ function ProtocolCard({
   );
 }
 
-function EmptyTray({ label }: { label: string }) {
+function AgentDesk({
+  name,
+  role,
+  active,
+  children,
+}: {
+  name: string;
+  role: string;
+  active: boolean;
+  children: ReactNode;
+}) {
   return (
-    <div className="rounded-md border border-dashed border-zinc-300 px-3 py-5 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-      {label}
+    <div
+      className={cn(
+        "min-h-[220px] rounded-lg border p-3 transition-colors",
+        active
+          ? "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30"
+          : "border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900"
+      )}
+    >
+      <div className="mb-1 text-sm font-semibold text-zinc-800 dark:text-zinc-100">{name}</div>
+      <div className="mb-3 break-words text-[11px] text-zinc-500 dark:text-zinc-400">{role}</div>
+      {children}
     </div>
   );
 }
 
 export default function TeamProtocols({ title }: { title?: string }) {
-  const [protocol, setProtocol] = useState<Protocol>("shutdown");
-  const steps = protocol === "shutdown" ? SHUTDOWN_STEPS : PLAN_STEPS;
-  const vis = useSteppedVisualization({ totalSteps: steps.length, autoPlayInterval: 2500 });
+  const vis = useSteppedVisualization({ totalSteps: STEPS.length, autoPlayInterval: 2600 });
   const step = vis.currentStep;
-
-  const switchProtocol = (value: Protocol) => {
-    setProtocol(value);
-    vis.reset();
-  };
-
-  const isPlan = protocol === "plan";
 
   return (
     <section className="min-h-[500px] space-y-4">
       <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-        {title || "Team Protocol Cards"}
+        {title || "Request Ledger"}
       </h2>
 
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
-        <div className="mb-4 flex justify-center gap-2">
-          <ToggleButton active={!isPlan} onClick={() => switchProtocol("shutdown")}>
-            Shutdown
-          </ToggleButton>
-          <ToggleButton active={isPlan} onClick={() => switchProtocol("plan")}>
-            Plan Approval
-          </ToggleButton>
+        <div className="mb-4 rounded-lg border border-zinc-200 bg-zinc-50 p-3 dark:border-zinc-700 dark:bg-zinc-800/70">
+          <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
+            <ListChecks size={15} />
+            Root pending ledger
+          </div>
+          <div className="space-y-2">
+            {LEDGER.map((row) => {
+              const status = statusFor(row, step);
+              if (status === "empty") return null;
+              return (
+                <div
+                  key={row.id}
+                  className={cn(
+                    "rounded-md border px-3 py-2 font-mono text-[11px]",
+                    status === "fulfilled" &&
+                      "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200",
+                    status === "pending" &&
+                      "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200",
+                    status === "ignored" &&
+                      "border-zinc-200 bg-zinc-100 text-zinc-500 line-through dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-500"
+                  )}
+                >
+                  <span className="font-semibold">{row.id}</span>
+                  {"  "}
+                  {row.to}: {row.task}
+                  {"  "}
+                  {status}
+                </div>
+              );
+            })}
+            {step < 2 && (
+              <div className="rounded-md border border-dashed border-zinc-300 px-3 py-4 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                no in-flight requests
+              </div>
+            )}
+          </div>
         </div>
 
-        <StateRail states={PROTOCOL_STATES[protocol]} currentStep={step} />
-
         <div className="grid gap-3 lg:grid-cols-3">
-          <Desk
-            title="Leader desk"
-            icon={<UserCheck size={15} />}
-            active={(!isPlan && (step === 1 || step === 3)) || (isPlan && step === 2)}
-          >
-            <div className="space-y-3">
+          <AgentDesk name="root" role="records ids · collect by replyTo" active={step === 2 || step === 4}>
+            <div className="space-y-2">
               <AnimatePresence mode="popLayout">
-                {!isPlan && step >= 1 && (
-                  <ProtocolCard
-                    key="shutdown-request"
-                    title="shutdown_request"
-                    rows={[`request_id: ${REQUEST_ID}`, "target: teammate", "mode: polite"]}
-                    tone={step >= 3 ? "zinc" : "blue"}
+                {step >= 1 && (
+                  <EnvelopeCard
+                    key="bcast"
+                    title="broadcast"
+                    rows={["to: *", "triggerTurn: false", step >= 4 ? "stand down" : "kickoff"]}
+                    tone="blue"
                   />
                 )}
-                {!isPlan && step >= 3 && (
-                  <ProtocolCard
-                    key="shutdown-response"
-                    title="shutdown_response"
-                    rows={[`request_id: ${REQUEST_ID}`, "approve: true", "status: closed"]}
-                    tone="emerald"
-                  />
-                )}
-                {isPlan && step >= 2 && (
-                  <ProtocolCard
-                    key="plan-approved"
-                    title="plan_approval_response"
-                    rows={[`request_id: ${REQUEST_ID}`, "approve: true", "unlock: implementation"]}
-                    tone="emerald"
+                {step >= 2 && (
+                  <EnvelopeCard
+                    key="reqs"
+                    title="request × 3"
+                    rows={["req_002 → alice", "req_003 → bob", "req_004 → alice", "triggerTurn: true"]}
+                    tone="purple"
                   />
                 )}
               </AnimatePresence>
-              {((!isPlan && step === 0) || (isPlan && step < 2)) && (
-                <EmptyTray label="waiting for a protocol card" />
-              )}
-            </div>
-          </Desk>
-
-          <Desk
-            title="Shared card shape"
-            icon={<ClipboardCheck size={15} />}
-            active={(!isPlan && step === 0) || (isPlan && step === 0)}
-          >
-            <div className="space-y-3">
-              <ProtocolCard
-                title="protocol fields"
-                rows={["type", "request_id", "payload", "response"]}
-                tone="amber"
-              />
-              <div className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
-                The key idea is correlation, not ceremony.
-              </div>
-              {isPlan && (
-                <div className="flex items-center gap-2 rounded-md border border-zinc-200 bg-white px-3 py-2 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-300">
-                  <LockKeyhole size={14} />
-                  implementation locked until approval
+              {step === 0 && (
+                <div className="rounded-md border border-dashed border-zinc-300 px-3 py-5 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                  waiting to route envelopes
                 </div>
               )}
             </div>
-          </Desk>
+          </AgentDesk>
 
-          <Desk
-            title="Teammate desk"
-            icon={isPlan ? <FileText size={15} /> : <CheckCircle2 size={15} />}
-            active={(!isPlan && step === 2) || (isPlan && step === 1)}
-          >
-            <div className="space-y-3">
+          <AgentDesk name="Mailbox" role="in-process waiters · not a file" active={step === 0 || step === 3}>
+            <div className="mb-3 flex items-center gap-2 text-xs text-zinc-600 dark:text-zinc-300">
+              <Inbox size={14} />
+              same s15 channel, typed payload
+            </div>
+            <EnvelopeCard
+              title="Envelope"
+              rows={["id, from, to, kind", "payload", "replyTo?  (teaching)", "triggerTurn"]}
+              tone="purple"
+            />
+            {step >= 3 && (
+              <div className="mt-2">
+                <EnvelopeCard
+                  title="response replyTo=req_999"
+                  rows={["unknown id", "collect: ignore"]}
+                  tone="amber"
+                />
+              </div>
+            )}
+          </AgentDesk>
+
+          <AgentDesk name="alice / bob" role="dispatch by kind · harness posts FINAL_ANSWER" active={step === 1 || step === 4}>
+            <div className="space-y-2">
               <AnimatePresence mode="popLayout">
-                {!isPlan && step >= 2 && (
-                  <ProtocolCard
-                    key="teammate-decision"
-                    title="decision card"
-                    rows={[`request_id: ${REQUEST_ID}`, "choice: approve", step >= 3 ? "state: exited" : "state: deciding"]}
-                    tone={step >= 3 ? "emerald" : "amber"}
-                  />
+                {step >= 1 && (
+                  <div
+                    key="heard"
+                    className="flex items-center gap-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/40 dark:text-blue-200"
+                  >
+                    <Radio size={14} />
+                    heard broadcast — no reply
+                  </div>
                 )}
-                {isPlan && step >= 1 && (
-                  <ProtocolCard
-                    key="plan-card"
-                    title="exit_plan_mode"
-                    rows={[`request_id: ${REQUEST_ID}`, "1. edit module", "2. run tests", "3. report diff"]}
-                    tone={step >= 2 ? "emerald" : "blue"}
+                {step >= 4 && (
+                  <EnvelopeCard
+                    key="finals"
+                    title="response × 3"
+                    rows={["replyTo: req_002", "replyTo: req_003", "replyTo: req_004"]}
+                    tone="green"
                   />
                 )}
               </AnimatePresence>
-              {((!isPlan && step < 2) || (isPlan && step === 0)) && (
-                <EmptyTray label={isPlan ? "draft plan not submitted" : "no request received"} />
+              {step < 1 && (
+                <div className="rounded-md border border-dashed border-zinc-300 px-3 py-5 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
+                  online — waiting for envelopes
+                </div>
               )}
             </div>
-          </Desk>
+          </AgentDesk>
         </div>
 
         <StepControls
@@ -354,8 +238,8 @@ export default function TeamProtocols({ title }: { title?: string }) {
           onReset={vis.reset}
           isPlaying={vis.isPlaying}
           onToggleAutoPlay={vis.toggleAutoPlay}
-          stepTitle={steps[step].title}
-          stepDescription={steps[step].desc}
+          stepTitle={STEPS[step].title}
+          stepDescription={STEPS[step].desc}
         />
       </div>
     </section>

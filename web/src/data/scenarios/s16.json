@@ -1,45 +1,53 @@
 {
   "version": "s16",
   "title": "Team Protocols",
-  "description": "Typed requests, request ids, and response matching turn team chat into a protocol.",
+  "description": "Root wraps mailbox traffic in typed envelopes and matches N in-flight requests by replyTo. Codex stamps NEW_TASK / MESSAGE / FINAL_ANSWER; the ledger is a teaching extra.",
   "steps": [
     {
       "type": "user_message",
-      "content": "Ask the reviewer agent for a plan before it edits anything.",
-      "annotation": "The lead needs a structured plan request, not free-form chat."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "request_plan",
-      "content": "{\"to\":\"reviewer\",\"task\":\"Review the parser change before editing.\"}",
-      "annotation": "The protocol records a pending request with a request_id."
+      "content": "Document the agent loop in three sections. Broadcast kickoff, then assign alice and bob — match their replies by id.",
+      "annotation": "s15 mail is still one sentence. Three results flowing back need a correlation key."
     },
     {
       "type": "system_event",
-      "content": "pending_requests[req_18] = {kind:\"plan\", to:\"reviewer\", status:\"pending\"}",
-      "annotation": "ProtocolState keeps the request open until a matching response arrives."
+      "content": "broadcast root → alice, bob [bcast_001] kickoff: we are documenting the agent loop today",
+      "annotation": "broadcast is a teaching extra (Codex has no everyone-announcement kind). No reply expected."
     },
     {
       "type": "system_event",
-      "content": "dispatch_message -> reviewer inbox: {type:\"plan_request\", request_id:\"req_18\"}",
-      "annotation": "The message is typed so the teammate knows how to handle it."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "submit_plan",
-      "content": "{\"request_id\":\"req_18\",\"plan\":[\"inspect parser\",\"run fixtures\",\"report risks\"]}",
-      "annotation": "The teammate responds with the same request_id."
+      "content": "request root → alice [req_002] triggerTurn=true  Write the 'agent loop' overview section",
+      "annotation": "request ≈ Codex NEW_TASK / followup: queue and wake the child to work. Root records req_002 in the pending ledger."
     },
     {
       "type": "system_event",
-      "content": "match_response(req_18) -> status: ready_for_review",
-      "annotation": "The lead can correlate the reply with the exact request."
+      "content": "request root → bob [req_003]  Write the 'tool use' section",
+      "annotation": "A second in-flight request. Addressing is still by agent name (Codex AgentPath); the id is for the round trip."
+    },
+    {
+      "type": "system_event",
+      "content": "request root → alice [req_004]  Write the 'approval policy' section",
+      "annotation": "alice now has two pending requests. Without replyTo, two of her replies would be indistinguishable."
+    },
+    {
+      "type": "system_event",
+      "content": "response bob → root [final_005] replyTo=req_999  ghost: no such request  → ignored",
+      "annotation": "Unknown id is dropped — de-dup / cross-talk guard. Codex does not keep this map; the chapter does."
     },
     {
       "type": "tool_call",
-      "toolName": "review_plan",
-      "content": "{\"request_id\":\"req_18\",\"approved\":true}",
-      "annotation": "The lead explicitly approves the plan before work proceeds."
+      "toolName": "write_file",
+      "content": "{\"filename\":\"alice-overview.md\",\"content\":\"# agent loop overview\"}",
+      "annotation": "Workers still only have write_file. Protocol dispatch is harness-side, not a new model tool."
+    },
+    {
+      "type": "system_event",
+      "content": "response alice → root  replyTo=req_002  matched · response bob → root  replyTo=req_003  matched · response alice → root  replyTo=req_004  matched",
+      "annotation": "Each FINAL_ANSWER-style response is posted by the harness with teaching replyTo. Root ticks the ledger, not the tone of the sentence."
+    },
+    {
+      "type": "system_event",
+      "content": "broadcast root → alice, bob  all sections in — stand down",
+      "annotation": "Stand-down is another no-reply broadcast. Claiming work without root assigning it is s17, not a new envelope kind."
     }
   ]
 }
