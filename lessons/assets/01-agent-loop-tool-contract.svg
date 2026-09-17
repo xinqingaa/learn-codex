@@ -1,0 +1,111 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" width="1600" height="1000" font-family="'PingFang SC', 'Microsoft YaHei', 'Helvetica Neue', Arial, sans-serif">
+  <defs>
+    <marker id="arrow-gray" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#6b7280"/>
+    </marker>
+    <marker id="arrow-blue" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
+    </marker>
+    <marker id="arrow-green" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
+    </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="9" markerHeight="9" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/>
+    </marker>
+    <linearGradient id="header3" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#0f172a"/>
+      <stop offset="100%" stop-color="#4338ca"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#fafbfc" rx="10"/>
+  <rect x="0" y="0" width="1600" height="90" fill="url(#header3)" rx="10"/>
+  <rect x="0" y="78" width="1600" height="12" fill="url(#header3)"/>
+  <text x="800" y="42" fill="#ffffff" font-size="30" font-weight="700" text-anchor="middle">Agent Loop 与工具契约</text>
+  <text x="800" y="70" fill="#c7d2fe" font-size="16" text-anchor="middle">模型只负责决定,harness 负责把决定变成动作 —— 对应原 s01 / s02</text>
+
+  <!-- User Task -->
+  <rect x="650" y="130" width="300" height="80" rx="12" fill="#f0f4ff" stroke="#2563eb" stroke-width="2.5"/>
+  <text x="800" y="164" fill="#1e3a5f" font-size="18" font-weight="700" text-anchor="middle">用户任务</text>
+  <text x="800" y="188" fill="#64748b" font-size="14" text-anchor="middle">一次请求,链路长度不确定</text>
+
+  <!-- Model -->
+  <rect x="580" y="250" width="440" height="120" rx="12" fill="#111827" stroke="#111827" stroke-width="2"/>
+  <rect x="590" y="260" width="420" height="100" rx="9" fill="none" stroke="#3b82f6" stroke-width="1.5"/>
+  <text x="800" y="292" fill="#ffffff" font-size="19" font-weight="700" text-anchor="middle">模型 · 决策者</text>
+  <text x="800" y="317" fill="#93c5fd" font-size="14" text-anchor="middle">输出 reasoning / message / function_call</text>
+  <text x="800" y="339" fill="#93c5fd" font-size="14" text-anchor="middle">harness 原样保留,不做语义解析</text>
+
+  <!-- Final message -->
+  <rect x="100" y="420" width="340" height="90" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="270" y="456" fill="#065f46" font-size="18" font-weight="700" text-anchor="middle">结束:最终回答</text>
+  <text x="270" y="480" fill="#059669" font-size="14" text-anchor="middle">没有 function_call,打印文本,退出循环</text>
+
+  <!-- Dispatch table -->
+  <rect x="580" y="420" width="440" height="90" rx="12" fill="#eff6ff" stroke="#2563eb" stroke-width="2.5"/>
+  <text x="800" y="456" fill="#1e3a5f" font-size="18" font-weight="700" text-anchor="middle">工具分发表</text>
+  <text x="800" y="480" fill="#3b5a80" font-size="14" text-anchor="middle">按名称查表路由,查不到就是明确的报错,不是崩溃</text>
+
+  <!-- Tool nodes -->
+  <rect x="100" y="560" width="445" height="90" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="322" y="596" fill="#111827" font-size="17" font-weight="700" text-anchor="middle">只读工具</text>
+  <text x="322" y="620" fill="#64748b" font-size="13" text-anchor="middle">read_file / list_dir,天然可并行</text>
+
+  <rect x="585" y="560" width="445" height="90" rx="12" fill="#ffffff" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="807" y="596" fill="#111827" font-size="17" font-weight="700" text-anchor="middle">结构化写</text>
+  <text x="807" y="620" fill="#64748b" font-size="13" text-anchor="middle">write_file / apply_patch,原子落盘 + 可恢复</text>
+
+  <rect x="1070" y="560" width="445" height="90" rx="12" fill="#fff7ed" stroke="#ea580c" stroke-width="2.5"/>
+  <text x="1292" y="596" fill="#111827" font-size="17" font-weight="700" text-anchor="middle">shell</text>
+  <text x="1292" y="620" fill="#9a5b1e" font-size="13" text-anchor="middle">兜底逃生舱,不是唯一选项</text>
+
+  <!-- Results -->
+  <rect x="580" y="710" width="440" height="90" rx="12" fill="#f0fdf4" stroke="#16a34a" stroke-width="2.5"/>
+  <text x="800" y="746" fill="#065f46" font-size="18" font-weight="700" text-anchor="middle">function_call_output</text>
+  <text x="800" y="770" fill="#059669" font-size="14" text-anchor="middle">按 call_id 合并,原样追加进上下文</text>
+
+  <!-- Arrows -->
+  <line x1="800" y1="210" x2="800" y2="248" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+
+  <path d="M 650 370 L 650 396 L 270 396 L 270 418" fill="none" stroke="#6b7280" stroke-width="2.5" marker-end="url(#arrow-gray)"/>
+  <rect data-graph-role="label" x="500" y="384" width="130" height="24" fill="#fafbfc" opacity="0.95"/>
+  <text x="565" y="401" fill="#475569" font-size="13" font-weight="600" text-anchor="middle">否 · 只输出文本</text>
+
+  <path d="M 950 370 L 950 400 L 800 400 L 800 418" fill="none" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <rect data-graph-role="label" x="808" y="386" width="150" height="24" fill="#fafbfc" opacity="0.95"/>
+  <text x="883" y="403" fill="#1d4ed8" font-size="13" font-weight="600" text-anchor="middle">是 · function_call</text>
+
+  <path d="M 680 510 L 680 534 L 322 534 L 322 558" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <path d="M 800 510 L 800 558" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <path d="M 920 510 L 920 534 L 1292 534 L 1292 558" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <rect data-graph-role="label" x="825" y="522" width="90" height="22" fill="#fafbfc" opacity="0.95"/>
+  <text x="870" y="538" fill="#15803d" font-size="13" font-weight="600" text-anchor="middle">同轮 fan-out</text>
+
+  <path d="M 322 650 L 322 684 L 700 684 L 700 708" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <path d="M 807 650 L 807 694 L 800 694 L 800 708" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <path d="M 1292 650 L 1292 684 L 900 684 L 900 708" fill="none" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+
+  <!-- Feedback loop, routed through the clear left margin -->
+  <path d="M 580 755 L 50 755 L 50 310 L 578 310" fill="none" stroke="#7c3aed" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-purple)"/>
+  <rect data-graph-role="label" x="140" y="735" width="330" height="30" fill="#fafbfc" opacity="0.95"/>
+  <text x="305" y="756" fill="#6d28d9" font-size="14" font-weight="600" text-anchor="middle">结果喂回上下文,循环继续,回到模型</text>
+
+  <!-- Legend -->
+  <rect id="legend-box" x="100" y="850" width="650" height="140" rx="12" fill="#ffffff" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="124" y="880" fill="#334155" font-size="16" font-weight="700">图例 · 箭头含义</text>
+  <line x1="124" y1="902" x2="168" y2="902" stroke="#2563eb" stroke-width="3" marker-end="url(#arrow-blue)"/>
+  <text x="178" y="907" fill="#475569" font-size="14">决策路径(模型输出 到 分发表)</text>
+  <line x1="124" y1="928" x2="168" y2="928" stroke="#6b7280" stroke-width="2.5" marker-end="url(#arrow-gray)"/>
+  <text x="178" y="933" fill="#475569" font-size="14">结束路径(没有 function_call)</text>
+  <line x1="124" y1="954" x2="168" y2="954" stroke="#16a34a" stroke-width="2.5" marker-end="url(#arrow-green)"/>
+  <text x="178" y="959" fill="#475569" font-size="14">工具分发与结果汇总(同轮可并行)</text>
+  <line x1="124" y1="980" x2="168" y2="980" stroke="#7c3aed" stroke-width="3" stroke-dasharray="8 6" marker-end="url(#arrow-purple)"/>
+  <text x="178" y="985" fill="#475569" font-size="14">结果喂回上下文(循环继续)</text>
+
+  <!-- Footer -->
+  <rect x="800" y="850" width="700" height="140" rx="12" fill="#f8fafc" stroke="#e2e8f0" stroke-width="1.5"/>
+  <text x="1150" y="884" fill="#334155" font-size="15" font-weight="700" text-anchor="middle">循环只信一个结构信号:这一轮输出里有没有 function_call</text>
+  <text x="1150" y="912" fill="#334155" font-size="15" font-weight="700" text-anchor="middle">工具靠 schema + 分发表注册,新增一个工具是常数代价</text>
+  <text x="1150" y="940" fill="#64748b" font-size="13" text-anchor="middle">审批 / 沙箱 / 压缩都是在分发表前后再加一层,这张图本身不变</text>
+  <text x="1150" y="964" fill="#94a3b8" font-size="12" text-anchor="middle">对照实现:codex 核心 turn 循环按事件流派发,不必等整轮生成完</text>
+</svg>
