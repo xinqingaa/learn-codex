@@ -2,33 +2,33 @@
   "version": "s19",
   "decisions": [
     {
+      "id": "connect-at-session-start",
+      "title": "Connect at Session Start, Not as a Model Tool",
+      "description": "main() spawns docs and deploy from MCP_CONFIG, then opens agentLoop. That matches Codex reading [mcp_servers] at session start. The model has no connect_mcp tool.",
+      "alternatives": "Expose connect_mcp as a function tool and let the model plug servers in mid-turn. That invents an API Codex does not have and hides that discovery happens before the first LLM call.",
+      "zh": {
+        "title": "会话启动时连接，不是模型工具",
+        "description": "main() 按 MCP_CONFIG spawn docs 和 deploy，再开 agentLoop。这对应 Codex 在会话启动时读 [mcp_servers]。模型没有 connect_mcp 工具。"
+      }
+    },
+    {
       "id": "normalized-mcp-namespace",
-      "title": "MCP Tools Use a Normalized Namespace",
-      "description": "Discovered tools are exposed as mcp__server__tool. The prefix makes the source explicit and avoids collisions with built-in tools or tools from another server.",
-      "alternatives": "Using the raw tool name is shorter, but search from two servers could overwrite each other.",
+      "title": "Prefix for the Model, Raw Name for the Child",
+      "description": "Discovered tools are exposed as mcp__server__tool (Codex still has the legacy mcp__ prefix). tools/call uses the server's raw name, so mcp__docs__search becomes { name: \"search\" } on the docs child.",
+      "alternatives": "Using the raw tool name is shorter, but search from two servers could overwrite each other. Sending the prefixed name to the child would break the MCP server, which only knows search / get_page / trigger.",
       "zh": {
-        "title": "MCP 工具使用规范化命名空间",
-        "description": "发现到的工具会暴露为 mcp__server__tool。前缀让工具来源明确，也避免和内置工具或其他服务器工具冲突。"
+        "title": "给模型看前缀，给子进程看原名",
+        "description": "发现到的工具暴露为 mcp__server__tool（Codex 仍保留 mcp__ 前缀）。tools/call 用服务器的原始名字，所以 mcp__docs__search 打给 docs 子进程的是 { name: \"search\" }。"
       }
     },
     {
-      "id": "dynamic-tool-pool",
-      "title": "Tool Discovery Updates the Active Tool Pool",
-      "description": "After connecting to a server, the runtime assembles a new tool pool for the next LLM call. The model can only use MCP tools after discovery has made them visible.",
-      "alternatives": "Preloading every possible MCP tool would create a huge prompt and expose capabilities the user did not request.",
-      "zh": {
-        "title": "工具发现会更新活动工具池",
-        "description": "连接服务器后，运行时会为下一次 LLM 调用组装新的工具池。模型只有在发现阶段让 MCP 工具可见之后，才能调用它们。"
-      }
-    },
-    {
-      "id": "external-results-append-like-tools",
-      "title": "External Results Reuse the Tool Result Path",
-      "description": "MCP responses are appended to the conversation like ordinary tool results. This keeps the agent loop unchanged while still letting external systems participate.",
+      "id": "loop-unchanged",
+      "title": "The Loop Does Not Change",
+      "description": "MCP responses are appended as function_call_output. agentLoop is unchanged since s01. HTTP, enabled_tools, OAuth, approval, and Codex-as-a-server are other chapters.",
       "alternatives": "A separate external-response channel would make MCP feel special and require extra loop logic.",
       "zh": {
-        "title": "外部结果复用 Tool Result 路径",
-        "description": "MCP 响应会像普通 tool result 一样追加到对话中。这样 agent 循环无需改变，同时外部系统仍然可以参与。"
+        "title": "循环一行没变",
+        "description": "MCP 响应按 function_call_output 追加。agentLoop 自 s01 起没变。HTTP、enabled_tools、OAuth、审批、Codex 当服务器，都是别的章。"
       }
     }
   ]

@@ -139,7 +139,7 @@ flowchart TD
 | [s17](s17_autonomous_agents/) | Autonomous Agents | self-claiming workers | 🟥 |
 | [s18](s18_worktree_isolation/) | Worktree Isolation | git worktree isolation (local App/CLI sessions; Cloud is s23) | 🟥 |
 | [s19](s19_mcp_servers/) | MCP Servers | an MCP tool bridge | 🟥 |
-| [s20](s20_full_harness/) | The Full Harness | every mechanism integrated into one loop | 🟥 |
+| [s20](s20_full_harness/) | The Full Harness | three seams on one loop (representatives, not 19 demos glued together) | 🟥 |
 
 **Part II · Master the Real Codex (s21–s28)** — every shipping surface, verified against the real `codex` CLI.
 

@@ -2,33 +2,33 @@
   "version": "s20",
   "decisions": [
     {
-      "id": "composition-over-new-loop",
-      "title": "The Final Agent Composes Previous Layers",
-      "description": "The comprehensive agent does not replace the loop with a new architecture. It composes memory, tasks, skills, background work, teams, worktrees, and MCP around the same core model-tool-result cycle.",
-      "alternatives": "A new orchestration framework would look more impressive, but it would hide the continuity across the course.",
+      "id": "three-seams",
+      "title": "Three Seams, Not a New Architecture",
+      "description": "The capstone composes representatives onto the s01 loop: tools in the registry, layers around dispatch (approval then sandbox in real Codex; this file lets sandbox speak first), and withMemory around the model call. It does not invent a Teams/Cron/Worktree router.",
+      "alternatives": "Glue all 19 demos into one file. That would hide the seams and blow past the line budget.",
       "zh": {
-        "title": "最终 Agent 是组合既有层，而不是换掉循环",
-        "description": "综合 Agent 没有用新架构替换循环，而是把 memory、task、skill、后台任务、团队、worktree、MCP 组合到同一个模型-工具-结果循环周围。"
+        "title": "三类接缝，不是新架构",
+        "description": "终点章把代表机制套回 s01 循环：注册表里的工具、包住 dispatch 的层（真实 Codex 先审批再进沙箱；本文件让沙箱先说话）、以及包住模型调用的 withMemory。它不发明 Teams/Cron/Worktree 路由器。"
       }
     },
     {
-      "id": "single-source-of-runtime-truth",
-      "title": "Runtime State Has Named Sources",
-      "description": "Context assembly pulls from named sources such as memory, task graph, skills, tool registry, and policy. This keeps a large agent debuggable because each piece of prompt context has an owner.",
-      "alternatives": "Dumping everything into one prompt string is shorter, but it becomes impossible to tell which subsystem caused a bad decision.",
+      "id": "mcp-before-loop",
+      "title": "MCP Is Registered Before the Loop",
+      "description": "registerMcp(\"docs\") runs in main() and exposes mcp__docs__search. That matches Codex starting MCP from config at session start. The server here is an in-process mock; s19 showed real stdio. The model has no connect_mcp tool.",
+      "alternatives": "Expose connect_mcp as a function tool. That invents an API Codex does not have.",
       "zh": {
-        "title": "运行时状态来自具名来源",
-        "description": "上下文组装从 memory、task graph、skills、tool registry、policy 等具名来源读取。大型 agent 因此仍可调试，因为每块 prompt context 都有清晰归属。"
+        "title": "MCP 在循环开始前注册",
+        "description": "main() 里 registerMcp(\"docs\")，暴露 mcp__docs__search。这对应 Codex 在会话启动时按 config 拉起 MCP。本章是进程内 mock；真 stdio 是 s19。模型没有 connect_mcp 工具。"
       }
     },
     {
-      "id": "recovery-is-first-class",
-      "title": "Recovery Is Part of the Main Flow",
-      "description": "Compaction, error recovery, and asynchronous result collection are treated as normal loop behavior. The final lesson shows that production agents spend as much effort recovering and resuming as they do calling tools.",
-      "alternatives": "Recovery could be left as error handling around the edges, but then the architecture would understate what real long-running agents need.",
+      "id": "curated-not-encyclopedic",
+      "title": "Representatives, Not an Encyclopedia",
+      "description": "spawn_subagent is s06's fresh-context child, not s15's mailbox. Skills, compact, AGENTS.md, the task board, teams, and worktrees still hang on these seams; this chapter does not restack them. Part II starts at s21.",
+      "alternatives": "Re-run s12–s18 inside the capstone. That re-teaches collab isolation and hides that the loop never changed.",
       "zh": {
-        "title": "恢复能力是一等流程",
-        "description": "压缩、错误恢复、异步结果收集都被视为正常循环行为。最终课展示了生产级 agent 在恢复和续跑上投入的工程量，并不低于调用工具本身。"
+        "title": "代表机制，不是百科全书",
+        "description": "spawn_subagent 是 s06 的干净上下文子循环，不是 s15 的信箱。技能、压缩、AGENTS.md、任务板、团队、worktree 仍挂在这些接缝上，本章不重跑。Part II 从 s21 开始。"
       }
     }
   ]

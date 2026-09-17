@@ -1,34 +1,26 @@
 #!/usr/bin/env tsx
 /**
- * s19_mcp_servers/code.ts — The MCP Tool Bridge (Codex-style, in TypeScript)
+ * s19_mcp_servers/code.ts — MCP tool bridge (Codex as a client)
  *
- * Every tool so far was hand-written into the harness. Real agents need to call
- * tools they didn't ship with — a company Jira, a deploy system, a knowledge
- * base — without recompiling. Codex solves this with MCP (Model Context
- * Protocol): declare servers in `~/.codex/config.toml` under `[mcp_servers]`,
- * and Codex spawns each one as a child process, speaks JSON-RPC over stdio,
- * discovers its tools (`tools/list`), and exposes them to the model as ordinary
- * function tools named `mcp__<server>__<tool>`.
+ * From s01–s18 the model only sees tools we wrote into the harness.
+ * A company Jira / deploy system / wiki cannot be rewritten every time.
  *
- *      config.toml                 spawn            stdio JSON-RPC
- *   ┌──────────────────┐     ┌───────────┐   {"method":"tools/list"}   ┌────────────┐
- *   │ [mcp_servers.    │ ──► │  client   │ ──────────────────────────► │ MCP server │
- *   │  docs]           │     │  bridge   │ ◄────────────────────────── │  (child)   │
- *   │ command = "..."  │     │ (in proc) │   {tools:[search,...]}      │ docs+deploy│
- *   └──────────────────┘     └─────┬─────┘                             └────────────┘
- *                                  │ bridge: mcp__docs__search → Responses-API function tool
- *                            ┌─────▼─────┐
- *                            │   model   │  calls it like any other tool
- *                            └───────────┘
+ * Codex is an MCP *client*. At session start it reads [mcp_servers.<name>]
+ * from ~/.codex/config.toml, spawns each stdio server, then:
+ *   initialize → notifications/initialized → tools/list → tools/call
+ * Discovered tools become ordinary function tools named mcp__<server>__<tool>
+ * (legacy prefix still in Codex). tools/call uses the server's raw name.
+ * The model has no connect_mcp tool.
  *
- * This file is BOTH halves: run normally it is the client+harness; run with
- * `--mcp-server <name>` it becomes the stdio server (spawned as a child of
- * itself, exactly like Codex spawning a configured server). No network, no key.
+ * HTTP url, enabled_tools, OAuth, timeouts: s22. Plugins that bundle MCP: s24.
+ * Codex *as* a server (`codex mcp-server`): s24 / s27. `codex mcp` is a
+ * config manager (add/list/get/login/logout/remove), not that server.
  *
- * Run it (self-running narrated demo):
- *     npm install
- *     npx tsx s19_mcp_servers/code.ts                       # offline demo
- *     OPENAI_API_KEY=sk-... npx tsx s19_mcp_servers/code.ts # real model
+ * Teaching extra: this file is BOTH halves — run normally it is the client;
+ * `--mcp-server <name>` makes it the stdio child. No network, no key.
+ *
+ *     npx tsx s19_mcp_servers/code.ts
+ *     OPENAI_API_KEY=sk-... npx tsx s19_mcp_servers/code.ts
  */
 
 import OpenAI from "openai";
@@ -47,10 +39,9 @@ function say(actor: string, msg: string): void {
   const t = ((Date.now() - t0) / 1000).toFixed(2).padStart(6);
   console.log(`\x1b[2m${t}s\x1b[0m \x1b[36m${actor.padEnd(6)}\x1b[0m ${msg}`);
 }
-const norm = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "_"); // MCP tool-name safe charset
-type Json = Record<string, any>; // JSON-RPC payloads are dynamically shaped; `any` keeps it readable
+const norm = (s: string) => s.replace(/[^a-zA-Z0-9_-]/g, "_");
+type Json = Record<string, any>;
 
-// ── Tool registry (from s02): the bridge registers MCP tools into it ─────────
 type FnTool = { type: "function"; name: string; description: string; parameters: Record<string, unknown>; strict: boolean };
 type Handler = (args: Json) => Promise<string> | string;
 const TOOLS: FnTool[] = [];
@@ -84,11 +75,11 @@ const SERVERS: Record<string, { tools: McpToolDef[]; handlers: Record<string, (a
   },
 };
 
-// ── MCP server mode: speak newline-delimited JSON-RPC 2.0 over stdin/stdout ──
+// MCP stdio is newline-delimited JSON-RPC (not Content-Length). Logs go to stderr.
 function runServer(name: string): void {
   const server = SERVERS[name];
   if (!server) { console.error(`unknown server "${name}"`); process.exit(1); }
-  console.error(`[mcp:${name}] up on stdio (pid ${process.pid})`); // logs go to stderr; stdout is protocol-only
+  console.error(`[mcp:${name}] up on stdio (pid ${process.pid})`);
   const send = (msg: Json) => process.stdout.write(JSON.stringify(msg) + "\n");
   readline.createInterface({ input: process.stdin }).on("line", (line) => {
     if (!line.trim()) return;
@@ -96,7 +87,7 @@ function runServer(name: string): void {
     if (method === "initialize") {
       send({ jsonrpc: "2.0", id, result: { protocolVersion: "2024-11-05", serverInfo: { name, version: "0.1.0" }, capabilities: { tools: {} } } });
     } else if (method === "notifications/initialized") {
-      // a notification: no response
+      // notification: no response
     } else if (method === "tools/list") {
       send({ jsonrpc: "2.0", id, result: { tools: server.tools } });
     } else if (method === "tools/call") {
@@ -109,8 +100,7 @@ function runServer(name: string): void {
   });
 }
 
-// ── NEW in s19: the MCP client bridge ────────────────────────────────────────
-// What `~/.codex/config.toml` would declare; the harness spawns each entry.
+// What ~/.codex/config.toml would declare. Codex spawns these at session start.
 const MCP_CONFIG: Record<string, { command: string; args: string[] }> = {
   docs: { command: NODE, args: ["--import", "tsx", SELF, "--mcp-server", "docs"] },
   deploy: { command: NODE, args: ["--import", "tsx", SELF, "--mcp-server", "deploy"] },
@@ -159,17 +149,17 @@ class McpClient {
   close(): void { this.child.kill(); }
 }
 
-async function connectMcp(name: string): Promise<McpClient> {
+async function spawnMcp(name: string): Promise<McpClient> {
   const def = MCP_CONFIG[name];
   const child = spawn(def.command, def.args, { stdio: ["pipe", "pipe", "pipe"] });
   child.on("error", (e) => say(name, `\x1b[31mspawn error: ${e.message}\x1b[0m`));
   const client = new McpClient(name, child);
-  await client.connect(); // initialize handshake + tools/list discovery
+  await client.connect();
   say("bridge", `connected "${name}" → discovered: ${client.tools.map((t) => t.name).join(", ")}`);
   return client;
 }
 
-// Expose a server's tools to the model as mcp__<server>__<tool> function tools.
+// Model sees mcp__<server>__<tool>. tools/call uses the raw t.name.
 function bridgeTools(client: McpClient): void {
   for (const t of client.tools) {
     register(
@@ -179,7 +169,6 @@ function bridgeTools(client: McpClient): void {
   }
 }
 
-// ── Model adapter (same shape as s01) ────────────────────────────────────────
 type OutputItem = {
   type: string;
   id?: string;
@@ -201,7 +190,6 @@ async function callModel(input: unknown[]): Promise<OutputItem[]> {
   }
   return offlineModel(input);
 }
-// Scripted stand-in: drive three bridged MCP tools across two servers.
 function offlineModel(input: unknown[]): OutputItem[] {
   const ran = input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
   const call = (n: number, name: string, args: Json): OutputItem =>
@@ -219,7 +207,7 @@ function offlineModel(input: unknown[]): OutputItem[] {
   }
 }
 
-// ── The core pattern (UNCHANGED since s01): loop until the model stops ──────
+// UNCHANGED since s01: loop until the model stops.
 async function agentLoop(input: unknown[]): Promise<string> {
   for (;;) {
     const output = await callModel(input);
@@ -242,21 +230,20 @@ async function agentLoop(input: unknown[]): Promise<string> {
   }
 }
 
-// ── Self-running narrated demo ────────────────────────────────────────────────
 async function main(): Promise<void> {
-  console.log("s19: The MCP Tool Bridge (Codex-style)");
-  console.log(OFFLINE ? "Offline demo model (no OPENAI_API_KEY) — real MCP servers over stdio JSON-RPC.\n" : `Model: ${MODEL}.\n`);
+  console.log("s19: MCP tool bridge (Codex as a client)");
+  console.log(OFFLINE ? "Offline demo — real MCP servers over stdio JSON-RPC. No connect_mcp tool.\n" : `Model: ${MODEL}.\n`);
 
-  console.log("\x1b[2m# ~/.codex/config.toml — how these two servers are declared:\x1b[0m");
+  console.log("\x1b[2m# ~/.codex/config.toml — spawned at session start, before the loop:\x1b[0m");
   for (const [name, def] of Object.entries(MCP_CONFIG)) {
     console.log(`\x1b[2m[mcp_servers.${name}]\x1b[0m`);
     console.log(`\x1b[2mcommand = ${JSON.stringify(def.command)}\x1b[0m`);
     console.log(`\x1b[2margs = ${JSON.stringify(def.args)}\n\x1b[0m`);
   }
 
-  const docs = await connectMcp("docs");
+  const docs = await spawnMcp("docs");
   bridgeTools(docs);
-  const deploy = await connectMcp("deploy");
+  const deploy = await spawnMcp("deploy");
   bridgeTools(deploy);
   console.log(`\nTools exposed to the model: ${TOOLS.map((t) => t.name).join(", ")}\n`);
 
@@ -268,10 +255,9 @@ async function main(): Promise<void> {
   deploy.close();
 }
 
-// ── Entry point: server mode (child) or harness mode (parent) ────────────────
 const serveAt = process.argv.indexOf("--mcp-server");
 if (serveAt >= 0) {
-  runServer(process.argv[serveAt + 1]); // child-process mode: speak JSON-RPC on stdio
+  runServer(process.argv[serveAt + 1]);
 } else {
   main().catch((err) => { console.error("fatal:", err); process.exit(1); });
 }

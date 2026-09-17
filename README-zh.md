@@ -139,7 +139,7 @@ flowchart TD
 | [s17](s17_autonomous_agents/) | Autonomous Agents | 自主认领任务 | 🟥 |
 | [s18](s18_worktree_isolation/) | Worktree Isolation | git worktree 隔离（本机 App/CLI；Cloud 是 s23） | 🟥 |
 | [s19](s19_mcp_servers/) | MCP Servers | MCP 工具桥接 | 🟥 |
-| [s20](s20_full_harness/) | The Full Harness | 所有机制集成进一个循环 | 🟥 |
+| [s20](s20_full_harness/) | The Full Harness | 三类接缝套回一个循环（代表机制，不是 19 个 demo 粘在一起） | 🟥 |
 
 **Part II · 精通真实的 Codex（s21–s28）** — 对照真实 `codex` CLI 讲清每个已发布的形态。
 

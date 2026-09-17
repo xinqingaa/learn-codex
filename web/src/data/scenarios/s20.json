@@ -1,57 +1,64 @@
 {
   "version": "s20",
   "title": "The Full Harness",
-  "description": "The final agent composes context assembly, tools, memory, teams, background work, cron, worktrees, and MCP.",
+  "description": "Part I capstone: representatives of three seams around the unchanged s01 loop. MCP is registered before the loop. The model has no connect_mcp tool.",
   "steps": [
     {
-      "type": "user_message",
-      "content": "Plan a release: inspect tasks, run checks, delegate docs, and keep long scans in the background.",
-      "annotation": "The final lesson combines many earlier capabilities in one request."
-    },
-    {
       "type": "system_event",
-      "content": "assemble_instructions: memory + task graph + skills + available tools + approval & sandbox policy",
-      "annotation": "The runtime builds the prompt from layered sources of context."
+      "content": "registerMcp(\"docs\") → mcp__docs__search — before agentLoop",
+      "annotation": "Codex starts MCP from config at session start. This chapter uses an in-process mock; real stdio is s19. No connect_mcp model tool."
     },
     {
-      "type": "assistant_text",
-      "content": "I'll inspect the task graph, delegate docs, start the slow scan in the background, and use the release checklist skill.",
-      "annotation": "The model chooses multiple mechanisms while keeping one coherent plan."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "load_skill",
-      "content": "{\"name\":\"release-check\"}",
-      "annotation": "Skills contribute procedural context before execution."
+      "type": "user_message",
+      "content": "Write short notes about the agent loop.",
+      "annotation": "One task. The loop does not grow a Teams / Cron / Worktree router."
     },
     {
       "type": "tool_call",
-      "toolName": "spawn_teammate",
-      "content": "{\"name\":\"docs\",\"role\":\"Update release notes in its worktree.\"}",
-      "annotation": "Team delegation handles a parallel slice of the release."
+      "toolName": "update_plan",
+      "content": "{\"plan\":[{\"step\":\"Sketch a plan\",\"status\":\"completed\"},{\"step\":\"Try a destructive command\",\"status\":\"in_progress\"}]}",
+      "annotation": "A registry tool (s05). The loop only sees a name plus a handler."
     },
     {
       "type": "tool_call",
       "toolName": "shell",
-      "content": "npm run lint && npm run test",
-      "toolInput": "{\"background\":true}",
-      "annotation": "Long-running validation goes through the background task path."
+      "content": "{\"command\":\"git push --force origin main\"}",
+      "annotation": "approval_policy=on-request would ask a human. The demo auto-answers no and feeds the error back."
     },
     {
       "type": "tool_call",
-      "toolName": "connect_mcp",
-      "content": "{\"server\":\"deploy\",\"command\":\"mock-deploy-server\"}",
-      "annotation": "External capabilities are added only when needed."
+      "toolName": "shell",
+      "content": "{\"command\":\"echo 'building notes...'\"}",
+      "annotation": "Same approval layer, other branch: auto-approved. The loop did not stop after the deny."
     },
     {
-      "type": "system_event",
-      "content": "recover: background task done, teammate replied, MCP deploy status ready",
-      "annotation": "The integrated runtime folds asynchronous results back into the loop."
+      "type": "tool_call",
+      "toolName": "write_file",
+      "content": "{\"path\":\"/etc/evil.txt\",\"content\":\"x\"}",
+      "annotation": "withSandbox path-checks write_file. /etc is outside the temp workspace, so the write is refused."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "write_file",
+      "content": "{\"path\":\"notes.md\",\"content\":\"# Agent Loop\\nThe loop is still s01.\\n\"}",
+      "annotation": "Same path check, inside the workspace: allowed. Real Codex sandboxes every exec (s04), not just this tool."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "mcp__docs__search",
+      "content": "{\"query\":\"agent loop\"}",
+      "annotation": "Registered at session start. The bridge uses the raw name search; this file does not spawn stdio children."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "spawn_subagent",
+      "content": "{\"task\":\"In one sentence, what is an agent harness?\"}",
+      "annotation": "s06's fresh-context child loop, not s15's mailbox. The child has no tools and returns one sentence."
     },
     {
       "type": "assistant_text",
-      "content": "Release preparation is ready: checks passed, docs are updated in the teammate worktree, and deployment status is available.",
-      "annotation": "The comprehensive agent returns a single user-facing outcome."
+      "content": "Done. Approval refused the force-push, the sandbox refused /etc but allowed notes.md, MCP answered, a sub-agent summarised — all around the same s01 loop.",
+      "annotation": "Every refusal was a function_call_output. withMemory appended each turn to rollout.jsonl."
     }
   ]
 }

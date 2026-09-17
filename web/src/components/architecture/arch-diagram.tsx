@@ -21,7 +21,7 @@ const CLASS_DESCRIPTIONS: Record<string, string> = {
   SharedBoard: "Cross-agent shared state coordination",
   CronJob: "App automation: cron (fresh turn) or heartbeat (same thread)",
   ProtocolState: "Pending team protocol requests and response matching",
-  MCPClient: "External tool discovery and invocation client",
+  MCPClient: "Session-start MCP client: discover and call external tools",
   RecoveryState: "Retry, fallback, and continuation state",
 };
 

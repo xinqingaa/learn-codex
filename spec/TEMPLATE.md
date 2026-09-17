@@ -79,8 +79,8 @@ Responses API · `reasoning.effort` (low/medium/high) · function tools · `appl
 | s16 | team_protocols | Coordination contracts | Codex NEW_TASK/MESSAGE/FINAL_ANSWER + teaching replyTo ledger |
 | s17 | autonomous_agents | Self-claiming workers | s12 TaskBoard concurrent atomic claim (Codex still parent-orchestrates; teaching pull) |
 | s18 | worktree_isolation | Git worktree lifecycle | parent-assigned git worktrees for local parallel sessions (Codex App/CLI; Cloud containers are s23; teaching merge) |
-| s19 | mcp_servers | MCP tool bridge | connect to an MCP-style server (stdio JSON-RPC), list its tools, expose them to the model, call one |
-| s20 | full_harness | Integration | one loop wiring together tools+approval+sandbox+plan+memory+subagents+mcp, narrated trace |
+| s19 | mcp_servers | MCP tool bridge | session-start spawn of stdio MCP servers from config; initialize/tools/list/tools/call; expose as mcp__<server>__<tool> (no connect_mcp tool) |
+| s20 | full_harness | Integration | three seams on the s01 loop (registry tools, approval+sandbox, memory); representatives only, not 19 chapters glued together |
 
 ## Quality bar
 
