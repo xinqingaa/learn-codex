@@ -174,8 +174,8 @@ export const VERSION_META: Record<string, {
   s17: {
     title: "Autonomous Agents",
     subtitle: "Check the Board, Claim the Task",
-    coreAddition: "Autonomous task claiming",
-    keyInsight: "Teammates become useful when they can discover and claim work themselves.",
+    coreAddition: "Concurrent claim on s12's board",
+    keyInsight: "Codex still parent-assigns; the chapter lets two workers race an unlocked scan and a locked claim.",
     layer: "collaboration",
     prevVersion: "s16",
   },

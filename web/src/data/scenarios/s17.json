@@ -1,46 +1,43 @@
 {
   "version": "s17",
   "title": "Autonomous Agents",
-  "description": "Idle teammates can scan the task board, claim eligible work, and return to idle after completion.",
+  "description": "Root seeds s12's teaching board and stops assigning. Two workers scan unlocked, then claim inside a lock. Codex still parent-orchestrates; the pull loop is a teaching extra.",
   "steps": [
     {
       "type": "system_event",
-      "content": "teammate(worker-a): state=IDLE -> idle_poll()",
-      "annotation": "Autonomy starts from an idle lifecycle tick, not a direct user command."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "list_tasks",
-      "content": "{\"status\":\"open\"}",
-      "annotation": "The idle agent scans the shared task board."
-    },
-    {
-      "type": "tool_result",
-      "toolName": "list_tasks",
-      "content": "[{\"id\":\"task_5\",\"status\":\"open\",\"owner\":null,\"title\":\"Update README\"}]",
-      "annotation": "Only unclaimed work is eligible for autonomous pickup."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "claim_task",
-      "content": "{\"id\":\"task_5\",\"owner\":\"worker-a\"}",
-      "annotation": "The task manager enforces ownership before work begins."
+      "content": "root seeded t1, t2, t3 (t3 blocked by t1+t2) — not assigning",
+      "annotation": "s16's bottleneck inverted: root writes the board and does not point at alice or bob."
     },
     {
       "type": "system_event",
-      "content": "worker-a: state=WORK task=task_5",
-      "annotation": "The lifecycle moves from IDLE to WORK."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "complete_task",
-      "content": "{\"id\":\"task_5\",\"result\":\"README updated with setup notes.\"}",
-      "annotation": "Completion writes the result back to the shared board."
+      "content": "alice scan → t1 pending · bob scan → t1 pending",
+      "annotation": "scan() is unlocked on purpose. Both may read the same row; that result is already stale."
     },
     {
       "type": "system_event",
-      "content": "worker-a: state=IDLE next_poll_in=5s",
-      "annotation": "After finishing, the agent becomes available for more work."
+      "content": "alice claimed t1 · bob race LOST on t1 (already in_progress, owner: alice); re-scanning",
+      "annotation": "The only check that counts is inside claim()'s mutex. Codex has no such board; this is s12's claim under a race."
+    },
+    {
+      "type": "system_event",
+      "content": "bob claimed t2: Write the API routes",
+      "annotation": "The loser does not retry t1. The board already has another unblocked row."
+    },
+    {
+      "type": "tool_call",
+      "toolName": "write_file",
+      "content": "{\"filename\":\"t1.md\",\"content\":\"# Design the DB schema\"}",
+      "annotation": "Workers still only have write_file. scan/claim/complete are harness-side, not model tools."
+    },
+    {
+      "type": "system_event",
+      "content": "t1 done · t2 done · t3 unblocked (blockedBy t1+t2 now done)",
+      "annotation": "s12's blockedBy rule still holds: t3 was not claimable while either predecessor was open."
+    },
+    {
+      "type": "system_event",
+      "content": "one worker claimed t3 · board is done — shutting down",
+      "annotation": "IDLE poll until allSettled, then SHUTDOWN. Claiming is s17; isolated directories are s18, not a Cloud claim API."
     }
   ]
 }

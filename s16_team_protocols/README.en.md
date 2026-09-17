@@ -137,7 +137,7 @@ In s15–s16, root has to hand each teammate its work: "alice does this, bob doe
 
 What if teammates **watched the board and claimed work themselves**? Root only creates tasks; teammates discover, claim, run and report on their own.
 
-s17 Autonomous Agents → self-organizing workers that no longer need a leader to delegate.
+s17 Autonomous Agents → workers scan s12's teaching board and claim atomically. Codex still parent-assigns (`spawn_agent` / `followup`); racing the board is a teaching extra. Cloud isolation is s18, not a claim API.
 
 <details>
 <summary>Into the Codex source</summary>

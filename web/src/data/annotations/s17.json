@@ -2,33 +2,33 @@
   "version": "s17",
   "decisions": [
     {
-      "id": "idle-poll-loop",
-      "title": "Autonomy Starts from Idle Polling",
-      "description": "The agent becomes autonomous by doing useful checks while idle: scanning tasks, reading inbox messages, and deciding whether to claim work. No new magic planner is introduced.",
-      "alternatives": "A central scheduler could assign every task, but this lesson focuses on local autonomy inside each teammate loop.",
+      "id": "pull-on-teaching-board",
+      "title": "Pull Is a Teaching Extra; Codex Still Pushes",
+      "description": "Root seeds t1/t2/t3 and stops assigning. Workers poll s12's TaskBoard. Real Codex Multi-Agent V2 stays parent-orchestrated (spawn_agent / followup_task / wait_agent). CSV fan-out still pushes one worker per row. This chapter does not invent a Codex claim API.",
+      "alternatives": "Keep root pointing at each teammate (s16). That scales with the number of tasks and is what Codex actually does.",
       "zh": {
-        "title": "自治从空闲轮询开始",
-        "description": "Agent 通过在空闲时做有用检查获得自治能力：扫描任务、读取 inbox、判断是否 claim 工作。这里没有引入新的神秘规划器。"
+        "title": "Pull 是教学加的；Codex 仍是推",
+        "description": "root 只写 t1/t2/t3，不再点名。工人轮询 s12 的 TaskBoard。真实 Multi-Agent V2 仍是父编排（spawn_agent / followup_task / wait_agent）。CSV 批量仍是按行推出工人。本章不发明 Codex 认领 API。"
       }
     },
     {
-      "id": "claim-before-work",
-      "title": "Claim Before Work Prevents Collisions",
-      "description": "A teammate must claim a task before entering WORK state. Ownership checks make autonomous pickup safe when multiple agents poll the same task board.",
-      "alternatives": "Agents could simply pick any open task, but two agents might duplicate work or overwrite each other's result.",
+      "id": "scan-then-locked-claim",
+      "title": "scan() Is a Clue; claim() Is the Promise",
+      "description": "Two workers may unlocked-scan the same pending row (TOCTOU). claim() sleeps to widen the race, then re-checks inside a mutex so exactly one owner is written. The loser re-scans instead of retrying the same id.",
+      "alternatives": "A single locked scan+claim is simpler but hides the stale-read. Letting both proceed without a re-check double-runs the task.",
       "zh": {
-        "title": "先 Claim 再工作，避免冲突",
-        "description": "队友必须先 claim 任务，再进入 WORK 状态。多个 agent 轮询同一个任务板时，所有权检查让自治领取任务更安全。"
+        "title": "scan() 是线索，claim() 才是承诺",
+        "description": "两个工人可以无锁扫到同一份 pending（TOCTOU）。claim() 用 sleep 撑开竞争窗口，再在互斥锁里复查，只写一个 owner。输家再扫，而不是重抢同一个 id。"
       }
     },
     {
-      "id": "identity-reinjection",
-      "title": "Identity Is Re-injected on Each Autonomous Turn",
-      "description": "Autonomous agents need a stable sense of who they are and what they are allowed to do. Re-injecting identity keeps a teammate from drifting into the lead's responsibilities.",
-      "alternatives": "A one-time identity prompt is shorter, but long-running loops are prone to context drift.",
+      "id": "blockedby-still-s12",
+      "title": "Dependencies Stay on the Board",
+      "description": "t3 stays unclaimable until t1 and t2 are done. That is s12's blockedBy rule under concurrency, not a new protocol kind and not Codex Cloud isolation (s18).",
+      "alternatives": "Ignore deps and let anyone grab t3 early. The board would no longer be a shared source of truth.",
       "zh": {
-        "title": "每个自治回合都重新注入身份",
-        "description": "自治 agent 需要稳定知道自己是谁、允许做什么。重新注入身份可以防止队友逐渐漂移到 lead 的职责上。"
+        "title": "依赖仍在板上",
+        "description": "t3 要等 t1 和 t2 都 done 才能认领。这是 s12 的 blockedBy 在并发下继续生效，不是新的信封 kind，也不是 Codex Cloud 的隔离（s18）。"
       }
     }
   ]

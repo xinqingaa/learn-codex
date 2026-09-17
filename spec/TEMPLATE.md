@@ -77,7 +77,7 @@ Responses API · `reasoning.effort` (low/medium/high) · function tools · `appl
 | s14 | automations | App-style scheduled runs | scheduler enqueues due work; cron starts a fresh turn into an inbox; heartbeat resumes the same thread |
 | s15 | agent_teams | Teammate mailboxes | root `spawn_agent` + `send_message`/`wait_agent` mailbox (Codex Multi-Agent V2) |
 | s16 | team_protocols | Coordination contracts | Codex NEW_TASK/MESSAGE/FINAL_ANSWER + teaching replyTo ledger |
-| s17 | autonomous_agents | Self-claiming workers | idle agents poll the task board, claim a task, run it, post results |
+| s17 | autonomous_agents | Self-claiming workers | s12 TaskBoard concurrent atomic claim (Codex still parent-orchestrates; teaching pull) |
 | s18 | worktree_isolation | Git worktree lifecycle | create isolated git worktrees per task so parallel agents don't conflict (Codex Cloud model) |
 | s19 | mcp_servers | MCP tool bridge | connect to an MCP-style server (stdio JSON-RPC), list its tools, expose them to the model, call one |
 | s20 | full_harness | Integration | one loop wiring together tools+approval+sandbox+plan+memory+subagents+mcp, narrated trace |

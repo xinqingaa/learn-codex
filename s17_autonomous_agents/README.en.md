@@ -3,19 +3,19 @@
 [中文](README.md) · [English](README.en.md)
 
 `s01` → ... → [s16](../s16_team_protocols/) → [s17](../s17_autonomous_agents/) → [s18](../s18_worktree_isolation/) → ... → s20
-> *"Poll the board, claim it yourself"* — poll when idle, run what you win, then claim again.
+> *"Poll the board, claim it yourself"* — Codex still parent-assigns; the chapter lets workers race s12's board.
 >
-> **Harness layer**: collaboration — no lead delegates; workers self-organize.
+> **Harness layer**: collaboration — push "who's free" down to each worker, backstop concurrency with one atomic claim.
 
 ---
 
 ## The Problem
 
-s16's teammates can exchange typed messages, but every task still has to be handed out by the lead: "alice does this, bob does that". With 10 unclaimed tasks on the board, the lead assigns 10 times — **the lead itself becomes the bottleneck**.
+s15–s16 already move mail, but work is still pointed at by root: three `request`s, three `replyTo` replies. With 10 unclaimed tasks on the board, root assigns 10 times — **the orchestrator itself becomes the bottleneck**. It also does not know who is free right now.
 
-Worse, the lead doesn't actually know which teammate is free right now. It can only guess: assign to a busy teammate and the work queues up; assign to an idle one and nothing is wasted. That "who's free" information is something **each teammate knows best about itself**.
+Codex Multi-Agent V2 is that parent-orchestrated default: `spawn_agent` / `followup_task` / `wait_agent`. On the product surface it does not spawn unless the user explicitly asks for parallel work. CSV batch spawn still **pushes** one worker per row; workers do not **pull**.
 
-So why not push the assignment down? Let teammates watch the board, pick work, and claim it themselves — the lead only writes tasks onto the board. But the moment two idle teammates eye the same task at the same instant, a new problem appears: **how do you guarantee a task is claimed by exactly one worker?**
+So push assignment down? Root only writes tasks onto s12's teaching board; workers scan and claim. The moment two idle workers see the same `pending` row, a new problem appears: **how do you guarantee a task is claimed by exactly one worker?**
 
 ---
 
@@ -23,16 +23,18 @@ So why not push the assignment down? Let teammates watch the board, pick work, a
 
 ![Autonomous Agents](images/autonomous-agents.svg)
 
-Take the lead out of the assignment loop. Each worker runs a three-phase loop: **WORK** (run the claimed task) → **IDLE** (poll the shared task board) → **SHUTDOWN** (exit when the board is all done). No lead assigns anything; the worker finds its own next task.
+Each teaching worker runs a three-phase loop: **WORK** (run what it just won) → **IDLE** (poll the board) → **SHUTDOWN** (exit when the board is all done). Root no longer points at anyone.
 
-The crux is the claim step. The board exposes two operations: an **unlocked pure read** `scan()`, and an **atomic** `claim()`. The race is part of the design — two workers can absolutely `scan()` the same pending task in the same instant, so the authoritative "is it still free?" check must live **inside** `claim()`'s critical section. The loser concedes honestly and goes back to re-scan.
+The board exposes two operations: an unlocked pure read `scan()`, and an atomic `claim()`. The race is part of the design — both workers can `scan()` `t1` in the same instant — so "is it still free?" must live inside `claim()`'s critical section. The loser concedes honestly and scans again.
+
+This is one extra teaching step on s12's `claim`: from "one model calls a tool" to "two loops reach at once". Codex has **no** such board, and no self-claiming workers.
 
 | concept | meaning | note |
 |---------|---------|------|
-| `scan()` | pure read of the board, **unlocked** | two workers may read the same pending task — the race starts here |
-| `claim(id, owner)` | atomic claim: re-checks the task is still free **inside the lock**, then flips it to `in_progress` | exactly one winner in the critical section |
-| race LOST | `claim` returns failure (task already taken) | concede honestly, re-`scan()` for the next one |
-| dependency `blockedBy` | not claimable until its dependencies finish | t3 only opens once t1 and t2 are both `done` |
+| `scan()` | pure read of the board, **unlocked** | two workers may read the same pending task |
+| `claim(id, owner)` | atomic claim: re-check still free **inside the lock**, then `in_progress` | exactly one winner in the critical section |
+| race LOST | `claim` fails (already taken) | re-`scan()`, do not retry the same row |
+| `blockedBy` | not claimable until deps finish | t3 opens only after t1 and t2 are `done` |
 
 ---
 
@@ -40,7 +42,7 @@ The crux is the claim step. The board exposes two operations: an **unlocked pure
 
 Four pieces: the claimable predicate, the unlocked read, a mutex that makes read-modify-write atomic, and the worker's own loop.
 
-**Step 1**: what counts as "claimable"? Pending, unowned, and all dependencies done.
+**Step 1**: pending, unowned, dependencies `done`. That is s12's rule, brought forward as-is.
 
 ```ts
 private claimable(t: Task): boolean {
@@ -52,7 +54,7 @@ private claimable(t: Task): boolean {
 }
 ```
 
-**Step 2**: `scan()` is a pure read, deliberately unlocked. It's fast, but its result may already be **stale** — the moment you read t1 as free, another worker may be claiming it.
+**Step 2**: `scan()` is deliberately unlocked. Fast, and possibly already stale.
 
 ```ts
 scan(): Task | undefined {
@@ -60,7 +62,7 @@ scan(): Task | undefined {
 }
 ```
 
-**Step 3**: a promise-chain mutex. Hanging the whole "read-check-modify-write" block on the tail of the chain guarantees only one segment runs at a time — that's the critical section.
+**Step 3**: a promise-chain mutex. The whole "re-check + set" hangs on the tail so only one segment runs at a time. This is not a Codex lockfile — it is an in-process critical section for the demo.
 
 ```ts
 class Mutex {
@@ -73,50 +75,42 @@ class Mutex {
 }
 ```
 
-**Step 4**: the atomic claim — the heart of this chapter. First a `sleep` simulates slow storage (that's the race window), then it re-checks **inside the lock** whether the task is still free. Only the worker that finds it genuinely free wins; everyone else gets an honest "you lost".
+**Step 4**: the atomic claim. A `sleep` widens the gap between read and write (the race window), then it re-checks **inside the lock**. Only the worker that finds the row genuinely free wins.
 
 ```ts
 async claim(id: string, owner: string): Promise<{ ok: boolean; reason: string }> {
-  await sleep(CLAIM_LATENCY_MS);              // the read-then-write gap: where races live
+  await sleep(CLAIM_LATENCY_MS);              // TOCTOU gap: where races live
   return this.lock.run(() => {
     const t = this.tasks.get(id);
     if (!this.claimable(t))
       return { ok: false, reason: `already ${t.status} (owner: ${t.owner ?? "none"})` };
     t.owner = owner;
-    t.status = "in_progress";                 // re-check passed inside the lock → sole winner
+    t.status = "in_progress";
     return { ok: true, reason: "claimed" };
   });
 }
 ```
 
-Assembled into the worker's full loop:
+The worker loop:
 
 ```ts
-async function worker(name: string, board: TaskBoard, scratch: string): Promise<void> {
-  for (;;) {
-    const task = board.scan();
-    if (!task) {
-      if (board.allSettled()) return;               // SHUTDOWN: the board is all done
-      await sleep(POLL_MS);                          // IDLE: keep polling
-      continue;
-    }
-    const res = await board.claim(task.id, name);
-    if (!res.ok) continue;                           // race LOST → re-scan
-    const result = await runTask(name, task, scratch); // WORK: run it in your own context
-    await board.complete(task.id, result);           // post the result back to the board
-  }
-}
+const task = board.scan();
+if (!task) { /* IDLE, or board all done → SHUTDOWN */ continue; }
+const res = await board.claim(task.id, name);
+if (!res.ok) continue;                         // race LOST → scan again
+await runTask(name, task, scratch);            // WORK: own context
+await board.complete(task.id, result);
 ```
 
-The core insight: **`scan()` gives you a lead, not a promise.** It tells you "t1 was free a moment ago", but by the time you reach for it, the world may have changed. So the only check that counts is the re-check inside `claim()`'s critical section — this is TOCTOU (time-of-check-to-time-of-use). Put the re-check inside the lock and the critical section has exactly one winner, so a **double-claim is eliminated structurally**. The loser doesn't retry the same task; it just re-scans, and the board naturally has a next one waiting.
+The core insight: **`scan()` gives you a lead, not a promise.** The only check that counts is inside `claim()` — TOCTOU. Put the re-check in the lock and a double-claim is eliminated structurally. The loser does not retry the same row; the board already has a next one.
 
 ---
 
 ## Try It
 
-> **Teaching demo note**: the code creates an `s17-scratch-*` directory under the system temp dir (`os.tmpdir()`) and writes each task's artifact file there — it doesn't touch your project files.
+> **Teaching demo note**: the code creates an `s17-scratch-*` directory under the system temp dir (`os.tmpdir()`) and writes task files there — it doesn't touch your project files.
 
-**No API key needed**: this chapter is a **self-running demo** with no REPL. Without `OPENAI_API_KEY` it uses a built-in offline scripted model — alice and bob wake at the same time, both `scan()` t1, and the winner is decided inside `claim()`'s critical section; the loser moves on to claim t2, narrated throughout.
+**No API key needed**: a self-running demo. Root only writes t1/t2/t3; alice and bob both `scan()` t1; `claim()` picks a winner; the loser takes t2; t3 waits until both predecessors are `done`.
 
 **Setup** (first run):
 
@@ -134,57 +128,67 @@ OPENAI_API_KEY=sk-... npx tsx s17_autonomous_agents/code.ts   # real model
 
 Try these tweaks:
 
-1. Add a third `worker("carol", ...)` to the `Promise.all` and watch three workers split the tasks.
-2. Raise `CLAIM_LATENCY_MS` to `200` to widen the race window and watch more `race LOST`s.
-3. Add an unblocked `t4` to the board and watch it get claimed in parallel with t1 and t2.
+1. Add a third `worker("carol", ...)` and watch three workers split the work.
+2. Raise `CLAIM_LATENCY_MS` to `200` to widen the race window and see more `race LOST`.
+3. Add an unblocked `t4` and watch it get claimed in parallel with t1 and t2.
 
-Watch for: when alice and bob both `scan()` t1, how does `claim()` guarantee only one wins? Does the loser actually take the next task (rather than stall or re-grab)? Is t3, blocked by t1+t2, only claimed after both are `done`?
+Watch for: when both `scan()` t1, is there exactly one `claimed`? Does the loser take t2 rather than stall or re-grab t1? Is t3 claimed only after t1+t2 are `done`?
 
 ---
 
 ## What's Next
 
-The workers self-organize now, but they still share **one working directory**. Alice rewrites `app.txt` for her task; bob rewrites `app.txt` for his — they clobber each other, and afterwards nobody can say which line belongs to which task.
+The workers self-organize now, but they still share **one working directory**. Alice rewrites `app.txt` for her task; bob rewrites `app.txt` for his — they clobber each other.
 
-s18 Worktree Isolation → give every task its own git worktree so parallel workers edit disjoint directories without colliding. This is exactly the Codex Cloud model.
+s18 Worktree Isolation → give every task its own git worktree. That is closer to the Codex Cloud model: an isolated execution environment, not a claim API.
 
 <details>
 <summary>Into the Codex source</summary>
 
-> The following is based on common multi-worker scheduling architectures, with reference to the overall design of OpenAI's open-source [`openai/codex`](https://github.com/openai/codex) repo (`codex-rs`) and of Codex Cloud. The chapter's "atomic claim + self-scan" is the minimal skeleton of an autonomous worker; real implementations make the storage, locking and recovery production-grade.
+> The following is based on Multi-Agent V2 in OpenAI's open-source [`openai/codex`](https://github.com/openai/codex) repo (`codex-rs`), and on the official [Subagents](https://developers.openai.com/codex/subagents) docs. The honesty bar matches s12: the source has parent-orchestrated spawn/wait; it does **not** have workers claiming a shared board. This chapter puts s12's `claim` on two concurrent loops — it does not shrink a scheduler that already lived in the source.
 
-**The chapter's `claim()` ≈ one atomic claim in a real scheduler.** The differences are the real shape of the "lock" and the "board".
-
-<details>
-<summary>1. In-memory mutex vs real atomic primitives</summary>
-
-The chapter's `Mutex` is a promise chain — it holds because Node is single-threaded and the whole board lives in one process's memory. In real systems the board is usually **shared storage** (a database, files) and the workers are in different processes, even different machines, where an in-process mutex can't reach. So the "re-check inside the lock" is replaced by the storage layer's own atomic primitive: a database `UPDATE ... WHERE status='pending'` (in a transaction), a compare-and-swap, or a lockfile. The semantics are identical to the chapter's — **"re-check + set" must be a single atomic operation** — only the mechanism carrying it changes.
-
-</details>
+**The chapter's worker loop = s12 `TaskBoard` + a teaching concurrent claim. Codex still has root assign work.**
 
 <details>
-<summary>2. The race window: simulated here, free in the real world</summary>
+<summary>1. Codex has no pull; the product default is parent-orchestrated</summary>
 
-The chapter uses `await sleep(CLAIM_LATENCY_MS)` to artificially widen the "gap between read and write" so you can see `race LOST` even in a small demo. A real scheduler doesn't have to act — network latency and storage round-trips naturally insert a gap between every "read it as free" and "write the claim", so TOCTOU races are the norm, not the exception. The chapter compresses that into one `sleep` to make the race **reproducible and observable**; the defense (re-check inside the critical section) is the same in both.
+Be explicit about what exists:
 
-</details>
+- **Codex has**: `spawn_agent` (returns immediately), `followup_task` / `assign_task` (`trigger_turn = true`), `send_message` (does not wake), `wait_agent`. An idle session starts a turn when mail has `trigger_turn` (or on durable sleep). CSV batch `spawn_agents_on_csv` pushes one worker per row from the orchestrator.
+- **Codex does not have**: idle workers polling a shared board, `scan()`, two workers racing one `pending` row, or "you lost, scan the next one".
+- **This chapter adds**: two named `worker` loops + `claim()` with a race window. They are teaching workers, **not** V2 children that claim work themselves after `spawn_agent`.
 
-<details>
-<summary>3. Task dispatch in Codex Cloud</summary>
-
-In Codex Cloud a "task" runs in **its own isolated environment** (expanded in s18, next chapter), and a scheduling layer hands queued tasks to free execution slots. The chapter's "worker polls the board and atomically claims" is a minimal replay of that "queue → claim → run → report" loop: in the real system the "board" is shared task storage, the "claim" is an atomic state transition, and a "worker" is an independent execution environment that gets scheduled up. The chapter folds multiple machines and processes into two `async` workers in a single process, so you can focus on the one thing that matters — **a claim must be atomic**.
+The official docs also say Codex only spawns when the user (or `AGENTS.md` / a skill) **explicitly asks** for parallel work. Pushing "who's free" down to each worker is a teaching step so TOCTOU is visible.
 
 </details>
 
 <details>
-<summary>4. Dependencies and recovery</summary>
+<summary>2. TaskBoard is still s12's teaching board</summary>
 
-The chapter's `blockedBy` check (claimable only once all dependencies are `done`) maps to the plainest edge constraint in a task graph (the s12 task system covers that on its own). Real systems also handle the corners the chapter skips: if a worker dies mid-task, the task must be **reclaimed and redelivered** (not stuck in `in_progress` forever); a task may be designed to be claimed **at most N times**; completion events are persisted so work can resume after a crash. These are hardening layers on top of the "atomic claim" foundation — they don't change the foundation itself.
+s12 already said: Codex's plan tool is `update_plan`; there is no `create_task` / `claim_task` / `owner` / `blockedBy`. This chapter does not promote the board into a Codex feature. It only lets **two loops call `claim` at once**. s15/s16 used the mailbox and never sat on this board; this is the first time multiple agents do.
 
-</details>
-
-**In one line**: autonomy means pushing the "who's free" information down to each worker and backstopping concurrency with a single **atomic claim**. The chapter uses a promise chain as the critical section and a `sleep` as the race window to run the whole "scan → claim → run → report" loop in front of you; real systems just move the same semantics into shared storage and independent execution environments.
+The `Mutex` is an in-process promise chain. A real cross-process board would use `UPDATE ... WHERE status='pending'` or compare-and-swap. The semantics (re-check + set must be atomic) can be compared; do **not** claim `codex-rs` ships a lockfile task board.
 
 </details>
 
-<!-- translation-sync: zh@v1, en@v1 -->
+<details>
+<summary>3. Codex Cloud is not a claim API</summary>
+
+Codex Cloud runs a task in an **isolated environment** (the s18 worktree line). The scheduler hands jobs to execution slots — cloud-side push, not agents pulling a board. CSV fan-out is still parent spawn per row; workers must `report_agent_job_result`. Still not pull.
+
+The demo uses `sleep(CLAIM_LATENCY_MS)` so `race LOST` is reproducible. Real network latency supplies that gap for free; the defense (re-check inside the critical section) is analogous, but it does not come from a Codex claim tool.
+
+</details>
+
+<details>
+<summary>4. Crash reclaim is out of scope</summary>
+
+A worker dying mid-task, a row stuck `in_progress`, at-most-N claims, persisting completion — real schedulers handle those; the chapter skips them. Dependency edges remain s12's `blockedBy`. Mail protocols are s16. Isolated directories are s18. Neither is stacked here.
+
+</details>
+
+**In one line**: Codex collaboration is still parent-assigned; this chapter adds "when two hands reach at once, the claim must be atomic". `scan()` is a lead; `claim()` is the promise.
+
+</details>
+
+<!-- translation-sync: zh@v2, en@v2 -->

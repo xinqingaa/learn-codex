@@ -6,6 +6,9 @@
     <marker id="arrow-blue" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#2563eb"/>
     </marker>
+    <marker id="arrow-purple" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#7c3aed"/>
+    </marker>
     <marker id="arrow-green" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
       <path d="M 0 0 L 10 5 L 0 10 z" fill="#16a34a"/>
     </marker>
@@ -21,58 +24,54 @@
   <rect width="720" height="540" fill="#fafbfc" rx="8"/>
   <rect x="0" y="0" width="720" height="48" fill="url(#header)" rx="8"/>
   <rect x="0" y="40" width="720" height="8" fill="url(#header)"/>
-  <text x="360" y="30" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">Self-Claiming Workers — poll, claim, run, report (no lead)</text>
+  <text x="360" y="30" fill="#fff" font-size="16" font-weight="700" text-anchor="middle">Self-claiming workers — scan unlocked, claim inside the lock</text>
 
-  <!-- worker alice -->
-  <rect x="50" y="86" width="172" height="52" rx="8" fill="#f0f4ff" stroke="#2563eb" stroke-width="2"/>
-  <text x="136" y="107" fill="#1e3a5f" font-size="13" font-weight="600" text-anchor="middle">worker alice</text>
-  <text x="136" y="125" fill="#64748b" font-size="11" text-anchor="middle">WORK → IDLE → poll</text>
-  <text x="136" y="158" fill="#16a34a" font-size="11" font-weight="600" text-anchor="middle">✓ won the race for t1</text>
+  <!-- root seeds: x=160..560 y=60..112 -->
+  <rect x="160" y="60" width="400" height="52" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
+  <text x="360" y="82" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">root</text>
+  <text x="360" y="100" fill="#93c5fd" font-size="11" text-anchor="middle">seeds the board · does not assign</text>
 
-  <!-- worker bob -->
-  <rect x="50" y="182" width="172" height="52" rx="8" fill="#f0f4ff" stroke="#2563eb" stroke-width="2"/>
-  <text x="136" y="203" fill="#1e3a5f" font-size="13" font-weight="600" text-anchor="middle">worker bob</text>
-  <text x="136" y="221" fill="#64748b" font-size="11" text-anchor="middle">WORK → IDLE → poll</text>
-  <text x="136" y="254" fill="#d97706" font-size="11" font-weight="600" text-anchor="middle">✗ lost t1 → re-scan → t2</text>
+  <!-- alice: x=40..240 y=184..264  cx=140 -->
+  <rect x="40" y="184" width="200" height="80" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
+  <text x="140" y="212" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">alice</text>
+  <text x="140" y="232" fill="#93c5fd" font-size="11" text-anchor="middle">WORK → IDLE → poll</text>
+  <text x="140" y="250" fill="#93c5fd" font-size="11" text-anchor="middle">teaching worker, not spawn_agent</text>
 
-  <!-- atomic claim critical section -->
-  <rect x="304" y="120" width="168" height="90" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
-  <text x="388" y="146" fill="#fff" font-size="13" font-weight="600" text-anchor="middle">claim(id, owner)</text>
-  <text x="388" y="166" fill="#93c5fd" font-size="11" text-anchor="middle">re-check owner inside</text>
-  <text x="388" y="182" fill="#93c5fd" font-size="11" text-anchor="middle">the lock — one winner</text>
+  <!-- bob: x=480..680 y=184..264  cx=580 -->
+  <rect x="480" y="184" width="200" height="80" rx="8" fill="#111827" stroke="#111827" stroke-width="2"/>
+  <text x="580" y="212" fill="#fff" font-size="14" font-weight="600" text-anchor="middle">bob</text>
+  <text x="580" y="232" fill="#93c5fd" font-size="11" text-anchor="middle">WORK → IDLE → poll</text>
+  <text x="580" y="250" fill="#93c5fd" font-size="11" text-anchor="middle">same loop, concurrent claim</text>
 
-  <!-- shared task board -->
-  <rect x="520" y="72" width="168" height="222" rx="8" fill="#ffffff" stroke="#cbd5e1" stroke-width="2"/>
-  <text x="604" y="96" fill="#1e3a5f" font-size="13" font-weight="700" text-anchor="middle">Shared Task Board</text>
-  <line x1="534" y1="106" x2="674" y2="106" stroke="#e2e8f0" stroke-width="1"/>
-  <text x="534" y="128" fill="#16a34a" font-size="11" font-weight="600">t1 · in_progress</text>
-  <text x="668" y="128" fill="#64748b" font-size="10" text-anchor="end">alice</text>
-  <text x="534" y="152" fill="#16a34a" font-size="11" font-weight="600">t2 · in_progress</text>
-  <text x="668" y="152" fill="#64748b" font-size="10" text-anchor="end">bob</text>
-  <text x="534" y="176" fill="#94a3b8" font-size="11" font-weight="600">t3 · pending</text>
-  <text x="668" y="176" fill="#94a3b8" font-size="10" text-anchor="end">blocked</text>
-  <text x="604" y="212" fill="#64748b" font-size="10" text-anchor="middle">pending → in_progress</text>
-  <text x="604" y="228" fill="#64748b" font-size="10" text-anchor="middle">→ done</text>
-  <text x="604" y="266" fill="#334155" font-size="10" font-weight="600" text-anchor="middle">claimable = pending</text>
-  <text x="604" y="281" fill="#334155" font-size="10" font-weight="600" text-anchor="middle">+ deps done</text>
+  <!-- claim critical section between workers: x=268..452 y=188..260 -->
+  <rect x="268" y="188" width="184" height="72" rx="8" fill="#f5f3ff" stroke="#7c3aed" stroke-width="2"/>
+  <text x="360" y="216" fill="#5b21b6" font-size="13" font-weight="600" text-anchor="middle">claim(id, owner)</text>
+  <text x="360" y="236" fill="#7c3aed" font-size="11" text-anchor="middle">locked re-check · one winner</text>
 
-  <!-- arrows: workers race into the claim -->
-  <line x1="222" y1="112" x2="302" y2="146" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="252" y="116" fill="#555" font-size="10" text-anchor="middle">scan + claim</text>
-  <line x1="222" y1="208" x2="302" y2="186" stroke="#555" stroke-width="2" marker-end="url(#arrow)"/>
-  <text x="252" y="222" fill="#555" font-size="10" text-anchor="middle">scan + claim</text>
-  <line x1="472" y1="165" x2="518" y2="165" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
-  <text x="495" y="155" fill="#2563eb" font-size="10" font-weight="600" text-anchor="middle">write owner</text>
+  <!-- board: x=180..540 y=320..432 -->
+  <rect x="180" y="320" width="360" height="112" rx="8" fill="#ecfdf5" stroke="#16a34a" stroke-width="2"/>
+  <text x="360" y="342" fill="#065f46" font-size="12" font-weight="600" text-anchor="middle">s12 TaskBoard (teaching)</text>
+  <text x="360" y="362" fill="#059669" font-size="11" text-anchor="middle">t1 pending · t2 pending · t3 blocked by t1+t2</text>
+  <text x="360" y="382" fill="#047857" font-size="11" text-anchor="middle">scan = clue · claim = promise</text>
+  <text x="360" y="404" fill="#047857" font-size="11" text-anchor="middle">loser re-scans · does not retry the same row</text>
+  <text x="360" y="420" fill="#047857" font-size="10" text-anchor="middle">Codex has no such board</text>
 
-  <!-- run + report flow -->
-  <rect x="140" y="330" width="440" height="60" rx="8" fill="#f0fdf4" stroke="#16a34a" stroke-width="2"/>
-  <text x="360" y="354" fill="#065f46" font-size="13" font-weight="600" text-anchor="middle">the winner runs the task in its OWN context,</text>
-  <text x="360" y="372" fill="#059669" font-size="11" text-anchor="middle">then posts the result back to the board — and polls again</text>
-  <path d="M 388 210 C 388 300 360 300 360 328" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-green)"/>
-  <path d="M 520 320 C 430 330 420 350 402 356" fill="none" stroke="#16a34a" stroke-width="2" stroke-dasharray="6 4" marker-end="url(#arrow-green)"/>
+  <!-- seed: root RIGHT → outer rail → board RIGHT -->
+  <path d="M 560 86 L 700 86 L 700 376 L 540 376" fill="none" stroke="#2563eb" stroke-width="2" marker-end="url(#arrow-blue)"/>
+  <text x="688" y="200" fill="#2563eb" font-size="11" font-weight="600" text-anchor="end">seed</text>
 
-  <!-- footer note -->
-  <rect x="60" y="470" width="600" height="52" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
-  <text x="360" y="492" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">No lead assigns work — the claim's critical section has exactly one winner; the loser re-scans.</text>
-  <text x="360" y="510" fill="#64748b" font-size="11" text-anchor="middle">s17 · Autonomous Agents</text>
+  <!-- scan: worker RIGHT/LEFT into claim at y=224 -->
+  <path d="M 240 224 L 268 224" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="254" y="176" fill="#7c3aed" font-size="11" font-weight="600" text-anchor="middle">scan</text>
+  <path d="M 480 224 L 452 224" fill="none" stroke="#7c3aed" stroke-width="2" marker-end="url(#arrow-purple)"/>
+  <text x="466" y="176" fill="#7c3aed" font-size="11" font-weight="600" text-anchor="middle">scan</text>
+
+  <!-- claim writes down into the board -->
+  <path d="M 360 260 L 360 320" fill="none" stroke="#16a34a" stroke-width="2" marker-end="url(#arrow-green)"/>
+  <text x="372" y="296" fill="#16a34a" font-size="11" font-weight="600">write owner</text>
+  <text x="140" y="296" fill="#d97706" font-size="11" font-weight="600" text-anchor="middle">race LOST → re-scan</text>
+
+  <rect x="60" y="448" width="600" height="72" rx="8" fill="#f8fafc" stroke="#e2e8f0"/>
+  <text x="360" y="474" fill="#334155" font-size="12" font-weight="600" text-anchor="middle">Codex still parent-assigns (spawn_agent / followup). This chapter races two loops on s12's board.</text>
+  <text x="360" y="496" fill="#64748b" font-size="11" text-anchor="middle">s17 · Autonomous Agents  ·  teaching pull · Cloud isolation is s18</text>
 </svg>
