@@ -137,7 +137,7 @@ s15–s16 里，root 必须亲手给每个队友派活：「alice 做这个，bo
 
 能不能让队友**自己看板、自己认领**？root 只负责创建任务，队友自己发现、自己抢、自己干、自己交。
 
-s17 Autonomous Agents → 工人自己扫 s12 那块教学板、原子认领。Codex 默认仍是父派活（`spawn_agent` / `followup`）；并发抢板是教程多写的一层。Cloud 隔离留给 s18，不是认领 API。
+s17 Autonomous Agents → 工人自己扫 s12 那块教学板、原子认领。Codex 默认仍是父派活（`spawn_agent` / `followup`）；并发抢板是教程多写的一层。目录隔离留给 s18；Cloud 容器是 s23，都不是认领 API。
 
 <details>
 <summary>深入 Codex 源码</summary>

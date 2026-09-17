@@ -140,7 +140,7 @@ Watch for: when both `scan()` t1, is there exactly one `claimed`? Does the loser
 
 The workers self-organize now, but they still share **one working directory**. Alice rewrites `app.txt` for her task; bob rewrites `app.txt` for his — they clobber each other.
 
-s18 Worktree Isolation → give every task its own git worktree. That is closer to the Codex Cloud model: an isolated execution environment, not a claim API.
+s18 Worktree Isolation → give every session its own git worktree (a local parallel checkout). Cloud container isolation is s23 — not a claim API, and not the worktree itself.
 
 <details>
 <summary>Into the Codex source</summary>
@@ -174,7 +174,7 @@ The `Mutex` is an in-process promise chain. A real cross-process board would use
 <details>
 <summary>3. Codex Cloud is not a claim API</summary>
 
-Codex Cloud runs a task in an **isolated environment** (the s18 worktree line). The scheduler hands jobs to execution slots — cloud-side push, not agents pulling a board. CSV fan-out is still parent spawn per row; workers must `report_agent_job_result`. Still not pull.
+Codex Cloud runs a task in an **isolated environment** (a container / micro-VM; see s23). The scheduler hands jobs to execution slots — cloud-side push, not agents pulling a board. CSV fan-out is still parent spawn per row; workers must `report_agent_job_result`. Still not pull. s18's git worktree is directory isolation for local parallel sessions — do not collapse it into Cloud.
 
 The demo uses `sleep(CLAIM_LATENCY_MS)` so `race LOST` is reproducible. Real network latency supplies that gap for free; the defense (re-check inside the critical section) is analogous, but it does not come from a Codex claim tool.
 
@@ -191,4 +191,4 @@ A worker dying mid-task, a row stuck `in_progress`, at-most-N claims, persisting
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->

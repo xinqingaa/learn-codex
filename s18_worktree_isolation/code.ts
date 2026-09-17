@@ -1,32 +1,27 @@
 #!/usr/bin/env tsx
 /**
- * s18_worktree_isolation/code.ts — Git Worktree Isolation (Codex-style, in TypeScript)
+ * s18_worktree_isolation/code.ts — Git worktree isolation (local parallel sessions)
  *
- * s17 let idle workers self-claim tasks — but they all share ONE working
- * directory. Alice edits app.txt for her task; Bob edits app.txt for his; each
- * overwrites the other and nobody can say which change belongs to which task.
- * This chapter gives every task its OWN directory: a git worktree on its own
- * branch (this is exactly the Codex Cloud model — one worktree per task).
+ * s17's workers self-claimed — but they still share ONE cwd. Alice writes
+ * app.txt; bob writes app.txt; they clobber each other.
  *
- *        one repo (.git)                a disjoint directory per task
- *      ┌──────────────────┐
- *      │ main  app.txt     │   git worktree add ../wt-t1 -b wt/t1
- *      │       ="base"     │   git worktree add ../wt-t2 -b wt/t2
- *      └────────┬─────────┘
- *       ┌───────┴────────┬──────────────────────────────┐
- *       │ wt-t1/ (wt/t1) │  alice rewrites app.txt here │
- *       │ wt-t2/ (wt/t2) │  bob rewrites app.txt here   │  SAME path,
- *       └────────────────┴──────────────────────────────┘  DIFFERENT content,
- *                                                           both on disk at once
+ * Codex App/CLI give each parallel session its own git worktree (another
+ * checkout, same .git). Cloud isolation (container / micro-VM + PR) is s23.
+ * The model has no create_worktree tool: the harness picks the cwd first.
  *
- * Parallel edits never collide because each agent works in a disjoint directory.
- * Afterwards each branch is merged back — git surfaces any real conflict (the
- * Codex Cloud "open a PR" moment) — and the worktree is removed or kept.
+ * Teaching extra: named branches wt/t1, wt/t2 plus merge --no-ff so the
+ * deferred conflict is visible. App default is detached HEAD; Codex does
+ * not auto-merge into main.
+ *
+ *      repo/main  app.txt="base"          (.git is shared)
+ *         │  git worktree add ../wt-t1 -b wt/t1
+ *         │  git worktree add ../wt-t2 -b wt/t2
+ *         ├─ wt-t1/  alice rewrites app.txt
+ *         └─ wt-t2/  bob   rewrites app.txt     SAME path, DIFFERENT content
  *
  * Run it (self-running narrated demo, builds a temp git repo):
- *     npm install
- *     npx tsx s18_worktree_isolation/code.ts                       # offline demo
- *     OPENAI_API_KEY=sk-... npx tsx s18_worktree_isolation/code.ts # real model
+ *     npx tsx s18_worktree_isolation/code.ts
+ *     OPENAI_API_KEY=sk-... npx tsx s18_worktree_isolation/code.ts
  */
 
 import OpenAI from "openai";
@@ -46,40 +41,25 @@ function say(actor: string, msg: string): void {
   console.log(`\x1b[2m${t}s\x1b[0m \x1b[36m${actor.padEnd(6)}\x1b[0m ${msg}`);
 }
 
-// ── Task board (from s17, trimmed): each task is bound to its own worktree ──
-type Task = { id: string; title: string; worktree: string; status: "pending" | "in_progress" | "done"; owner?: string };
-class TaskBoard {
-  private tasks = new Map<string, Task>();
-  add(t: Task): void { this.tasks.set(t.id, t); }
-  all(): Task[] { return [...this.tasks.values()]; }
-  // Synchronous scan+claim: safe on one event loop (no await between the two).
-  claimNext(owner: string): Task | undefined {
-    const t = this.all().find((x) => x.status === "pending");
-    if (t) { t.status = "in_progress"; t.owner = owner; }
-    return t;
-  }
-  complete(id: string): void { const t = this.tasks.get(id); if (t) t.status = "done"; }
-}
+type Job = { id: string; title: string; dir: string; branch: string };
 
 // ── NEW in s18: the git worktree lifecycle ───────────────────────────────────
-// One isolated directory + one branch per task. Parallel agents never share a
-// cwd, so their edits to the same file cannot clobber each other mid-work.
-function git(repo: string, args: string): string {
-  return String(execSync(`git ${args}`, { cwd: repo, stdio: ["ignore", "pipe", "pipe"] })).trim();
+// One isolated directory + one branch per session. Parallel agents never share
+// a cwd, so their edits to the same path cannot clobber each other mid-work.
+function git(cwd: string, args: string): string {
+  return String(execSync(`git ${args}`, { cwd, stdio: ["ignore", "pipe", "pipe"] })).trim();
 }
-function createWorktree(repo: string, root: string, task: Task): { dir: string; branch: string } {
-  const dir = path.join(root, task.worktree);
-  const branch = `wt/${task.id}`;
-  git(repo, `worktree add "${dir}" -b ${branch}`); // new dir + new branch from HEAD
-  return { dir, branch };
+function createWorktree(repo: string, dir: string, branch: string): void {
+  git(repo, `worktree add "${dir}" -b "${branch}"`); // new dir + named branch from HEAD
 }
 function mergeBack(repo: string, branch: string): boolean {
-  try { git(repo, `merge --no-ff ${branch} -m "merge ${branch}"`); return true; }
+  // Teaching extra: Codex does not auto-merge. We merge so the conflict is visible.
+  try { git(repo, `merge --no-ff "${branch}" -m "merge ${branch}"`); return true; }
   catch { return false; } // non-zero exit = git stopped on a real conflict
 }
 function removeWorktree(repo: string, dir: string, branch: string): void {
   git(repo, `worktree remove --force "${dir}"`);
-  git(repo, `branch -D ${branch}`);
+  git(repo, `branch -D "${branch}"`);
 }
 
 // ── The one tool a worker uses inside its worktree ──────────────────────────
@@ -115,7 +95,7 @@ type OutputItem = {
   arguments?: string;
   content?: { type: string; text?: string }[];
 };
-async function callModel(input: unknown[], worker: string, task: Task): Promise<OutputItem[]> {
+async function callModel(input: unknown[], worker: string, job: Job): Promise<OutputItem[]> {
   if (!OFFLINE && openai) {
     const resp = await openai.responses.create({
       model: MODEL,
@@ -128,15 +108,14 @@ async function callModel(input: unknown[], worker: string, task: Task): Promise<
     });
     return resp.output as unknown as OutputItem[];
   }
-  return offlineModel(input, worker, task);
+  return offlineModel(input, worker, job);
 }
-// Scripted stand-in: rewrite app.txt with this worker's line, then wrap up.
-function offlineModel(input: unknown[], worker: string, task: Task): OutputItem[] {
+function offlineModel(input: unknown[], worker: string, job: Job): OutputItem[] {
   const ran = input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
   if (ran === 0) {
     return [{
-      type: "function_call", id: `c_${task.id}`, call_id: `c_${task.id}`, name: "write_file",
-      arguments: JSON.stringify({ filename: "app.txt", content: `base\n${worker}: ${task.title}\n` }),
+      type: "function_call", id: `c_${job.id}`, call_id: `c_${job.id}`, name: "write_file",
+      arguments: JSON.stringify({ filename: "app.txt", content: `base\n${worker}: ${job.title}\n` }),
     }];
   }
   return [{
@@ -145,41 +124,35 @@ function offlineModel(input: unknown[], worker: string, task: Task): OutputItem[
   }];
 }
 
-// ── A worker: claim a task, run it INSIDE its own worktree, commit ──────────
-async function worker(name: string, board: TaskBoard, repo: string, root: string): Promise<void> {
-  const task = board.claimNext(name);
-  if (!task) { say(name, "nothing to claim — exiting"); return; }
-  say(name, `\x1b[35mclaimed\x1b[0m ${task.id}: ${task.title}`);
-  const wt = createWorktree(repo, root, task);
-  say(name, `worktree → ${task.worktree}/  (branch wt/${task.id})`);
-
-  const input: unknown[] = [{ role: "user", content: `Task "${task.title}": update app.txt to record that you did it.` }];
-  await sleep(120); // let the two workers interleave in the trace
+// ── A worker: already given a worktree (parent-assigned, like two Codex sessions)
+async function worker(name: string, job: Job): Promise<void> {
+  say(name, `session → ${path.basename(job.dir)}/  (branch ${job.branch})`);
+  const input: unknown[] = [{ role: "user", content: `Task "${job.title}": update app.txt to record that you did it.` }];
+  await sleep(120);
   for (let step = 0; step < 4; step++) {
-    const output = await callModel(input, name, task);
+    const output = await callModel(input, name, job);
     input.push(...output);
     const calls = output.filter((i) => i.type === "function_call");
     if (calls.length === 0) break;
     for (const call of calls) {
       const { filename, content } = JSON.parse(call.arguments ?? "{}") as { filename: string; content: string };
-      say(name, `\x1b[33mwrite_file\x1b[0m ${task.worktree}/${filename}`);
-      const out = writeArtifact(wt.dir, filename, content);
+      say(name, `\x1b[33mwrite_file\x1b[0m ${path.basename(job.dir)}/${filename}`);
+      const out = writeArtifact(job.dir, filename, content);
       input.push({ type: "function_call_output", call_id: call.call_id, output: out });
     }
   }
-  git(wt.dir, "add -A");
-  git(wt.dir, `commit -m "${task.id}: ${task.title}"`);
-  say(name, `\x1b[32mcommitted\x1b[0m on wt/${task.id}`);
-  board.complete(task.id);
+  git(job.dir, "add -A");
+  git(job.dir, `commit -m "${job.id}: ${job.title}"`);
+  say(name, `\x1b[32mcommitted\x1b[0m on ${job.branch}`);
 }
 
 // ── Self-running narrated demo ────────────────────────────────────────────────
 async function main(): Promise<void> {
-  console.log("s18: Git Worktree Isolation (Codex-style)");
+  console.log("s18: Git Worktree Isolation (local parallel sessions)");
   console.log(
     OFFLINE
-      ? "Offline demo model (no OPENAI_API_KEY). Two workers edit the same file in disjoint worktrees.\n"
-      : `Model: ${MODEL}. Two workers edit the same file in disjoint worktrees.\n`
+      ? "Offline demo model (no OPENAI_API_KEY). Two sessions edit the same file in disjoint worktrees.\n"
+      : `Model: ${MODEL}. Two sessions edit the same file in disjoint worktrees.\n`
   );
 
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "s18-"));
@@ -194,34 +167,33 @@ async function main(): Promise<void> {
   git(repo, 'commit -m "initial"');
   say("repo", `temp git repo → ${repo}`);
 
-  const board = new TaskBoard();
-  board.add({ id: "t1", title: "design the schema", worktree: "wt-t1", status: "pending" });
-  board.add({ id: "t2", title: "write the routes", worktree: "wt-t2", status: "pending" });
-  say("board", "seeded 2 tasks — each is bound to its own worktree");
+  // Root opens two sessions — like the App starting two Worktree chats.
+  // Not s17 claiming. Not a Cloud container.
+  const jobs: Job[] = [
+    { id: "t1", title: "design the schema", dir: path.join(root, "wt-t1"), branch: "wt/t1" },
+    { id: "t2", title: "write the routes", dir: path.join(root, "wt-t2"), branch: "wt/t2" },
+  ];
+  for (const job of jobs) createWorktree(repo, job.dir, job.branch);
+  say("root", "opened wt-t1 (wt/t1) and wt-t2 (wt/t2) — not claiming, not Cloud");
 
-  await Promise.all([worker("alice", board, repo, root), worker("bob", board, repo, root)]);
+  await Promise.all([worker("alice", jobs[0]!), worker("bob", jobs[1]!)]);
 
-  // The isolation proof: the SAME path was edited in two places at once.
-  say("repo", "both workers edited the SAME path app.txt — on disk side by side:");
-  for (const t of board.all()) {
-    const text = fs.readFileSync(path.join(root, t.worktree, "app.txt"), "utf8");
-    say("repo", `  ${t.worktree}/app.txt = ${JSON.stringify(text)}`);
+  say("repo", "both sessions edited the SAME path app.txt — on disk side by side:");
+  for (const job of jobs) {
+    const text = fs.readFileSync(path.join(job.dir, "app.txt"), "utf8");
+    say("repo", `  ${path.basename(job.dir)}/app.txt = ${JSON.stringify(text)}`);
   }
   say("repo", "\x1b[2m" + git(repo, "worktree list").split("\n").join("\n  ") + "\x1b[0m");
 
-  // Merge each branch back. Disjoint edits would merge cleanly; here both
-  // touched app.txt, so the second merge is a genuine conflict — the honest
-  // signal Codex Cloud turns into a PR for a human.
-  for (const t of board.all()) {
-    const branch = `wt/${t.id}`;
-    if (mergeBack(repo, branch)) {
-      say("merge", `\x1b[32m${branch} merged\x1b[0m into main`);
-      removeWorktree(repo, path.join(root, t.worktree), branch);
-      say("merge", `worktree ${t.worktree}/ removed, branch deleted — the work is on main`);
+  for (const job of jobs) {
+    if (mergeBack(repo, job.branch)) {
+      say("merge", `\x1b[32m${job.branch} merged\x1b[0m into main`);
+      removeWorktree(repo, job.dir, job.branch);
+      say("merge", `worktree ${path.basename(job.dir)}/ removed, branch deleted — the work is on main`);
     } else {
-      say("merge", `\x1b[33m${branch} CONFLICTS\x1b[0m on app.txt — git refuses to auto-merge`);
+      say("merge", `\x1b[33m${job.branch} CONFLICTS\x1b[0m on app.txt — git refuses to auto-merge`);
       git(repo, "merge --abort");
-      say("merge", `merge --abort; keep ${t.worktree}/ + branch ${branch} for human review`);
+      say("merge", `merge --abort; keep ${path.basename(job.dir)}/ + branch ${job.branch} for human review`);
     }
   }
 

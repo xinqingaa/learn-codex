@@ -12,7 +12,7 @@
  *      bob   ──scan (unlocked)──►     │
  *      both ──claim (locked re-check)─┘  one WON, one LOST → re-scan
  *
- * Codex does not have this board. Cloud isolation is s18, not a claim API.
+ * Codex does not have this board. Directory isolation is s18; Cloud containers are s23.
  *
  * Run it:
  *     npx tsx s17_autonomous_agents/code.ts

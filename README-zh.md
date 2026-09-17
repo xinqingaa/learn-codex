@@ -137,7 +137,7 @@ flowchart TD
 | [s15](s15_agent_teams/) | Agent Teams | 队友信箱 | 🟥 |
 | [s16](s16_team_protocols/) | Team Protocols | 协作消息契约 | 🟥 |
 | [s17](s17_autonomous_agents/) | Autonomous Agents | 自主认领任务 | 🟥 |
-| [s18](s18_worktree_isolation/) | Worktree Isolation | git worktree 隔离（Codex Cloud 模式） | 🟥 |
+| [s18](s18_worktree_isolation/) | Worktree Isolation | git worktree 隔离（本机 App/CLI；Cloud 是 s23） | 🟥 |
 | [s19](s19_mcp_servers/) | MCP Servers | MCP 工具桥接 | 🟥 |
 | [s20](s20_full_harness/) | The Full Harness | 所有机制集成进一个循环 | 🟥 |
 

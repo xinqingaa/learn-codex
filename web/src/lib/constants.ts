@@ -181,9 +181,9 @@ export const VERSION_META: Record<string, {
   },
   s18: {
     title: "Worktree Isolation",
-    subtitle: "Separate Directories, No Conflicts",
+    subtitle: "One Session, One Checkout",
     coreAddition: "Git worktree lifecycle",
-    keyInsight: "Parallel agents need isolated filesystems as much as isolated conversations — the model Codex Cloud runs on.",
+    keyInsight: "Codex App/CLI isolate parallel sessions with git worktrees; Cloud containers are s23. Teaching merge shows the deferred conflict.",
     layer: "collaboration",
     prevVersion: "s17",
   },

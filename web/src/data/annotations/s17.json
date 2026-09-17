@@ -24,11 +24,11 @@
     {
       "id": "blockedby-still-s12",
       "title": "Dependencies Stay on the Board",
-      "description": "t3 stays unclaimable until t1 and t2 are done. That is s12's blockedBy rule under concurrency, not a new protocol kind and not Codex Cloud isolation (s18).",
+      "description": "t3 stays unclaimable until t1 and t2 are done. That is s12's blockedBy rule under concurrency, not a new protocol kind and not git-worktree isolation (s18).",
       "alternatives": "Ignore deps and let anyone grab t3 early. The board would no longer be a shared source of truth.",
       "zh": {
         "title": "依赖仍在板上",
-        "description": "t3 要等 t1 和 t2 都 done 才能认领。这是 s12 的 blockedBy 在并发下继续生效，不是新的信封 kind，也不是 Codex Cloud 的隔离（s18）。"
+        "description": "t3 要等 t1 和 t2 都 done 才能认领。这是 s12 的 blockedBy 在并发下继续生效，不是新的信封 kind，也不是 git worktree 隔离（s18）。"
       }
     }
   ]

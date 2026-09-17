@@ -37,7 +37,7 @@
     {
       "type": "system_event",
       "content": "one worker claimed t3 · board is done — shutting down",
-      "annotation": "IDLE poll until allSettled, then SHUTDOWN. Claiming is s17; isolated directories are s18, not a Cloud claim API."
+      "annotation": "IDLE poll until allSettled, then SHUTDOWN. Claiming is s17; isolated directories are s18. Cloud containers are s23."
     }
   ]
 }

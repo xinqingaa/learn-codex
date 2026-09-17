@@ -1,45 +1,44 @@
 {
   "version": "s18",
   "title": "Worktree Isolation",
-  "description": "A task can be bound to an isolated git worktree so concurrent agents avoid stepping on each other.",
+  "description": "Root opens two git worktrees, then starts alice and bob. Same path, two contents. Codex App/CLI isolate local sessions this way; Cloud containers are s23. The teaching merge shows the deferred conflict.",
   "steps": [
     {
-      "type": "user_message",
-      "content": "Let one teammate fix the docs while another changes the parser.",
-      "annotation": "Concurrent edits need isolated working directories."
-    },
-    {
-      "type": "tool_call",
-      "toolName": "create_worktree",
-      "content": "{\"task_id\":\"task_docs\",\"name\":\"docs-fix\"}",
-      "annotation": "The tool validates a safe worktree name before touching git."
+      "type": "system_event",
+      "content": "root opened wt-t1 (wt/t1) and wt-t2 (wt/t2) — not claiming, not Cloud",
+      "annotation": "Like two App Worktree chats. The harness picks the cwd; the model has no create_worktree tool."
     },
     {
       "type": "system_event",
-      "content": "git worktree add .worktrees/docs-fix -b agent/docs-fix",
-      "annotation": "A separate branch and checkout are created for that task."
-    },
-    {
-      "type": "tool_result",
-      "toolName": "create_worktree",
-      "content": "task_docs bound to .worktrees/docs-fix",
-      "annotation": "The task record stores the assigned worktree path."
-    },
-    {
-      "type": "system_event",
-      "content": ".worktrees/events.jsonl <- {event:\"created\", task:\"task_docs\", worktree:\"docs-fix\"}",
-      "annotation": "Lifecycle events are emitted as a side channel."
+      "content": "alice session → wt-t1/  (branch wt/t1) · bob session → wt-t2/  (branch wt/t2)",
+      "annotation": "Named branches are a teaching extra so merge has a ref. App default is detached HEAD."
     },
     {
       "type": "tool_call",
-      "toolName": "keep_worktree",
-      "content": "{\"task_id\":\"task_docs\",\"reason\":\"needs human review\"}",
-      "annotation": "Closeout can preserve a worktree instead of deleting it immediately."
+      "toolName": "write_file",
+      "content": "{\"filename\":\"app.txt\",\"content\":\"base\\nalice: design the schema\\n\"}",
+      "annotation": "write_file only writes inside wt-t1/. path.basename keeps it from escaping the worktree."
     },
     {
-      "type": "assistant_text",
-      "content": "The docs task now has an isolated worktree and can be reviewed independently from parser changes.",
-      "annotation": "The user sees the isolation boundary, not just a raw git command."
+      "type": "tool_call",
+      "toolName": "write_file",
+      "content": "{\"filename\":\"app.txt\",\"content\":\"base\\nbob: write the routes\\n\"}",
+      "annotation": "bob writes the SAME path in wt-t2/. The two files sit on disk at once; nobody clobbers anybody."
+    },
+    {
+      "type": "system_event",
+      "content": "wt-t1/app.txt = \"base\\nalice: design the schema\\n\" · wt-t2/app.txt = \"base\\nbob: write the routes\\n\"",
+      "annotation": "The isolation proof: same path, different content, shared .git."
+    },
+    {
+      "type": "system_event",
+      "content": "wt/t1 merged into main · worktree wt-t1/ removed, branch deleted",
+      "annotation": "Teaching merge, not a Codex product exit. App would keep the checkout, Create branch, Handoff, or open a PR."
+    },
+    {
+      "type": "system_event",
+      "content": "wt/t2 CONFLICTS on app.txt — merge --abort; keep wt-t2/ + branch wt/t2 for human review",
+      "annotation": "The real conflict was deferred until merge. Cloud containers and PR apply are s23, not this git worktree."
     }
   ]
 }

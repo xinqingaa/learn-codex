@@ -137,7 +137,7 @@ flowchart TD
 | [s15](s15_agent_teams/) | Agent Teams | teammate mailboxes | 🟥 |
 | [s16](s16_team_protocols/) | Team Protocols | coordination message contracts | 🟥 |
 | [s17](s17_autonomous_agents/) | Autonomous Agents | self-claiming workers | 🟥 |
-| [s18](s18_worktree_isolation/) | Worktree Isolation | git worktree isolation (the Codex Cloud model) | 🟥 |
+| [s18](s18_worktree_isolation/) | Worktree Isolation | git worktree isolation (local App/CLI sessions; Cloud is s23) | 🟥 |
 | [s19](s19_mcp_servers/) | MCP Servers | an MCP tool bridge | 🟥 |
 | [s20](s20_full_harness/) | The Full Harness | every mechanism integrated into one loop | 🟥 |
 

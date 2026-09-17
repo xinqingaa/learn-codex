@@ -140,7 +140,7 @@ OPENAI_API_KEY=sk-... npx tsx s17_autonomous_agents/code.ts   # 真实模型
 
 工人能自组织了，但还挤在**同一个工作目录**里。alice 为她的任务改 `app.txt`，bob 也为他的任务改 `app.txt`——互相覆盖。
 
-s18 Worktree Isolation → 给每份任务一个独立的 git worktree。那才更接近 Codex Cloud 的模型：隔离的执行环境，不是工人认领 API。
+s18 Worktree Isolation → 给每个 session 一个独立的 git worktree（本机并行 checkout）。Cloud 容器隔离是 s23，不是认领 API，也不是 worktree 本身。
 
 <details>
 <summary>深入 Codex 源码</summary>
@@ -174,7 +174,7 @@ s12 已经写明：Codex 的计划工具是 `update_plan`，没有 `create_task`
 <details>
 <summary>三、Codex Cloud 不是认领 API</summary>
 
-Codex Cloud 把一次任务放到**隔离环境**里跑（下一章 s18 的 worktree 才是那条线）。调度层把作业派给执行槽，是云侧的推，不是 Agent 自己看板抢活。CSV fan-out 同样是父按行 spawn，工人必须 `report_agent_job_result`，仍不是 pull。
+Codex Cloud 把一次任务放到**隔离环境**里跑（容器 / 微虚拟机，见 s23）。调度层把作业派给执行槽，是云侧的推，不是 Agent 自己看板抢活。CSV fan-out 同样是父按行 spawn，工人必须 `report_agent_job_result`，仍不是 pull。s18 的 git worktree 是本机并行 session 的目录隔离，不要和 Cloud 混成一件事。
 
 教学 demo 用 `sleep(CLAIM_LATENCY_MS)` 人为撑开竞争窗口，好让 `race LOST` 可复现。真实网络延迟天生有缝；防守方式（临界区内复查）可以类比，来源不是 Codex 的认领工具。
 
@@ -191,4 +191,4 @@ Codex Cloud 把一次任务放到**隔离环境**里跑（下一章 s18 的 work
 
 </details>
 
-<!-- translation-sync: zh@v2, en@v2 -->
+<!-- translation-sync: zh@v3, en@v3 -->

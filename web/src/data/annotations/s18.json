@@ -2,33 +2,33 @@
   "version": "s18",
   "decisions": [
     {
-      "id": "worktree-name-validation",
-      "title": "Worktree Names Are Validated Before Git Runs",
-      "description": "The tool validates names before creating branches or directories. That keeps a teaching implementation from normalizing unsafe user input into shell or filesystem operations.",
-      "alternatives": "Passing names directly to git is shorter, but it turns a collaboration feature into an injection hazard.",
+      "id": "parent-opens-checkouts",
+      "title": "Root Opens the Worktrees; Workers Do Not Claim",
+      "description": "main creates wt-t1 and wt-t2, then Promise.all two workers. That matches two App Worktree chats / two CLI -C sessions. This chapter does not restack s17's claim race, and the model has no create_worktree tool.",
+      "alternatives": "Let workers claimNext then create a worktree. That re-teaches s17 and hides that Codex binds cwd at session start.",
       "zh": {
-        "title": "运行 Git 前先校验 Worktree 名称",
-        "description": "工具在创建分支或目录前先校验名称。这样教学实现不会把不安全的用户输入直接传入 shell 或文件系统操作。"
+        "title": "root 先开目录，工人不认领",
+        "description": "main 建好 wt-t1 和 wt-t2，再 Promise.all 两个工人。这对应两条 App Worktree 对话 / 两次 CLI -C。本章不再叠 s17 的抢活，模型也没有 create_worktree 工具。"
       }
     },
     {
-      "id": "task-bound-worktree",
-      "title": "The Task Record Owns the Worktree Binding",
-      "description": "A task stores its assigned worktree so future commands know where to run. The binding is explicit data, not a hidden convention based on naming or current working directory.",
-      "alternatives": "Deriving the worktree path from branch names is convenient, but brittle when tasks are renamed or moved.",
+      "id": "disjoint-cwd",
+      "title": "Same Path, Two Directories",
+      "description": "A worktree is another checkout of the same repo, not another repo. alice and bob both write app.txt; the files sit on disk at once because they are not the same directory. Sandbox (s04) still scopes writes to cwd; this chapter does not restack it.",
+      "alternatives": "Copy the whole repo, or run in Cloud containers (s23). Heavier than the local parallel-session problem this chapter is teaching.",
       "zh": {
-        "title": "任务记录持有 Worktree 绑定关系",
-        "description": "任务会记录自己分配到的 worktree，因此后续命令知道应该在哪里运行。这个绑定是显式数据，而不是依赖命名或当前目录的隐藏约定。"
+        "title": "同路径，两份目录",
+        "description": "worktree 是同一仓库的另一份 checkout，不是另一份仓库。alice 和 bob 都写 app.txt；两份文件同时在磁盘上，因为根本不在同一个目录。sandbox（s04）仍然按 cwd 锁写；本章不叠一层。"
       }
     },
     {
-      "id": "lifecycle-event-stream",
-      "title": "Lifecycle Events Stay Separate from Tool Results",
-      "description": "Creation, status, keep, and removal events are emitted to a side-channel log. That makes worktree state observable without overloading the conversational transcript.",
-      "alternatives": "Only returning tool results is simpler, but later debugging needs a durable audit trail of worktree lifecycle changes.",
+      "id": "teaching-merge",
+      "title": "The Merge Is Teaching; Codex Does Not Auto-Merge",
+      "description": "Named branches plus merge --no-ff / merge --abort show the deferred conflict. App default is detached HEAD; the product exit is keep the directory, Create branch, Handoff, or open a PR. Cloud apply is s23.",
+      "alternatives": "Stop after the two write_file calls. Isolation would still be true, but the 'conflict was only postponed' beat would be missing.",
       "zh": {
-        "title": "生命周期事件与工具结果分离",
-        "description": "创建、状态、保留和移除事件会写入旁路日志。这样 worktree 状态可观察，同时不会把对话 transcript 塞满运行时事件。"
+        "title": "merge 是教学用的；Codex 不会自动并进 main",
+        "description": "命名分支加上 merge --no-ff / merge --abort，是为了让推迟的冲突看得见。App 默认 detached HEAD；产品出口是留目录、Create branch、Handoff、开 PR。Cloud apply 是 s23。"
       }
     }
   ]
