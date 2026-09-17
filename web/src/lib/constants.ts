@@ -151,7 +151,7 @@ export const VERSION_META: Record<string, {
     title: "Automations",
     subtitle: "Work on a Schedule",
     coreAddition: "Scheduled / triggered runs",
-    keyInsight: "Recurring work should be created by the harness, not remembered by the model.",
+    keyInsight: "The alarm clock sits outside the loop: cron starts a fresh turn into the inbox; heartbeat resumes the same thread.",
     layer: "concurrency",
     prevVersion: "s13",
   },

@@ -147,7 +147,7 @@
     "s11": "Error Recovery Paths",
     "s12": "Task Board Dependencies",
     "s13": "Yield Window & Harvest",
-    "s14": "Automation Scheduler",
+    "s14": "cron vs heartbeat",
     "s15": "Team Mailbox Workbench",
     "s16": "Team Protocol Cards",
     "s17": "Autonomous Agent Cycle",

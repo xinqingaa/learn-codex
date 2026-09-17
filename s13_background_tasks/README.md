@@ -126,7 +126,7 @@ OPENAI_API_KEY=sk-... npx tsx s13_background_tasks/code.ts   # 真实模型
 
 后台任务解决了「慢操作不阻塞主循环」。但如果想**定时**做某件事呢？比如「每天早 9 点跑一遍测试」「每 5 分钟检查一次服务状态」——不是由你或模型当下发起，而是到点自动触发。
 
-s14 Automations → 给 Agent 装一个**闹钟**：一个迷你调度器，按 cron 节奏把任务排进队列，到点就唤起 Agent 去跑。
+s14 Automations → 闹钟在 loop 外面：到期把 prompt 塞进去。`cron` 新开一轮进 inbox，`heartbeat` 回到同一条 thread。
 
 <details>
 <summary>深入 Codex 源码</summary>

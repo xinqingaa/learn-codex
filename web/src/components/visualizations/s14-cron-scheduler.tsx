@@ -8,33 +8,33 @@ import { cn } from "@/lib/utils";
 
 const STEPS = [
   {
-    title: "Make It Repeatable",
-    desc: "The user turns one normal prompt into a reusable schedule card.",
+    title: "Alarm Clock Outside",
+    desc: "The loop does not watch a clock. A scheduler outside owns due time.",
     active: "composer",
   },
   {
-    title: "Store the Card",
-    desc: "The schedule lives in durable data, so it is not tied to the current chat turn.",
+    title: "Two Kinds",
+    desc: "cron is a standalone run (new turn). heartbeat returns to the same thread.",
     active: "ledger",
   },
   {
     title: "Time Keeps Moving",
-    desc: "A tiny scheduler watches the clock while the agent can do other work.",
+    desc: "Each tick only asks: is anything due? The agent can be busy elsewhere.",
     active: "clock",
   },
   {
-    title: "Copy Goes to the Queue",
-    desc: "When the cron expression matches, the scheduler puts a due copy in the queue.",
+    title: "Enqueue, Don't Run",
+    desc: "A match goes on the fired queue. The scheduler never calls the model.",
     active: "queue",
   },
   {
-    title: "Run as a Normal Turn",
-    desc: "The queue processor hands the due prompt to the same agent loop beginners already know.",
+    title: "Branch on Kind",
+    desc: "cron starts a fresh turn and writes the inbox. heartbeat appends to the live thread.",
     active: "inbox",
   },
   {
-    title: "Keep the Original",
-    desc: "The result is recorded, and the schedule card remains ready for the next matching time.",
+    title: "Same Loop",
+    desc: "Both paths are s01. CLI only has codex exec; the App owns this scheduler.",
     active: "done",
   },
 ] as const;
@@ -118,7 +118,7 @@ export default function CronSchedulerVisualization({ title }: { title?: string }
   return (
     <section className="min-h-[500px] space-y-4">
       <h2 className="text-xl font-semibold text-zinc-900 dark:text-zinc-100">
-        {title || "Cron Scheduler"}
+        {title || "cron vs heartbeat"}
       </h2>
 
       <div className="rounded-lg border border-zinc-200 bg-white p-4 dark:border-zinc-700 dark:bg-zinc-900">
@@ -166,14 +166,21 @@ export default function CronSchedulerVisualization({ title }: { title?: string }
               <AnimatePresence>
                 {step >= 1 && (
                   <ScheduleCard
-                    title="0 9 * * 1-5"
-                    subtitle="review open PR every weekday"
+                    title="kind=cron 0 9 * * 1-5"
+                    subtitle="fresh turn → inbox / Triage"
                     tone={step === 5 ? "emerald" : "blue"}
+                  />
+                )}
+                {step >= 1 && (
+                  <ScheduleCard
+                    title="kind=heartbeat */30"
+                    subtitle="same thread, keep context"
+                    tone={step === 5 ? "emerald" : "amber"}
                   />
                 )}
               </AnimatePresence>
               <div className="rounded-md border border-dashed border-zinc-300 px-3 py-4 text-center text-xs text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                {step >= 1 ? "stored schedules stay here" : "no saved schedule yet"}
+                {step >= 1 ? "cron + heartbeat stay registered" : "no saved schedule yet"}
               </div>
             </div>
           </Panel>
@@ -217,14 +224,14 @@ export default function CronSchedulerVisualization({ title }: { title?: string }
                 {step >= 4 && (
                   <ScheduleCard
                     title="agent turn"
-                    subtitle={step >= 5 ? "result appended" : "runs like a normal prompt"}
+                    subtitle={step >= 5 ? "inbox item saved" : "fresh turn, like codex exec"}
                     tone={step >= 5 ? "emerald" : "blue"}
                   />
                 )}
               </AnimatePresence>
               <div className="flex items-center gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300">
                 {step >= 5 ? <CheckCircle2 size={14} /> : <Bot size={14} />}
-                {step >= 5 ? "review summary saved" : "agent loop available"}
+                {step >= 5 ? "cron → inbox · heartbeat → same thread" : "agent loop available"}
               </div>
             </div>
           </Panel>

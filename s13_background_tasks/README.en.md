@@ -126,7 +126,7 @@ Watch for: does the slow command go through `exec_command`, wait a yield window,
 
 Background tasks solve "slow operations don't block the main loop." But what if you want something done **on a schedule** — "run the tests every day at 9am," "check the service status every 5 minutes" — triggered not by you or the model right now, but automatically when the time comes?
 
-s14 Automations → give the agent an **alarm clock**: a tiny scheduler that enqueues a task on a cron-like tick and wakes the agent to run it.
+s14 Automations → the alarm clock sits outside the loop: when due, drop a prompt in. `cron` starts a fresh turn into the inbox; `heartbeat` returns to the same thread.
 
 <details>
 <summary>Into the Codex source</summary>

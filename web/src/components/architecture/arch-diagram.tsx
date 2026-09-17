@@ -16,7 +16,7 @@ const CLASS_DESCRIPTIONS: Record<string, string> = {
   TeammateManager: "Multi-agent team lifecycle and coordination",
   Teammate: "Individual agent identity and state tracking",
   SharedBoard: "Cross-agent shared state coordination",
-  CronJob: "Durable recurring job definition",
+  CronJob: "App automation: cron (fresh turn) or heartbeat (same thread)",
   ProtocolState: "Pending team protocol requests and response matching",
   MCPClient: "External tool discovery and invocation client",
   RecoveryState: "Retry, fallback, and continuation state",

@@ -1,44 +1,45 @@
 {
   "version": "s14",
   "title": "Automations",
-  "description": "A daemon loop watches durable cron definitions, queues due jobs, and lets the agent process them.",
+  "description": "A scheduler outside the agent loop enqueues due work. cron starts a fresh turn into the inbox; heartbeat resumes the same thread.",
   "steps": [
     {
       "type": "user_message",
-      "content": "Every weekday morning, remind me to review open tasks.",
-      "annotation": "The user asks for a recurring future action."
+      "content": "Every weekday morning, review open tasks. Also keep watching this thread for anything new.",
+      "annotation": "The user wants unattended work: a standalone recurring run, and a same-thread check-in."
     },
     {
-      "type": "assistant_text",
-      "content": "I'll create a cron job and store it so the scheduler can pick it up later.",
-      "annotation": "The agent delegates recurrence to the scheduler instead of relying on current context."
+      "type": "system_event",
+      "content": "register repo-check kind=cron \"0 9 * * 1-5\"",
+      "annotation": "cron automations are stored outside the loop (App: automation.toml + RRULE)."
+    },
+    {
+      "type": "system_event",
+      "content": "register watch kind=heartbeat \"*/30 * * * *\"",
+      "annotation": "heartbeat automations target an existing thread instead of opening a new one."
+    },
+    {
+      "type": "system_event",
+      "content": "clock tick 09:00 → fired repo-check → queue",
+      "annotation": "The scheduler only enqueues. It never runs the agent."
     },
     {
       "type": "tool_call",
-      "toolName": "schedule_cron",
-      "content": "{\"name\":\"review-open-tasks\",\"cron\":\"0 9 * * 1-5\",\"prompt\":\"Review open tasks and summarize blockers.\"}",
-      "annotation": "The new tool validates and persists a cron definition."
+      "toolName": "shell",
+      "content": "git status --short",
+      "toolInput": "{\"command\":\"git status --short\"}",
+      "annotation": "Dispatcher dequeues the cron job and starts a fresh turn, like codex exec."
     },
     {
       "type": "tool_result",
-      "toolName": "schedule_cron",
-      "content": "Scheduled review-open-tasks with id cron_7.",
-      "annotation": "The job is written to the durable schedule store."
+      "toolName": "shell",
+      "content": "(clean working tree)",
+      "annotation": "The cron turn's findings are written to the inbox / Triage, then the turn ends."
     },
     {
       "type": "system_event",
-      "content": "cron_scheduler_loop: cron_7 matched current minute -> cron_queue.put(cron_7)",
-      "annotation": "The independent scheduler daemon detects that the job is due."
-    },
-    {
-      "type": "system_event",
-      "content": "queue_processor_loop: dequeued cron_7 and invoked agent_loop(prompt)",
-      "annotation": "A separate processor turns due jobs into normal agent work."
-    },
-    {
-      "type": "assistant_text",
-      "content": "Scheduled. When the cron fires, the queue processor will run the reminder prompt through the agent loop.",
-      "annotation": "The final answer explains the durable recurring behavior."
+      "content": "inbox ← cron repo-check · heartbeatThread ← [Heartbeat] anything new?",
+      "annotation": "A later tick resumes the same heartbeat thread instead of starting from zero."
     }
   ]
 }
