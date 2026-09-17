@@ -6,7 +6,7 @@ import { StepControls } from "@/components/visualizations/shared/step-controls";
 import { useSteppedVisualization } from "@/hooks/useSteppedVisualization";
 import { cn } from "@/lib/utils";
 
-type AgentId = "lead" | "coder" | "reviewer";
+type AgentId = "root" | "researcher" | "writer";
 
 interface Mail {
   id: string;
@@ -19,68 +19,85 @@ interface Mail {
 }
 
 const AGENTS: { id: AgentId; label: string; role: string }[] = [
-  { id: "lead", label: "Lead", role: "splits work and reads results" },
-  { id: "coder", label: "Coder", role: "implements one slice" },
-  { id: "reviewer", label: "Reviewer", role: "checks the result" },
+  { id: "root", label: "root", role: "spawns children, wait_agent for finals" },
+  { id: "researcher", label: "researcher", role: "own context · send_message findings" },
+  { id: "writer", label: "writer", role: "own context · wait_agent then write" },
 ];
 
 const MAIL: Mail[] = [
   {
-    id: "assign",
-    from: "lead",
-    to: "coder",
-    subject: "Build login UI",
-    body: "Please implement the login form and report back.",
+    id: "spawn-r",
+    from: "root",
+    to: "researcher",
+    subject: "spawn_agent",
+    body: "Research the agent loop; send_message findings to writer.",
     appearsAt: 1,
-    consumedAt: 2,
+    consumedAt: 3,
   },
   {
-    id: "result",
-    from: "coder",
-    to: "reviewer",
-    subject: "Login UI done",
-    body: "Files changed, ready for review.",
-    appearsAt: 4,
-    consumedAt: 5,
+    id: "spawn-w",
+    from: "root",
+    to: "writer",
+    subject: "spawn_agent",
+    body: "wait_agent for findings, then write agent-loop.md.",
+    appearsAt: 1,
+    consumedAt: 4,
   },
   {
-    id: "feedback",
-    from: "reviewer",
-    to: "lead",
-    subject: "Review passed",
-    body: "No blockers. One small polish note.",
+    id: "findings",
+    from: "researcher",
+    to: "writer",
+    subject: "send_message",
+    body: "Findings: loop = run tools until none remain.",
+    appearsAt: 3,
+    consumedAt: 4,
+  },
+  {
+    id: "final-r",
+    from: "researcher",
+    to: "root",
+    subject: "final",
+    body: "Findings queued for writer.",
+    appearsAt: 5,
+  },
+  {
+    id: "final-w",
+    from: "writer",
+    to: "root",
+    subject: "final",
+    body: "Doc saved: agent-loop.md",
     appearsAt: 5,
   },
 ];
 
 const STEPS = [
   {
-    title: "A Team Is Mailboxes",
-    desc: "Each agent has its own inbox file. The team does not need shared memory to coordinate.",
+    title: "Root Owns the User Thread",
+    desc: "The user talks to root. Children are not started yet — each will get its own context window.",
   },
   {
-    title: "Lead Drops a Card",
-    desc: "Assigning work means appending a message to the coder's inbox.",
+    title: "spawn_agent Returns Immediately",
+    desc: "Unlike s06's spawnSubagent, which waits for one conclusion, both children start without the parent awaiting them.",
   },
   {
-    title: "Coder Reads Before Thinking",
-    desc: "Before its next model call, the coder drains its inbox and turns messages into context.",
+    title: "Researcher Works Alone",
+    desc: "gather_notes stays in the researcher's private input. Root never sees the raw notes.",
   },
   {
-    title: "Coder Works Alone",
-    desc: "The coder now runs its own loop. The lead does not have to hold the full context.",
+    title: "send_message Queues, Does Not Start a Turn",
+    desc: "Findings land in the writer's in-process mailbox. If writer is blocked on wait_agent, the mail is handed over now.",
   },
   {
-    title: "Result Becomes Mail",
-    desc: "The coder sends a result card to the reviewer through the same mailbox mechanism.",
+    title: "Writer wait_agent Then Writes",
+    desc: "Writer's window holds the one-line conclusion, not the research notes, then writes agent-loop.md.",
   },
   {
-    title: "Reviewer Sends Feedback",
-    desc: "Review feedback is just another card. The lead reads it from its inbox.",
+    title: "Harness Posts final to Parent",
+    desc: "When a child loop ends, Codex-style FINAL_ANSWER is posted to root's mailbox. Root wait_agent collects both.",
   },
   {
-    title: "Files Are the Coordination Layer",
-    desc: "The whole team is inspectable as append-only inbox files: lead.jsonl, coder.jsonl, reviewer.jsonl.",
+    title: "Windows Never Merge",
+    desc: "The team shared information through the mailbox. Three contexts stayed small; the artifact is on disk.",
   },
 ] as const;
 
@@ -88,19 +105,19 @@ function visibleMail(agent: AgentId, step: number) {
   return MAIL.filter((mail) => mail.to === agent && mail.appearsAt <= step && (mail.consumedAt === undefined || step < mail.consumedAt));
 }
 
-function agentState(agent: AgentId, step: number): "waiting" | "reading" | "working" | "reviewing" | "done" {
-  if (agent === "lead" && step === 1) return "working";
-  if (agent === "coder" && step === 2) return "reading";
-  if (agent === "coder" && (step === 3 || step === 4)) return "working";
-  if (agent === "reviewer" && step === 5) return "reviewing";
-  if (agent === "lead" && step >= 5) return "reading";
+function agentState(agent: AgentId, step: number): "waiting" | "spawning" | "working" | "waiting-mail" | "done" {
   if (step === 6) return "done";
+  if (agent === "root" && step === 1) return "spawning";
+  if (agent === "root" && step >= 5) return "waiting-mail";
+  if (agent === "researcher" && (step === 2 || step === 3)) return "working";
+  if (agent === "writer" && step === 3) return "waiting-mail";
+  if (agent === "writer" && step === 4) return "working";
   return "waiting";
 }
 
 function stateClass(state: ReturnType<typeof agentState>) {
-  if (state === "working") return "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30";
-  if (state === "reading" || state === "reviewing") return "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30";
+  if (state === "working" || state === "spawning") return "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950/30";
+  if (state === "waiting-mail") return "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30";
   if (state === "done") return "border-emerald-300 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30";
   return "border-zinc-200 bg-white dark:border-zinc-700 dark:bg-zinc-900";
 }
@@ -144,7 +161,7 @@ function AgentPanel({ agent, step }: { agent: (typeof AGENTS)[number]; step: num
       <div className="rounded-md border border-zinc-200 bg-white p-3 dark:border-zinc-700 dark:bg-zinc-900">
         <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-zinc-800 dark:text-zinc-100">
           <Inbox size={15} />
-          {agent.id}.jsonl
+          mailbox:{agent.id}
         </div>
         <div className="min-h-[118px] space-y-2">
           <AnimatePresence mode="popLayout">
@@ -170,13 +187,13 @@ function AgentPanel({ agent, step }: { agent: (typeof AGENTS)[number]; step: num
 
 function ActivityLog({ step }: { step: number }) {
   const items = [
-    "team config creates lead, coder, reviewer",
-    "lead appends task card to coder.jsonl",
-    "coder drains inbox before model call",
-    "coder works in its own loop",
-    "coder appends result to reviewer.jsonl",
-    "reviewer appends feedback to lead.jsonl",
-    "all coordination remains visible on disk",
+    "user talks to root only",
+    "root spawn_agent researcher + writer (non-blocking)",
+    "researcher gather_notes in its own context",
+    "send_message queues findings on writer's mailbox",
+    "writer wait_agent delivers, then write_file",
+    "harness posts final to root for each child",
+    "three windows never merged — artifact is on disk",
   ].slice(0, step + 1);
 
   return (

@@ -131,7 +131,7 @@ OPENAI_API_KEY=sk-... npx tsx s14_automations/code.ts   # 真实模型
 
 现在 harness 能按时间表自己把 prompt 塞进 loop 了。但很多任务一个人扛不动：「重构整个后端」涉及认证、数据库、路由、测试，单个上下文装不下所有细节。
 
-s15 Agent Teams → 让两个有名字的队友各带各的上下文，用异步信箱互相发消息，把一个任务拆开协作。
+s15 Agent Teams → root 用 `spawn_agent` 拉起命名子 Agent，各自带上下文，靠 `send_message` / `wait_agent` 的进程内信箱交接，而不是把所有细节塞进一个窗口。
 
 <details>
 <summary>深入 Codex 源码</summary>

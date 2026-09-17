@@ -2,33 +2,33 @@
   "version": "s15",
   "decisions": [
     {
-      "id": "lead-agent-owns-coordination",
-      "title": "The Lead Owns Coordination",
-      "description": "The lead agent decides when to spawn teammates, what to send them, and how to interpret replies. Teammates can work independently, but the user-facing conversation stays anchored in one lead loop.",
-      "alternatives": "A peer-to-peer team would be more flexible, but much harder to explain because no single loop owns the answer.",
+      "id": "root-owns-spawn",
+      "title": "Root Spawns; Children Do Not Recurse",
+      "description": "Only the root agent gets spawn_agent. Children run with a narrower tool list so a helper cannot take over orchestration or open an unbounded spawn tree. Codex allows nested spawn with a concurrency cap; the chapter keeps the gate visible.",
+      "alternatives": "Giving every teammate spawn_agent is closer to the full V2 tool table, but it hides the recursion problem s06 already solved by not letting a child spawn further.",
       "zh": {
-        "title": "由 Lead Agent 负责协调",
-        "description": "Lead agent 决定何时创建队友、发送什么任务、如何解释回复。队友可以独立工作，但面向用户的对话始终锚定在一个 lead 循环中。"
+        "title": "只有 root 能 spawn，孩子不能递归",
+        "description": "只有 root 拿到 spawn_agent。孩子用更窄的工具表，避免 helper 接管编排或开出不受控的派生树。Codex 允许嵌套 spawn 并设并发上限；教学版把这道闸留在明处。"
       }
     },
     {
-      "id": "file-backed-mailboxes",
-      "title": "Mailboxes Make Team Communication Inspectable",
-      "description": "MessageBus writes JSONL mailboxes so every handoff is visible on disk. This avoids magical shared memory and gives learners a concrete artifact for debugging team behavior.",
-      "alternatives": "In-memory channels are faster, but they hide the communication history and disappear when the process stops.",
+      "id": "in-process-mailbox",
+      "title": "The Mailbox Is an In-Process Channel",
+      "description": "Each agent has an in-memory inbox with waiters, matching Codex's tokio mpsc Mailbox. Sending queues or delivers to a blocked wait_agent. Session history can persist via rollout; the mailbox itself is not a JSONL file per agent.",
+      "alternatives": "File-backed JSONL inboxes are easy to inspect, but they describe a different architecture than codex-rs, which keeps the mailbox in process and persists conversation history on the session rollout.",
       "zh": {
-        "title": "邮箱文件让团队通信可检查",
-        "description": "MessageBus 使用 JSONL 邮箱记录每次交接。这样避免了神秘的共享内存，也给学习者一个能直接调试团队行为的具体文件。"
+        "title": "信箱是进程内通道",
+        "description": "每个 Agent 一个带 waiter 的内存收件箱，对应 Codex 的 tokio mpsc Mailbox。发送时入队，或直接交给正阻塞的 wait_agent。会话历史可以走 rollout 落盘；信箱本身不是每个 Agent 一个 JSONL 文件。"
       }
     },
     {
-      "id": "scoped-teammate-tools",
-      "title": "Teammates Use Scoped Tool Sets",
-      "description": "A teammate loop receives a narrower prompt and tool set than the lead. That keeps delegation focused and prevents a helper agent from accidentally taking over orchestration.",
-      "alternatives": "Giving every teammate the full tool pool is simpler, but it blurs roles and makes failures harder to attribute.",
+      "id": "send-does-not-start-a-turn",
+      "title": "send_message Queues; It Does Not Start a Turn",
+      "description": "Codex splits queue-only send_message (trigger_turn=false) from followup_task (trigger_turn=true). The chapter keeps send_message as a queue: if the target is blocked on wait_agent the mail is handed over, otherwise it waits in the box. Idle wake-up is a later, separate concern.",
+      "alternatives": "Treating every send as 'wake the other agent now' is simpler to demo, but it would burn a model turn for chatter and would not match Multi-Agent V2.",
       "zh": {
-        "title": "队友使用受限工具集",
-        "description": "队友循环拿到比 lead 更窄的提示词和工具集。这样委派更聚焦，也避免 helper agent 意外接管整体协调。"
+        "title": "send_message 只入队，不开一轮",
+        "description": "Codex 把只排队的 send_message（trigger_turn=false）和会开一轮的 followup_task（trigger_turn=true）分开。教学版的 send_message 就是排队：对方若正阻塞在 wait_agent 上就直接交付，否则进信箱。空闲唤醒是另一件事。"
       }
     }
   ]

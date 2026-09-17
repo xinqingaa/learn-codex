@@ -131,7 +131,7 @@ Watch for: the scheduler only enqueues and never executes; `cron` results land i
 
 Now the harness can drop a prompt into the loop on a schedule. But many tasks are too big for one: "refactor the whole backend" spans auth, the database, routing and tests — more detail than one context window holds.
 
-s15 Agent Teams → give two named teammates their own contexts and let them split a task by trading messages over asynchronous mailboxes.
+s15 Agent Teams → root uses `spawn_agent` to start named children with their own contexts, then they hand off over an in-process mailbox (`send_message` / `wait_agent`) instead of stuffing every detail into one window.
 
 <details>
 <summary>Into the Codex source</summary>

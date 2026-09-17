@@ -159,7 +159,7 @@ export const VERSION_META: Record<string, {
     title: "Agent Teams",
     subtitle: "One Agent Isn't Enough, Form a Team",
     coreAddition: "Teammate mailboxes",
-    keyInsight: "Persistent teammates let work continue in parallel without stuffing every thought into one context.",
+    keyInsight: "spawn_agent returns immediately; teammates share a mailbox, not a context window.",
     layer: "collaboration",
     prevVersion: "s14",
   },

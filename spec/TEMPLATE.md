@@ -75,7 +75,7 @@ Responses API · `reasoning.effort` (low/medium/high) · function tools · `appl
 | s12 | task_system | Shared task board | a TaskBoard (create/claim/complete) the agent reads and updates as it plans work |
 | s13 | background_tasks | unified_exec yield + harvest | exec_command waits a yield window; still-running returns session_id; write_stdin polls; result harvested on a later turn |
 | s14 | automations | App-style scheduled runs | scheduler enqueues due work; cron starts a fresh turn into an inbox; heartbeat resumes the same thread |
-| s15 | agent_teams | Teammate mailboxes | two named agents exchange messages via mailboxes to split a task |
+| s15 | agent_teams | Teammate mailboxes | root `spawn_agent` + `send_message`/`wait_agent` mailbox (Codex Multi-Agent V2) |
 | s16 | team_protocols | Coordination contracts | typed message envelope (request/response/broadcast) + a lead that routes work |
 | s17 | autonomous_agents | Self-claiming workers | idle agents poll the task board, claim a task, run it, post results |
 | s18 | worktree_isolation | Git worktree lifecycle | create isolated git worktrees per task so parallel agents don't conflict (Codex Cloud model) |

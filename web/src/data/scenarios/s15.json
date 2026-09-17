@@ -1,51 +1,55 @@
 {
   "version": "s15",
   "title": "Agent Teams",
-  "description": "A lead agent can spawn teammate loops and coordinate through file-backed mailboxes.",
+  "description": "Root spawns named children with spawn_agent; they keep separate contexts and hand off through an in-process mailbox (send_message / wait_agent).",
   "steps": [
     {
       "type": "user_message",
-      "content": "Split this task: one agent checks tests, another reviews docs.",
-      "annotation": "The request needs parallel work with separate responsibilities."
+      "content": "Research how an agent loop works and write agent-loop.md. Spawn a researcher and a writer, then wait until both finish.",
+      "annotation": "The user task is too big for one context: research notes would crowd the writing window."
     },
     {
       "type": "assistant_text",
-      "content": "I'll spawn teammates with narrow roles and coordinate their updates through the message bus.",
-      "annotation": "The lead keeps orchestration authority while delegating execution."
+      "content": "I'll spawn researcher and writer in parallel, then wait_agent for their finals.",
+      "annotation": "Root keeps the user-facing conversation; children get their own loops."
     },
     {
       "type": "tool_call",
-      "toolName": "spawn_teammate",
-      "content": "{\"name\":\"test-runner\",\"role\":\"Run test commands and report failures.\"}",
-      "annotation": "A teammate thread starts with its own simplified loop."
+      "toolName": "spawn_agent",
+      "content": "{\"task_name\":\"researcher\",\"message\":\"Research the agent loop, then send_message findings to writer.\"}",
+      "annotation": "spawn_agent returns immediately — unlike s06's spawnSubagent, which waits for one conclusion."
     },
     {
       "type": "tool_call",
-      "toolName": "send_message",
-      "content": "{\"to\":\"test-runner\",\"message\":\"Run the focused test suite and summarize failures.\"}",
-      "annotation": "The lead sends work through the file-backed mailbox."
+      "toolName": "spawn_agent",
+      "content": "{\"task_name\":\"writer\",\"message\":\"wait_agent for findings, then write agent-loop.md.\"}",
+      "annotation": "Both spawns share one turn so both mailboxes exist before either child starts."
     },
     {
       "type": "system_event",
-      "content": ".mailboxes/test-runner.jsonl <- {from:\"lead\", message:\"Run the focused test suite\"}",
-      "annotation": "MessageBus persists the handoff as JSONL."
-    },
-    {
-      "type": "system_event",
-      "content": ".mailboxes/lead.jsonl <- {from:\"test-runner\", message:\"Tests passed.\"}",
-      "annotation": "The teammate replies without sharing the lead's whole conversation."
+      "content": "mailbox: researcher → writer: Findings: an agent loop = while the model calls tools…",
+      "annotation": "send_message queues on the target inbox and does not start a new turn."
     },
     {
       "type": "tool_call",
-      "toolName": "check_inbox",
-      "content": "{\"agent\":\"lead\"}",
-      "annotation": "The lead polls its own inbox for teammate updates."
+      "toolName": "wait_agent",
+      "content": "{}",
+      "annotation": "Writer blocks on its own mailbox until the findings arrive."
     },
     {
-      "type": "tool_result",
-      "toolName": "check_inbox",
-      "content": "test-runner: Tests passed.",
-      "annotation": "Mailbox messages re-enter the lead loop as tool results."
+      "type": "system_event",
+      "content": "mailbox: researcher → root: final: findings queued for writer.",
+      "annotation": "When a child loop ends, the harness posts FINAL_ANSWER to the parent mailbox."
+    },
+    {
+      "type": "system_event",
+      "content": "mailbox: writer → root: final: doc saved.",
+      "annotation": "Root's wait_agent calls collect the two finals without merging child contexts."
+    },
+    {
+      "type": "assistant_text",
+      "content": "Both children posted a final — agent-loop.md is written.",
+      "annotation": "Root's window never held the researcher's notes, only mailbox traffic."
     }
   ]
 }

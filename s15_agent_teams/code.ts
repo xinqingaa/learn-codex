@@ -1,27 +1,24 @@
 #!/usr/bin/env tsx
 /**
- * s15_agent_teams/code.ts — Teammate Mailboxes (Codex-style, in TypeScript)
+ * s15_agent_teams/code.ts — Multi-Agent V2 mailboxes (Codex-style)
  *
- * s06's sub-agent was a temp worker: spawn it, get one result back, throw it
- * away. Some tasks are too big for that — they need teammates that keep their
- * OWN context and talk to each other while they work. This chapter gives each
- * named agent its own conversation and an ASYNC MAILBOX; sending a message is
- * just a tool call, and a teammate can block on its inbox waiting for input:
+ * s06's sub-agent (`spawnSubagent`) waited in the parent until one summary
+ * came back. (That tool was also named `task` in s06; it is not s12's board.)
+ * Codex Multi-Agent V2 keeps children alive: spawn returns immediately, each
+ * agent holds its own context, and they coordinate through a MAILBOX.
  *
- *      ┌──────────────┐   send_message   ┌──────────────┐
- *      │  researcher  │ ───────────────► │  mailbox:    │
- *      │ (own context)│                  │   "writer"   │
- *      └──────────────┘                  └──────┬───────┘
- *      ┌──────────────┐   wait_inbox            │ deliver
- *      │    writer    │ ◄───────────────────────┘
- *      │ (own context)│ ───────────────► writes the doc
- *      └──────────────┘
+ *      root  --spawn_agent-->  researcher (own loop)
+ *        |                         |
+ *        |                    send_message
+ *        |                         v
+ *        |                       writer  --write_file--> agent-loop.md
+ *        |                         |
+ *        +-- wait_agent <----- final (harness posts completion)
  *
- * One researches, the other writes. Neither shares a context window — they
- * share INFORMATION through messages. That's the whole idea of a team.
+ * Sending is `send_message` (queue, do not start a turn). Joining is
+ * `wait_agent` (block on YOUR mailbox until a message or a child final).
  *
  * Run it (self-running narrated demo):
- *     npm install
  *     npx tsx s15_agent_teams/code.ts                       # offline demo
  *     OPENAI_API_KEY=sk-... npx tsx s15_agent_teams/code.ts # real model
  */
@@ -35,39 +32,36 @@ const MODEL = process.env.MODEL_ID ?? "gpt-5-codex";
 const OFFLINE = !process.env.OPENAI_API_KEY || process.env.CODEX_OFFLINE === "1";
 const openai = OFFLINE ? null : new OpenAI();
 
-const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 const t0 = Date.now();
 function say(actor: string, msg: string): void {
   const t = ((Date.now() - t0) / 1000).toFixed(2).padStart(6);
-  console.log(`\x1b[2m${t}s\x1b[0m \x1b[36m${actor.padEnd(10)}\x1b[0m ${msg}`);
+  console.log(`\x1b[2m${t}s\x1b[0m \x1b[36m${actor.padEnd(11)}\x1b[0m ${msg}`);
 }
 
-// ── NEW in s15: async mailboxes between named teammates ─────────────────────
-// A loose message (the typed envelope is s16's job). Each teammate owns an
-// inbox; send() appends, recv() blocks until something arrives (or times out).
-type Message = { from: string; to: string; content: string; ts: number };
+type Mail = { from: string; to: string; content: string };
 
-class MessageBus {
-  private boxes = new Map<string, Message[]>();
-  private waiters = new Map<string, ((m: Message) => void)[]>();
+// ── NEW in s15: per-agent mailbox (Codex `Mailbox` is an in-process channel) ─
+class Mailbox {
+  private boxes = new Map<string, Mail[]>();
+  private waiters = new Map<string, Array<(m: Mail) => void>>();
 
-  send(from: string, to: string, content: string): void {
-    const msg: Message = { from, to, content, ts: Date.now() };
-    const pending = this.waiters.get(to);
-    if (pending && pending.length > 0) {
-      pending.shift()!(msg); // someone is blocked on wait_inbox → hand it over
-    } else {
-      const box = this.boxes.get(to) ?? [];
-      box.push(msg);
-      this.boxes.set(to, box);
-    }
-    say("bus", `\x1b[35m${from}\x1b[0m → \x1b[35m${to}\x1b[0m: ${content.slice(0, 56)}`);
+  ensure(name: string): void {
+    if (!this.boxes.has(name)) this.boxes.set(name, []);
   }
 
-  // Block until a message arrives for `to` (bounded so a real run can't hang).
-  async recv(to: string, timeoutMs = 15_000): Promise<Message | null> {
-    const box = this.boxes.get(to);
-    if (box && box.length > 0) return box.shift()!;
+  send(from: string, to: string, content: string): void {
+    this.ensure(to);
+    const mail: Mail = { from, to, content };
+    const pending = this.waiters.get(to);
+    if (pending && pending.length > 0) pending.shift()!(mail);
+    else this.boxes.get(to)!.push(mail);
+    say("mailbox", `\x1b[35m${from}\x1b[0m → \x1b[35m${to}\x1b[0m: ${content.slice(0, 56)}`);
+  }
+
+  async recv(to: string, timeoutMs = 15_000): Promise<Mail | null> {
+    this.ensure(to);
+    const box = this.boxes.get(to)!;
+    if (box.length > 0) return box.shift()!;
     return new Promise((resolve) => {
       const waiters = this.waiters.get(to) ?? [];
       const timer = setTimeout(() => resolve(null), timeoutMs);
@@ -80,62 +74,65 @@ class MessageBus {
   }
 }
 
-const BUS = new MessageBus();
+const BUS = new Mailbox();
+const parentOf = new Map<string, string>();
+const live = new Map<string, Promise<void>>();
+type Spawn = { name: string; role: string; task: string; parent: string };
+let pendingSpawns: Spawn[] = [];
 
-// ── Tools a teammate can call. send_message / wait_inbox ARE the mailbox. ────
-const TOOLS = [
-  {
+function fn(
+  name: string,
+  description: string,
+  properties: Record<string, { type: string; description?: string }>,
+  required: string[]
+) {
+  return {
     type: "function" as const,
-    name: "gather_notes",
-    description: "Collect raw research notes about the topic.",
-    parameters: {
-      type: "object",
-      properties: { topic: { type: "string" } },
-      required: ["topic"],
-      additionalProperties: false,
-    },
+    name,
+    description,
+    parameters: { type: "object" as const, properties, required, additionalProperties: false },
     strict: true,
-  },
-  {
-    type: "function" as const,
-    name: "write_file",
-    description: "Write the final document to disk.",
-    parameters: {
-      type: "object",
-      properties: {
-        filename: { type: "string", description: "File name, no directories." },
-        content: { type: "string" },
-      },
-      required: ["filename", "content"],
-      additionalProperties: false,
-    },
-    strict: true,
-  },
-  {
-    type: "function" as const,
-    name: "send_message",
-    description: "Send a message to a teammate's mailbox.",
-    parameters: {
-      type: "object",
-      properties: {
-        to: { type: "string", description: "Teammate name." },
-        content: { type: "string" },
-      },
-      required: ["to", "content"],
-      additionalProperties: false,
-    },
-    strict: true,
-  },
-  {
-    type: "function" as const,
-    name: "wait_inbox",
-    description: "Block until a message arrives in your inbox; returns it.",
-    parameters: { type: "object", properties: {}, additionalProperties: false },
-    strict: true,
-  },
-];
+  };
+}
 
-// ── Model adapter (same shape as s01), scripted per role when offline ───────
+const SPAWN = fn(
+  "spawn_agent",
+  "Spawn a named sub-agent. Returns immediately; the child runs in parallel.",
+  {
+    task_name: { type: "string", description: "Child name, e.g. researcher or writer." },
+    message: { type: "string", description: "Initial task delivered to the child." },
+  },
+  ["task_name", "message"]
+);
+const SEND = fn(
+  "send_message",
+  "Queue a message on an existing agent's mailbox. Does not start a new turn.",
+  {
+    target: { type: "string", description: "task_name from spawn_agent." },
+    message: { type: "string" },
+  },
+  ["target", "message"]
+);
+const WAIT = fn(
+  "wait_agent",
+  "Block until this agent's mailbox has a message or a child final (or timeout).",
+  {},
+  []
+);
+const GATHER = fn("gather_notes", "Collect raw research notes.", { topic: { type: "string" } }, ["topic"]);
+const WRITE = fn(
+  "write_file",
+  "Write the final document to disk.",
+  { filename: { type: "string" }, content: { type: "string" } },
+  ["filename", "content"]
+);
+
+function toolsFor(role: string) {
+  if (role === "root") return [SPAWN, SEND, WAIT];
+  if (role === "researcher") return [GATHER, SEND];
+  return [WAIT, WRITE, SEND];
+}
+
 type OutputItem = {
   type: string;
   id?: string;
@@ -145,15 +142,21 @@ type OutputItem = {
   content?: { type: string; text?: string }[];
 };
 
+function instructionsFor(role: string): string {
+  if (role === "root")
+    return "You are the root agent. Spawn named children with spawn_agent, then wait_agent until they finish. Keep replies to one line.";
+  if (role === "researcher")
+    return "You are researcher. Gather notes, send_message the findings to 'writer', then stop. Keep replies to one line.";
+  return "You are writer. wait_agent for findings, write agent-loop.md, then stop. Keep replies to one line.";
+}
+
 async function callModel(input: unknown[], role: string): Promise<OutputItem[]> {
   if (!OFFLINE && openai) {
     const resp = await openai.responses.create({
       model: MODEL,
-      instructions:
-        `You are the '${role}' on a two-agent team. Use your tools, coordinate ` +
-        `over send_message / wait_inbox, and keep replies to one line.`,
+      instructions: instructionsFor(role),
       input: input as never,
-      tools: TOOLS,
+      tools: toolsFor(role),
       reasoning: { effort: "low" },
     });
     return resp.output as unknown as OutputItem[];
@@ -172,107 +175,131 @@ const text = (t: string): OutputItem[] => [
   { type: "message", content: [{ type: "output_text", text: `[offline demo] ${t}` }] },
 ];
 
-// The researcher gathers notes, hands them to the writer, then signs off.
 function offlineModel(input: unknown[], role: string): OutputItem[] {
   const done = input.filter((i) => (i as { type?: string }).type === "function_call_output").length;
+  if (role === "root") {
+    if (done === 0)
+      return [
+        call("s1", "spawn_agent", {
+          task_name: "researcher",
+          message: "Research how an agent loop works, then send_message findings to writer.",
+        }),
+        call("s2", "spawn_agent", {
+          task_name: "writer",
+          message: "wait_agent for findings, write them into agent-loop.md.",
+        }),
+      ];
+    if (done === 2 || done === 3) return [call(`w${done}`, "wait_agent", {})];
+    return text("root: both children posted a final — done.");
+  }
   if (role === "researcher") {
     if (done === 0) return [call("r1", "gather_notes", { topic: "the agent loop" })];
     if (done === 1)
       return [
         call("r2", "send_message", {
-          to: "writer",
-          content:
-            "Findings: an agent loop = while the model calls tools, run them and " +
-            "feed results back; it stops when no tool call remains.",
+          target: "writer",
+          message:
+            "Findings: an agent loop = while the model calls tools, run them and feed results back; it stops when no tool call remains.",
         }),
       ];
-    return text("researcher: notes sent to writer — my part is done.");
+    return text("researcher: findings queued for writer.");
   }
-  // writer
-  if (done === 0) return [call("w1", "wait_inbox", {})];
+  if (done === 0) return [call("w1", "wait_agent", {})];
   if (done === 1) {
-    const findings = String(
-      (input.find((i) => (i as { type?: string }).type === "function_call_output") as {
-        output?: string;
-      })?.output ?? ""
-    );
+    const findings = String((input.find((i) => (i as { type?: string }).type === "function_call_output") as { output?: string })?.output ?? "");
     return [
       call("w2", "write_file", {
         filename: "agent-loop.md",
-        content: `# The Agent Loop\n\n${findings}\n\n— written by the writer teammate\n`,
+        content: `# The Agent Loop\n\n${findings}\n\n— written by the writer agent\n`,
       }),
     ];
   }
-  if (done === 2)
-    return [call("w3", "send_message", { to: "researcher", content: "Doc written: agent-loop.md" })];
-  return text("writer: doc saved and researcher notified — done.");
+  return text("writer: doc saved.");
 }
 
-// ── NEW in s15: one teammate = its OWN context + its OWN loop ───────────────
-// Each teammate keeps a private `input` array (its own context window). The
-// mailbox tools are executed by the harness like any other tool — but their
-// effect is on ANOTHER agent's context, not the filesystem.
-async function runTool(
-  name: string,
-  args: Record<string, string>,
-  self: string,
-  scratch: string
-): Promise<string> {
+function lastText(output: OutputItem[]): string {
+  for (const item of output)
+    for (const c of item.content ?? []) if (c.type === "output_text" && c.text) return c.text;
+  return "done";
+}
+
+async function runTool(name: string, args: Record<string, string>, self: string, scratch: string): Promise<string> {
   if (name === "gather_notes") return `notes on "${args.topic}": loop, tools, feed-back, stop.`;
   if (name === "write_file") {
     const p = path.join(scratch, path.basename(args.filename));
     fs.writeFileSync(p, args.content);
     return `wrote ${args.content.length} bytes to ${p}`;
   }
-  if (name === "send_message") {
-    BUS.send(self, args.to, args.content);
-    return `delivered to ${args.to}`;
+  if (name === "spawn_agent") {
+    if (self !== "root") return "only the root agent can spawn";
+    const child = args.task_name;
+    BUS.ensure(child);
+    pendingSpawns.push({ name: child, role: child, task: args.message, parent: self });
+    return `spawned ${child}`;
   }
-  if (name === "wait_inbox") {
+  if (name === "send_message") {
+    BUS.send(self, args.target, args.message);
+    return `queued for ${args.target}`;
+  }
+  if (name === "wait_agent") {
     const msg = await BUS.recv(self);
-    return msg ? `[inbox from ${msg.from}] ${msg.content}` : "(inbox timeout)";
+    return msg ? `[mailbox from ${msg.from}] ${msg.content}` : "(mailbox timeout)";
   }
   return `unknown tool ${name}`;
 }
 
-async function teammate(name: string, role: string, task: string, scratch: string): Promise<void> {
+function flushSpawns(scratch: string): void {
+  const batch = pendingSpawns;
+  pendingSpawns = [];
+  for (const s of batch) {
+    parentOf.set(s.name, s.parent);
+    live.set(s.name, runAgent(s.name, s.role, s.task, scratch));
+  }
+}
+
+async function runAgent(name: string, role: string, task: string, scratch: string): Promise<void> {
   say(name, `online as \x1b[35m${role}\x1b[0m — own context, own loop`);
-  const input: unknown[] = [{ role: "user", content: task }]; // private context
+  const input: unknown[] = [{ role: "user", content: task }];
+  let closing = "done";
   for (let step = 0; step < 8; step++) {
     const output = await callModel(input, role);
     input.push(...output);
     const calls = output.filter((i) => i.type === "function_call");
     if (calls.length === 0) {
-      for (const item of output)
-        for (const c of item.content ?? [])
-          if (c.type === "output_text" && c.text) say(name, `\x1b[32m${c.text}\x1b[0m`);
-      return; // this teammate is done
+      closing = lastText(output);
+      say(name, `\x1b[32m${closing}\x1b[0m`);
+      break;
     }
     for (const c of calls) {
       const args = JSON.parse(c.arguments ?? "{}") as Record<string, string>;
-      if (c.name !== "wait_inbox") say(name, `→ ${c.name}(${(args.to ?? args.filename ?? args.topic ?? "").slice(0, 30)})`);
       const result = await runTool(c.name ?? "", args, name, scratch);
+      if (c.name === "wait_agent") say(name, `← wait_agent ${result.slice(0, 52)}`);
+      else say(name, `→ ${c.name}(${(args.task_name ?? args.target ?? args.filename ?? args.topic ?? "").slice(0, 28)})`);
       input.push({ type: "function_call_output", call_id: c.call_id, output: result });
     }
+    flushSpawns(scratch);
   }
+  const parent = parentOf.get(name);
+  if (parent) BUS.send(name, parent, `final: ${closing}`);
 }
 
-// ── Self-running narrated demo: one researches, one writes ──────────────────
 async function main(): Promise<void> {
-  console.log("s15: Teammate Mailboxes (Codex-style)");
+  console.log("s15: Multi-Agent V2 mailboxes (Codex-style)");
   console.log(
     OFFLINE
-      ? "Offline demo model (no OPENAI_API_KEY). Two teammates split a task over mailboxes.\n"
-      : `Model: ${MODEL}. Two teammates split a task over mailboxes.\n`
+      ? "Offline demo model (no OPENAI_API_KEY). Root spawns two children over a mailbox.\n"
+      : `Model: ${MODEL}. Root spawns two children over a mailbox.\n`
   );
 
   const scratch = fs.mkdtempSync(path.join(os.tmpdir(), "s15-team-"));
-  // No lead assigns steps one by one. Each teammate gets a goal and its own
-  // context; the mailbox lets them coordinate the hand-off themselves.
-  await Promise.all([
-    teammate("researcher", "researcher", "Research how an agent loop works, then send your findings to 'writer'.", scratch),
-    teammate("writer", "writer", "Wait for research findings, write them into agent-loop.md, then tell 'researcher' you're done.", scratch),
-  ]);
+  BUS.ensure("root");
+  await runAgent(
+    "root",
+    "root",
+    "Spawn researcher and writer to research the agent loop and write agent-loop.md. wait_agent until both finish.",
+    scratch
+  );
+  await Promise.all([...live.values()]);
 
   const doc = path.join(scratch, "agent-loop.md");
   say("main", `team finished — shared artifact at ${doc}`);
