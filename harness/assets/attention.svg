@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="520" viewBox="0 0 1120 520" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
-<rect width="1120" height="520" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1120" height="620" viewBox="0 0 1120 620" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1120" height="620" fill="#ffffff"/>
 <defs>
 <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
 <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
@@ -7,43 +7,75 @@
 </defs>
 <text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">注意力预算的四条路径</text>
 <text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">四件事看起来都是「上下文不够用」，但成本结构完全不同，所以不能用同一招去解</text>
-<text x="162" y="106" font-size="12.5" fill="#dc2626" text-anchor="middle" font-weight="600">计划只在模型脑子里</text>
-<path d="M162,116 L162,140" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
-<rect x="40" y="146" width="244" height="200" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
-<text x="162" y="176" font-size="16" fill="#78350f" text-anchor="middle" font-weight="700">外化计划</text>
-<text x="54" y="204" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 把整份步骤列表交给 harness</text>
-<text x="54" y="226" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 每次整体替换，不做增量合并</text>
-<text x="54" y="248" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 同一时刻只允许一步进行中</text>
-<text x="54" y="300" font-size="12" fill="#78350f" text-anchor="start" font-weight="600">换来能见度</text>
-<text x="54" y="324" font-size="11" fill="#b45309" text-anchor="start" font-weight="400">换不来约束力：模型照样能跳步</text>
-<text x="432" y="106" font-size="12.5" fill="#dc2626" text-anchor="middle" font-weight="600">支线淹没主线</text>
-<path d="M432,116 L432,140" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
-<rect x="310" y="146" width="244" height="200" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
-<text x="432" y="176" font-size="16" fill="#4c1d95" text-anchor="middle" font-weight="700">干净上下文</text>
-<text x="324" y="204" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 同一个循环 + 一份全新输入</text>
-<text x="324" y="226" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 工具表收窄，禁止递归派生</text>
-<text x="324" y="248" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 只有结论文本穿过边界</text>
-<text x="324" y="300" font-size="12" fill="#4c1d95" text-anchor="start" font-weight="600">换来主线清洁度</text>
-<text x="324" y="324" font-size="11" fill="#b45309" text-anchor="start" font-weight="400">代价是多烧一份 token；短任务里纯亏</text>
-<text x="702" y="106" font-size="12.5" fill="#dc2626" text-anchor="middle" font-weight="600">规范每轮都在烧钱</text>
-<path d="M702,116 L702,140" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
-<rect x="580" y="146" width="244" height="200" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="702" y="176" font-size="16" fill="#1e3a8a" text-anchor="middle" font-weight="700">知识分层</text>
-<text x="594" y="204" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 目录层：名字 + 一句话，常驻</text>
-<text x="594" y="226" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 正文层：完整内容，按需注入</text>
-<text x="594" y="248" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 按名字查表，不给文件路径</text>
-<text x="594" y="300" font-size="12" fill="#1e3a8a" text-anchor="start" font-weight="600">把每轮必付变成用到才付</text>
-<text x="594" y="324" font-size="11" fill="#b45309" text-anchor="start" font-weight="400">正文进历史后仍会一路携带</text>
-<text x="972" y="106" font-size="12.5" fill="#dc2626" text-anchor="middle" font-weight="600">历史只增不减</text>
-<path d="M972,116 L972,140" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
-<rect x="850" y="146" width="244" height="200" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
-<text x="972" y="176" font-size="16" fill="#134e4a" text-anchor="middle" font-weight="700">有损压缩</text>
-<text x="864" y="204" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 旧历史交给一次无工具调用总结</text>
-<text x="864" y="226" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 在硬上限之前主动触发</text>
-<text x="864" y="248" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">· 切在最后一条用户消息之前</text>
-<text x="864" y="300" font-size="12" fill="#134e4a" text-anchor="start" font-weight="600">换来无上限的会话长度</text>
-<text x="864" y="324" font-size="11" fill="#b45309" text-anchor="start" font-weight="400">信息确实会丢；压过几次就什么都不剩</text>
-<text x="40" y="396" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">共同前提：模型没有任何持久状态。它每一轮看到的「记忆」，就是 harness 这次递过去的那段输入。</text>
-<text x="40" y="424" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">所以「它忘了最初要干什么」和「它塞不进下一轮」是同一个问题的两面，都不是模型的缺陷。</text>
-<text x="40" y="460" font-size="13" fill="#0d9488" text-anchor="start" font-weight="400">压缩换的是空间（有损，活在内存里）；持久化换的是寿命（无损，但不解决窗口问题）。两层都需要。</text>
+<circle cx="560.0" cy="168" r="76" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+<line x1="543.0" y1="136.0" x2="555.6" y2="143.6" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="577.0" y1="136.0" x2="564.4" y2="143.6" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="543.0" y1="156.0" x2="555.6" y2="148.4" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="577.0" y1="156.0" x2="564.4" y2="148.4" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+<text x="560.0" y="182" font-size="14.5" fill="#334155" text-anchor="middle" font-weight="700">上下文窗口</text>
+<text x="560.0" y="202" font-size="11" fill="#64748b" text-anchor="middle" font-weight="400">容量有限、只读一次</text>
+<polyline points="560.0,244 560.0,264 161.0,264 161.0,296" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="161.0" y="282" font-size="11.5" fill="#dc2626" text-anchor="middle" font-weight="600">计划只在模型脑子里</text>
+<rect x="39.0" y="300" width="244" height="218" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<rect x="57.480000000000004" y="324.0" width="23.04" height="4.48" rx="2" fill="none" stroke="#d97706" stroke-width="1.8"/>
+<rect x="57.480000000000004" y="329.76" width="23.04" height="4.48" rx="2" fill="none" stroke="#d97706" stroke-width="1.8"/>
+<rect x="57.480000000000004" y="335.52" width="23.04" height="4.48" rx="2" fill="none" stroke="#d97706" stroke-width="1.8"/>
+<text x="93.0" y="322" font-size="15" fill="#78350f" text-anchor="start" font-weight="700">外化计划</text>
+<text x="53.0" y="360" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">把步骤表整体交给 harness 持有</text>
+<text x="53.0" y="380" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">同一时刻只有一步在进行中</text>
+<rect x="53.0" y="448" width="216" height="28" rx="6" fill="#ecfdf5" stroke="none" stroke-width="1.6"/>
+<text x="63.0" y="466" font-size="11" fill="#065f46" text-anchor="start" font-weight="600">✓ 换来能见度</text>
+<rect x="53.0" y="482" width="216" height="28" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="63.0" y="500" font-size="11" fill="#9a3412" text-anchor="start" font-weight="600">✗ 换不来约束力：照样能跳步</text>
+<polyline points="560.0,244 560.0,264 427.0,264 427.0,296" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="427.0" y="282" font-size="11.5" fill="#dc2626" text-anchor="middle" font-weight="600">支线淹没主线</text>
+<rect x="305.0" y="300" width="244" height="218" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<circle cx="327.0" cy="323.2" r="2.4" fill="#7c3aed"/>
+<circle cx="327.0" cy="340.8" r="2.4" fill="#7c3aed"/>
+<circle cx="343.0" cy="331.2" r="2.4" fill="#7c3aed"/>
+<line x1="327.0" y1="325.3" x2="327.0" y2="338.7" stroke="#7c3aed" stroke-width="1.8" stroke-linecap="round"/>
+<path d="M327.0,331.2 Q333.4,331.2 343.0,331.2" fill="none" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="359.0" y="322" font-size="15" fill="#4c1d95" text-anchor="start" font-weight="700">干净上下文</text>
+<text x="319.0" y="360" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">同一循环换一份全新输入</text>
+<text x="319.0" y="380" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">工具表收窄，只有结论穿回主线</text>
+<rect x="319.0" y="448" width="216" height="28" rx="6" fill="#ecfdf5" stroke="none" stroke-width="1.6"/>
+<text x="329.0" y="466" font-size="11" fill="#065f46" text-anchor="start" font-weight="600">✓ 换来主线清洁度</text>
+<rect x="319.0" y="482" width="216" height="28" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="329.0" y="500" font-size="11" fill="#9a3412" text-anchor="start" font-weight="600">✗ 多烧一份 token；短任务纯亏</text>
+<polyline points="560.0,244 560.0,264 693.0,264 693.0,296" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="693.0" y="282" font-size="11.5" fill="#dc2626" text-anchor="middle" font-weight="600">规范每轮都在烧钱</text>
+<rect x="571.0" y="300" width="244" height="218" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<line x1="596.5" y1="319.2" x2="594.0" y2="344.8" stroke="#2563eb" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="602.0" y1="319.2" x2="599.4" y2="344.8" stroke="#2563eb" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="600.0" y1="319.2" x2="602.6" y2="344.8" stroke="#2563eb" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="605.5" y1="319.2" x2="608.0" y2="344.8" stroke="#2563eb" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<text x="625.0" y="322" font-size="15" fill="#1e3a8a" text-anchor="start" font-weight="700">知识分层</text>
+<text x="585.0" y="360" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">目录层常驻：名字+一句话</text>
+<text x="585.0" y="380" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">正文层按名字查表、按需注入</text>
+<rect x="585.0" y="448" width="216" height="28" rx="6" fill="#ecfdf5" stroke="none" stroke-width="1.6"/>
+<text x="595.0" y="466" font-size="11" fill="#065f46" text-anchor="start" font-weight="600">✓ 把每轮必付变成用到才付</text>
+<rect x="585.0" y="482" width="216" height="28" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="595.0" y="500" font-size="11" fill="#9a3412" text-anchor="start" font-weight="600">✗ 正文进历史后仍一路携带</text>
+<polyline points="560.0,244 560.0,264 959.0,264 959.0,296" fill="none" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#a)"/>
+<text x="959.0" y="282" font-size="11.5" fill="#dc2626" text-anchor="middle" font-weight="600">历史只增不减</text>
+<rect x="837.0" y="300" width="244" height="218" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<circle cx="867.0" cy="332.0" r="8.3" fill="none" stroke="#0d9488" stroke-width="1.8"/>
+<line x1="876.0" y1="332.0" x2="882.2" y2="332.0" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="873.3" y1="338.3" x2="877.7" y2="342.7" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="867.0" y1="341.0" x2="867.0" y2="347.2" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="860.7" y1="338.3" x2="856.3" y2="342.7" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="858.0" y1="332.0" x2="851.8" y2="332.0" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="860.7" y1="325.7" x2="856.3" y2="321.3" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="867.0" y1="323.0" x2="867.0" y2="316.8" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="873.3" y1="325.7" x2="877.7" y2="321.3" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<text x="891.0" y="322" font-size="15" fill="#134e4a" text-anchor="start" font-weight="700">有损压缩</text>
+<text x="851.0" y="360" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">硬上限前把旧历史无工具总结</text>
+<text x="851.0" y="380" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">切在最后一条用户消息之前</text>
+<rect x="851.0" y="448" width="216" height="28" rx="6" fill="#ecfdf5" stroke="none" stroke-width="1.6"/>
+<text x="861.0" y="466" font-size="11" fill="#065f46" text-anchor="start" font-weight="600">✓ 换来无上限的会话长度</text>
+<rect x="851.0" y="482" width="216" height="28" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="861.0" y="500" font-size="11" fill="#9a3412" text-anchor="start" font-weight="600">✗ 信息会丢；压多次就什么都不剩</text>
+<text x="40" y="556" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">共同前提：模型没有任何持久状态。它每一轮看到的「记忆」，就是 harness 这次递过去的那段输入。</text>
+<text x="40" y="580" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">所以「它忘了最初要干什么」和「它塞不进下一轮」是同一个问题的两面，都不是模型的缺陷。</text>
+<text x="40" y="610" font-size="13" fill="#0d9488" text-anchor="start" font-weight="400">压缩换的是空间（有损，活在内存里）；持久化换的是寿命（无损，但不解决窗口问题）。两层都需要。</text>
 </svg>

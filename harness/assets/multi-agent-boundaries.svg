@@ -1,32 +1,54 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1060" height="560" viewBox="0 0 1060 560" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
-<rect width="1060" height="560" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="660" viewBox="0 0 700 660" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="700" height="660" fill="#ffffff"/>
 <defs>
 <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
-<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
-<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
 </defs>
-<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">「多执行者」其实是四件互相独立的事</text>
-<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">注意力怎么隔离、信息怎么传递、顺序怎么保证、文件在哪写——混在一起想，会设计出一团乱麻</text>
-<rect x="40" y="108" width="980" height="80" rx="9" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
-<text x="60" y="138" font-size="15" fill="#4c1d95" text-anchor="start" font-weight="700">1. 注意力边界</text>
-<text x="60" y="162" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">各带一份私有上下文；信箱传消息，过境的东西必须被显式说出来</text>
-<text x="1000" y="138" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：支线的几十轮中间过程淹没主线</text>
-<rect x="40" y="204" width="980" height="80" rx="9" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
-<text x="60" y="234" font-size="15" fill="#7f1d1d" text-anchor="start" font-weight="700">2. 规则边界</text>
-<text x="60" y="258" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">任务带依赖集合；认领时检查，不满足就拒绝</text>
-<text x="1000" y="234" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：三个执行者各自跳步，没有任何地方看得出全局顺序被破坏</text>
-<rect x="40" y="300" width="980" height="80" rx="9" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
-<text x="60" y="330" font-size="15" fill="#78350f" text-anchor="start" font-weight="700">3. 并发正确性</text>
-<text x="60" y="354" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">请求带 id 对账；认领的复查与置位必须原子</text>
-<text x="1000" y="330" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：回执对不上账；两个执行者同时抢到同一份活</text>
-<rect x="40" y="396" width="980" height="80" rx="9" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
-<text x="60" y="426" font-size="15" fill="#134e4a" text-anchor="start" font-weight="700">4. 地盘边界</text>
-<text x="60" y="450" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">各自一份工作目录；冲突推迟到交回那一刻由 git 诚实暴露</text>
-<text x="1000" y="426" font-size="11.5" fill="#b45309" text-anchor="end" font-weight="400">没有它：并行写入互相覆盖，事后分不清哪行属于哪份活</text>
-<rect x="40" y="500" width="470" height="44" rx="8" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
-<text x="275.0" y="527.75" font-size="13.5" fill="#7f1d1d" text-anchor="middle" font-weight="600">前提：多执行者默认是亏的</text>
-<text x="60" y="536" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">每个执行者独立烧 token，总成本高于单个。</text>
-<rect x="550" y="500" width="470" height="44" rx="8" fill="#ecfdf5" stroke="#059669" stroke-width="1.6"/>
-<text x="785.0" y="527.5" font-size="13" fill="#064e3b" text-anchor="middle" font-weight="600">只在任务确实能拆、且每部分都有大量中间过程时才划算</text>
-<text x="570" y="536" font-size="11.5" fill="#64748b" text-anchor="start" font-weight="400">主流产品默认只在用户明确要求并行时才派生——这个保守默认是对的。</text>
+<text x="32" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">「多执行者」其实是四件互相独立的事</text>
+<text x="32" y="64" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">注意力怎么隔离、信息怎么传递、顺序怎么保证、</text>
+<text x="32" y="82" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">文件在哪写——混在一起想，会设计出一团乱麻</text>
+<circle cx="332.0" cy="316.0" r="58" fill="#f8fafc" stroke="#94a3b8" stroke-width="2"/>
+<path d="M319.2,297.2 L332.0,290.0 L344.8,297.2 L344.8,309.2 L332.0,316.4 L319.2,309.2 Z" fill="none" stroke="#475569" stroke-width="1.8" stroke-linejoin="round"/>
+<line x1="319.2" y1="297.2" x2="332.0" y2="304.4" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="344.8" y1="297.2" x2="332.0" y2="304.4" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+<line x1="332.0" y1="304.4" x2="332.0" y2="316.4" stroke="#475569" stroke-width="1.8" stroke-linecap="round"/>
+<text x="332.0" y="334.0" font-size="12.5" fill="#334155" text-anchor="middle" font-weight="700">共享资源</text>
+<text x="332.0" y="350.0" font-size="9.5" fill="#64748b" text-anchor="middle" font-weight="400">任务队列/仓库/上下文</text>
+<rect x="32" y="118" width="288" height="186" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<rect x="49.5" y="145.0" width="21.0" height="12.75" rx="2" fill="none" stroke="#7c3aed" stroke-width="1.8"/>
+<path d="M49.5,145.0 Q60,135.25 70.5,145.0" fill="none" stroke="#7c3aed" stroke-width="1.8"/>
+<circle cx="72.8" cy="147.7" r="1.3" fill="#7c3aed"/>
+<text x="82" y="140" font-size="13.5" fill="#4c1d95" text-anchor="start" font-weight="700">① 注意力边界</text>
+<text x="48" y="176" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">各带私有上下文；信箱传消息，</text>
+<text x="48" y="194" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">过境内容必须显式说出</text>
+<rect x="48" y="262" width="256" height="26" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="56" y="280" font-size="10" fill="#9a3412" text-anchor="start" font-weight="600">没有它：支线几十轮细节淹没主线</text>
+<rect x="344" y="118" width="288" height="186" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<path d="M372,133 L384.3,140.5 L384.3,150.25 Q384.3,160.75 372,163 Q359.7,160.75 359.7,150.25 L359.7,140.5 Z" fill="none" stroke="#dc2626" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="M366.9,148 L371.4,152.5 L378.0,143.8" fill="none" stroke="#dc2626" stroke-width="2.16" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="394" y="140" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="700">② 规则边界</text>
+<text x="360" y="176" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">任务带依赖集合；认领时检查，</text>
+<text x="360" y="194" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">不满足就拒绝</text>
+<rect x="360" y="262" width="256" height="26" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="368" y="280" font-size="10" fill="#9a3412" text-anchor="start" font-weight="600">没有它：全局顺序被悄悄破坏</text>
+<rect x="32" y="328" width="288" height="186" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<line x1="55.8" y1="346.0" x2="53.4" y2="370.0" stroke="#d97706" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="60.9" y1="346.0" x2="58.5" y2="370.0" stroke="#d97706" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="59.1" y1="346.0" x2="61.5" y2="370.0" stroke="#d97706" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="64.2" y1="346.0" x2="66.6" y2="370.0" stroke="#d97706" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<text x="82" y="350" font-size="13.5" fill="#78350f" text-anchor="start" font-weight="700">③ 并发正确性</text>
+<text x="48" y="386" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">请求带 id 对账；认领的复查</text>
+<text x="48" y="404" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">与置位必须原子</text>
+<rect x="48" y="472" width="256" height="26" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="56" y="490" font-size="10" fill="#9a3412" text-anchor="start" font-weight="600">没有它：两个执行者抢到同一份活</text>
+<rect x="344" y="328" width="288" height="186" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<path d="M359.25,367.0 L359.25,352.75 L369.0,352.75 L372,356.5 L384.75,356.5 L384.75,367.0 Z" fill="none" stroke="#0d9488" stroke-width="1.8" stroke-linejoin="round"/>
+<text x="394" y="350" font-size="13.5" fill="#134e4a" text-anchor="start" font-weight="700">④ 地盘边界</text>
+<text x="360" y="386" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">各自一份工作目录；冲突推迟到</text>
+<text x="360" y="404" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">交回那一刻由 git 暴露</text>
+<rect x="360" y="472" width="256" height="26" rx="6" fill="#fff7ed" stroke="none" stroke-width="1.6"/>
+<text x="368" y="490" font-size="10" fill="#9a3412" text-anchor="start" font-weight="600">没有它：并行写入互相覆盖</text>
+<text x="32" y="542" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="700">前提：多执行者默认是亏的</text>
+<text x="32" y="564" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">每个执行者独立烧 token，总成本高于单个；只在任务确实能拆、</text>
+<text x="32" y="584" font-size="12" fill="#64748b" text-anchor="start" font-weight="400">且每部分都有大量中间过程时才划算。</text>
+<text x="32" y="616" font-size="12" fill="#0d9488" text-anchor="start" font-weight="400">主流产品默认只在用户明确要求并行时才派生——这个保守默认是对的。</text>
 </svg>

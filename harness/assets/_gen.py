@@ -103,40 +103,136 @@ def write(name, parts):
     print("wrote", name)
 
 
+def icon(name, cx, cy, r, color, sw=1.8):
+    """极简线条图标，居中在 (cx,cy)，外接半径约 r。不依赖字体/emoji，跨平台一致。"""
+    import math
+    o = []
+    ln = lambda x1, y1, x2, y2, w=sw, cap="round": o.append(
+        f'<line x1="{x1:.1f}" y1="{y1:.1f}" x2="{x2:.1f}" y2="{y2:.1f}" '
+        f'stroke="{color}" stroke-width="{w}" stroke-linecap="{cap}"/>')
+    circ = lambda x, y, rr, fill="none", w=sw: o.append(
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rr:.1f}" fill="{fill}" stroke="{color}" '
+        f'stroke-width="{w}"/>' if fill == "none" else
+        f'<circle cx="{x:.1f}" cy="{y:.1f}" r="{rr:.1f}" fill="{color}"/>')
+    if name == "eye":  # 感知
+        o.append(f'<ellipse cx="{cx}" cy="{cy}" rx="{r}" ry="{r*0.58}" fill="none" '
+                  f'stroke="{color}" stroke-width="{sw}"/>')
+        circ(cx, cy, r * 0.3, fill=color)
+    elif name == "wrench":  # 行动/工具
+        ln(cx - r * 0.7, cy + r * 0.7, cx + r * 0.35, cy - r * 0.35, w=sw * 1.8)
+        circ(cx - r * 0.75, cy + r * 0.75, r * 0.32)
+        circ(cx + r * 0.55, cy - r * 0.55, r * 0.3)
+    elif name == "gear":  # 执行/循环
+        circ(cx, cy, r * 0.52)
+        for i in range(8):
+            a = i * math.pi / 4
+            ln(cx + math.cos(a) * r * 0.56, cy + math.sin(a) * r * 0.56,
+               cx + math.cos(a) * r * 0.95, cy + math.sin(a) * r * 0.95, w=sw * 1.3)
+    elif name == "shield":  # 验证
+        o.append(f'<path d="M{cx},{cy-r} L{cx+r*0.82},{cy-r*0.5} L{cx+r*0.82},{cy+r*0.15} '
+                  f'Q{cx+r*0.82},{cy+r*0.85} {cx},{cy+r} Q{cx-r*0.82},{cy+r*0.85} '
+                  f'{cx-r*0.82},{cy+r*0.15} L{cx-r*0.82},{cy-r*0.5} Z" fill="none" '
+                  f'stroke="{color}" stroke-width="{sw}" stroke-linejoin="round"/>')
+        o.append(f'<path d="M{cx-r*0.34},{cy} L{cx-r*0.04},{cy+r*0.3} L{cx+r*0.4},{cy-r*0.28}" '
+                  f'fill="none" stroke="{color}" stroke-width="{sw*1.2}" stroke-linecap="round" '
+                  f'stroke-linejoin="round"/>')
+    elif name == "lock":  # 约束
+        o.append(f'<rect x="{cx-r*0.62}" y="{cy-r*0.05}" width="{r*1.24}" height="{r*0.85}" '
+                  f'rx="3" fill="none" stroke="{color}" stroke-width="{sw}"/>')
+        o.append(f'<path d="M{cx-r*0.34},{cy-r*0.05} L{cx-r*0.34},{cy-r*0.4} '
+                  f'Q{cx-r*0.34},{cy-r*0.8} {cx},{cy-r*0.8} Q{cx+r*0.34},{cy-r*0.8} '
+                  f'{cx+r*0.34},{cy-r*0.4} L{cx+r*0.34},{cy-r*0.05}" fill="none" '
+                  f'stroke="{color}" stroke-width="{sw}"/>')
+        circ(cx, cy + r * 0.32, r * 0.09, fill=color)
+    elif name == "mailbox":  # 信箱/消息隔离
+        o.append(f'<rect x="{cx-r*0.7}" y="{cy-r*0.2}" width="{r*1.4}" height="{r*0.85}" '
+                  f'rx="2" fill="none" stroke="{color}" stroke-width="{sw}"/>')
+        o.append(f'<path d="M{cx-r*0.7},{cy-r*0.2} Q{cx},{cy-r*0.85} {cx+r*0.7},{cy-r*0.2}" '
+                  f'fill="none" stroke="{color}" stroke-width="{sw}"/>')
+        circ(cx + r * 0.85, cy - r * 0.02, r * 0.09, fill=color)
+    elif name == "layers":  # 分层
+        for dy in (-0.36, 0, 0.36):
+            o.append(f'<rect x="{cx-r*0.72}" y="{cy+r*dy-r*0.14}" width="{r*1.44}" '
+                      f'height="{r*0.28}" rx="2" fill="none" stroke="{color}" stroke-width="{sw}"/>')
+    elif name == "compress":  # 压缩
+        for dx, dy in ((-1, -1), (1, -1), (-1, 1), (1, 1)):
+            ln(cx + dx * r * 0.85, cy + dy * r * 0.5, cx + dx * r * 0.22, cy + dy * r * 0.12)
+    elif name == "branch":  # 分叉/独立执行
+        circ(cx - r * 0.5, cy - r * 0.55, r * 0.15, fill=color)
+        circ(cx - r * 0.5, cy + r * 0.55, r * 0.15, fill=color)
+        circ(cx + r * 0.5, cy - r * 0.05, r * 0.15, fill=color)
+        ln(cx - r * 0.5, cy - r * 0.42, cx - r * 0.5, cy + r * 0.42)
+        o.append(f'<path d="M{cx-r*0.5},{cy-r*0.05} Q{cx-r*0.1},{cy-r*0.05} '
+                  f'{cx+r*0.5},{cy-r*0.05}" fill="none" stroke="{color}" stroke-width="{sw}"/>')
+    elif name == "id":  # id / 并发对账
+        for dx in (-0.28, 0.06):
+            ln(cx + dx * r, cy - r * 0.8, cx + dx * r - r * 0.16, cy + r * 0.8, w=sw * 1.3)
+        for dx in (-0.06, 0.28):
+            ln(cx + dx * r, cy - r * 0.8, cx + dx * r + r * 0.16, cy + r * 0.8, w=sw * 1.3)
+    elif name == "folder":  # 工作目录/地盘
+        o.append(f'<path d="M{cx-r*0.85},{cy+r*0.6} L{cx-r*0.85},{cy-r*0.35} '
+                  f'L{cx-r*0.2},{cy-r*0.35} L{cx},{cy-r*0.1} L{cx+r*0.85},{cy-r*0.1} '
+                  f'L{cx+r*0.85},{cy+r*0.6} Z" fill="none" stroke="{color}" '
+                  f'stroke-width="{sw}" stroke-linejoin="round"/>')
+    elif name == "cycle":  # 闭环箭头
+        o.append(f'<path d="M{cx-r*0.75},{cy} A{r*0.75},{r*0.75} 0 1 1 {cx+r*0.2},{cy+r*0.72}" '
+                  f'fill="none" stroke="{color}" stroke-width="{sw*1.3}"/>')
+        a2 = math.atan2(r * 0.72, r * 0.2) if False else 0.9
+        tx, ty = cx + r * 0.2, cy + r * 0.72
+        o.append(f'<path d="M{tx-r*0.28},{ty-r*0.05} L{tx+r*0.05},{ty+r*0.28} '
+                  f'L{tx+r*0.32},{ty-r*0.1} Z" fill="{color}"/>')
+    elif name == "box3d":  # 共享资源/仓库
+        o.append(f'<path d="M{cx-r*0.8},{cy-r*0.3} L{cx},{cy-r*0.75} L{cx+r*0.8},{cy-r*0.3} '
+                  f'L{cx+r*0.8},{cy*0+cy+r*0.45} L{cx},{cy+r*0.9} L{cx-r*0.8},{cy+r*0.45} Z" '
+                  f'fill="none" stroke="{color}" stroke-width="{sw}" stroke-linejoin="round"/>')
+        ln(cx - r * 0.8, cy - r * 0.3, cx, cy + r * 0.15)
+        ln(cx + r * 0.8, cy - r * 0.3, cx, cy + r * 0.15)
+        ln(cx, cy + r * 0.15, cx, cy + r * 0.9)
+    return o
+
+
 # ---------------------------------------------------------------- 0 五个环节
 def five_elements():
-    W, H = 1150, 400
+    W, H = 1150, 360
     s = header(W, H, "一个动作生命周期里的五个环节",
                "agent = model + harness；model 只负责生成决定，剩下的感知、行动、执行、验证、约束全部是 harness 的工作")
 
     stages = [
-        ("感知", "context", "这一轮该看见什么", "core"),
-        ("行动", "tools", "意图如何变成可判定的请求", "tool"),
-        ("执行", "恢复", "请求如何在会失败的现实里跑完", "store"),
-        ("验证", "判断力", "这个动作该不该发生", "attn"),
-        ("约束", "硬边界", "验证出错时损失被限制在哪", "gate"),
+        ("感知", "context", "eye", "这一轮该看见什么", "core"),
+        ("行动", "tools", "wrench", "意图如何变成可判定的请求", "tool"),
+        ("执行", "恢复", "gear", "请求如何在会失败的现实里跑完", "store"),
+        ("验证", "判断力", "shield", "这个动作该不该发生", "attn"),
+        ("约束", "硬边界", "lock", "验证出错时损失被限制在哪", "gate"),
     ]
-    bw, gap = 190, 32
+    bw, gap = 190, 30
     x0 = (W - (bw * 5 + gap * 4)) / 2
-    for i, (stage, mech, q, st) in enumerate(stages):
+    top = 106
+    for i, (stage, mech, ic, q, st) in enumerate(stages):
         x = x0 + i * (bw + gap)
         bg, stc, tc = PALETTE[st]
-        s.append(box(x, 120, bw, 150, st, rx=10))
-        s.append(txt(x + bw / 2, 158, stage, 22, tc, anchor="middle", weight="700"))
-        s.append(txt(x + bw / 2, 184, mech, 13.5, tc, anchor="middle", weight="600"))
-        s.append(txt(x + bw / 2, 210, "—— 回答 ——", 10, MUTED, anchor="middle"))
-        # wrap question into two lines roughly
+        s.append(box(x, top, bw, 176, st, rx=10))
+        s += icon(ic, x + bw / 2, top + 34, 18, stc)
+        s.append(txt(x + bw / 2, top + 74, stage, 21, tc, anchor="middle", weight="700"))
+        s.append(txt(x + bw / 2, top + 98, mech, 13, tc, anchor="middle", weight="600"))
+        s.append(f'<line x1="{x+24}" y1="{top+112}" x2="{x+bw-24}" y2="{top+112}" '
+                  f'stroke="{stc}" stroke-width="1" opacity="0.35"/>')
         mid = len(q) // 2
-        cut = q.rfind("", 0, mid + 1) if False else mid
-        l1, l2 = q[:cut], q[cut:]
-        s.append(txt(x + bw / 2, 232, l1, 11.5, MUTED, anchor="middle"))
-        s.append(txt(x + bw / 2, 250, l2, 11.5, MUTED, anchor="middle"))
-        s.append(txt(x + bw / 2, 290, f"第{'一二三四五'[i]}部分", 12, tc, anchor="middle", weight="600"))
+        l1, l2 = q[:mid], q[mid:]
+        s.append(txt(x + bw / 2, top + 134, l1, 11.5, MUTED, anchor="middle"))
+        s.append(txt(x + bw / 2, top + 152, l2, 11.5, MUTED, anchor="middle"))
+        s.append(txt(x + bw / 2, top + 170 - 4, f"第{'一二三四五'[i]}部分", 11.5, tc,
+                     anchor="middle", weight="600"))
         if i > 0:
             px = x0 + (i - 1) * (bw + gap) + bw
-            s.append(arrow(px + 4, 195, x - 4, 195, sw=2))
-    s.append(txt(40, 350, "这五件事不是五个独立模块，是同一个动作生命周期里的五个必经关卡——", 13, INK))
-    s.append(txt(40, 374, "少了任何一关，系统就会在那个位置上失守；它们全部长在下一张图那同一个循环上。", 13, INK))
+            s.append(arrow(px + 4, top + 34, x - 4, top + 34, sw=2))
+    # 闭环：从最后一环画一条弧线绕回第一环，强调这是循环不是流水线终点
+    loop_y = top + 176 + 34
+    s.append(poly([(x0 + 4 * (bw + gap) + bw / 2, top + 176), (x0 + 4 * (bw + gap) + bw / 2, loop_y),
+                   (x0 + bw / 2, loop_y), (x0 + bw / 2, top + 176 + 4)],
+                  color="#94a3b8", dashed=True, sw=1.6))
+    s.append(txt((x0 + bw / 2 + x0 + 4 * (bw + gap) + bw / 2) / 2, loop_y + 18,
+                 "约束验证之后，回到下一轮的感知——五环首尾相接，不是一条走到头的流水线",
+                 12, MUTED, anchor="middle"))
     write("five-elements.svg", s)
 
 
@@ -196,10 +292,15 @@ def panorama():
         (502, "会落地的动作", "命令／补丁 → 必须先过判定链", "gate"),
     ]
     lx, lw = 600, 452
+    bus_x = lx - 24
+    ys = [y + 23 for y, *_ in lanes] + [589]
+    s.append(f'<line x1="{bus_x}" y1="{min(ys)}" x2="{bus_x}" y2="{max(ys)}" '
+              f'stroke="{LINE}" stroke-width="1.6"/>')
+    s.append(f'<line x1="568" y1="589" x2="{bus_x}" y2="589" stroke="{LINE}" stroke-width="1.6"/>')
     for y, t, sub, st in lanes:
         s += labelled_box(lx, y, lw, 46, t, [sub], style=st, title_size=12.5, line_size=11,
                           align="left")
-        s.append(arrow(568, 589, lx - 4, y + 23))
+        s.append(arrow(bus_x, y + 23, lx - 4, y + 23, sw=1.6))
 
     # 判定链
     s.append(box(lx, 560, lw, 96, "gate", rx=8))
@@ -400,43 +501,60 @@ def safety_gates():
 
 # ---------------------------------------------------------------- 5 注意力预算
 def attention():
-    W, H = 1120, 520
+    W, H = 1120, 620
     s = header(W, H, "注意力预算的四条路径",
                "四件事看起来都是「上下文不够用」，但成本结构完全不同，所以不能用同一招去解")
 
-    cols = [
-        ("计划只在模型脑子里", "外化计划",
-         ["把整份步骤列表交给 harness", "每次整体替换，不做增量合并", "同一时刻只允许一步进行中"],
-         "换来能见度", "换不来约束力：模型照样能跳步", "attn"),
-        ("支线淹没主线", "干净上下文",
-         ["同一个循环 + 一份全新输入", "工具表收窄，禁止递归派生", "只有结论文本穿过边界"],
-         "换来主线清洁度", "代价是多烧一份 token；短任务里纯亏", "tool"),
-        ("规范每轮都在烧钱", "知识分层",
-         ["目录层：名字 + 一句话，常驻", "正文层：完整内容，按需注入", "按名字查表，不给文件路径"],
-         "把每轮必付变成用到才付", "正文进历史后仍会一路携带", "core"),
-        ("历史只增不减", "有损压缩",
-         ["旧历史交给一次无工具调用总结", "在硬上限之前主动触发", "切在最后一条用户消息之前"],
-         "换来无上限的会话长度", "信息确实会丢；压过几次就什么都不剩", "store"),
-    ]
-    for i, (sym, name, how, gain, cost, st) in enumerate(cols):
-        x = 40 + i * 270
-        bg, stc, tc = PALETTE[st]
-        s.append(txt(x + 122, 106, sym, 12.5, "#dc2626", anchor="middle", weight="600"))
-        s.append(arrow(x + 122, 116, x + 122, 140))
-        s.append(box(x, 146, 244, 200, st, rx=10))
-        s.append(txt(x + 122, 176, name, 16, tc, anchor="middle", weight="700"))
-        yy = 204
-        for h in how:
-            s.append(txt(x + 14, yy, "· " + h, 11.5, MUTED))
-            yy += 22
-        s.append(txt(x + 14, 300, gain, 12, tc, weight="600"))
-        s.append(txt(x + 14, 324, cost, 11, "#b45309"))
+    # 中心：共享的稀缺资源
+    cx, cy = W / 2, 168
+    s.append(f'<circle cx="{cx}" cy="{cy}" r="76" fill="#f8fafc" stroke="{LINE}" '
+              f'stroke-width="2"/>')
+    s += icon("compress", cx, cy - 22, 20, "#475569")
+    s.append(txt(cx, cy + 14, "上下文窗口", 14.5, "#334155", anchor="middle", weight="700"))
+    s.append(txt(cx, cy + 34, "容量有限、只读一次", 11, MUTED, anchor="middle"))
 
-    s.append(txt(40, 396, "共同前提：模型没有任何持久状态。它每一轮看到的「记忆」，就是 harness 这次递过去的那段输入。",
+    cols = [
+        ("计划只在模型脑子里", "外化计划", "layers",
+         ("把步骤表整体交给 harness 持有", "同一时刻只有一步在进行中"),
+         "换来能见度", "换不来约束力：照样能跳步", "attn"),
+        ("支线淹没主线", "干净上下文", "branch",
+         ("同一循环换一份全新输入", "工具表收窄，只有结论穿回主线"),
+         "换来主线清洁度", "多烧一份 token；短任务纯亏", "tool"),
+        ("规范每轮都在烧钱", "知识分层", "id",
+         ("目录层常驻：名字+一句话", "正文层按名字查表、按需注入"),
+         "把每轮必付变成用到才付", "正文进历史后仍一路携带", "core"),
+        ("历史只增不减", "有损压缩", "gear",
+         ("硬上限前把旧历史无工具总结", "切在最后一条用户消息之前"),
+         "换来无上限的会话长度", "信息会丢；压多次就什么都不剩", "store"),
+    ]
+    n = len(cols)
+    cw, gap = 244, 22
+    x0 = (W - (cw * n + gap * (n - 1))) / 2
+    top = 300
+    for i, (sym, name, ic, how, gain, cost, st) in enumerate(cols):
+        x = x0 + i * (cw + gap)
+        bg, stc, tc = PALETTE[st]
+        # 从中心资源引出的连接线（先各自水平错开，再垂直下降，避免斜线交叉）
+        midx = x + cw / 2
+        s.append(poly([(cx, cy + 76), (cx, 264), (midx, 264), (midx, top - 4)], color=LINE))
+        s.append(txt(midx, 282, sym, 11.5, "#dc2626", anchor="middle", weight="600"))
+
+        s.append(box(x, top, cw, 218, st, rx=10))
+        s += icon(ic, x + 30, top + 32, 16, stc)
+        s.append(txt(x + 54, top + 22, name, 15, tc, weight="700"))
+        s.append(txt(x + 14, top + 60, how[0], 11.5, MUTED))
+        s.append(txt(x + 14, top + 80, how[1], 11.5, MUTED))
+        # 换来 / 换不来：用一对色块小标签而不是整句话堆叠
+        s.append(box(x + 14, top + 148, cw - 28, 28, "ok", rx=6, fill="#ecfdf5", stroke="none"))
+        s.append(txt(x + 24, top + 166, "✓ " + gain, 11, "#065f46", weight="600"))
+        s.append(box(x + 14, top + 182, cw - 28, 28, "gate", rx=6, fill="#fff7ed", stroke="none"))
+        s.append(txt(x + 24, top + 200, "✗ " + cost, 11, "#9a3412", weight="600"))
+
+    s.append(txt(40, 556, "共同前提：模型没有任何持久状态。它每一轮看到的「记忆」，就是 harness 这次递过去的那段输入。",
                  13, INK))
-    s.append(txt(40, 424, "所以「它忘了最初要干什么」和「它塞不进下一轮」是同一个问题的两面，都不是模型的缺陷。",
+    s.append(txt(40, 580, "所以「它忘了最初要干什么」和「它塞不进下一轮」是同一个问题的两面，都不是模型的缺陷。",
                  13, INK))
-    s.append(txt(40, 460, "压缩换的是空间（有损，活在内存里）；持久化换的是寿命（无损，但不解决窗口问题）。两层都需要。",
+    s.append(txt(40, 610, "压缩换的是空间（有损，活在内存里）；持久化换的是寿命（无损，但不解决窗口问题）。两层都需要。",
                  13, "#0d9488"))
     write("attention.svg", s)
 
@@ -746,70 +864,123 @@ def triggers_outlets():
 
 # ---------------------------------------------------------------- 12 多执行者四层边界
 def multi_agent():
-    W, H = 1060, 560
-    s = header(W, H, "「多执行者」其实是四件互相独立的事",
-               "注意力怎么隔离、信息怎么传递、顺序怎么保证、文件在哪写——混在一起想，会设计出一团乱麻")
-
-    layers = [
-        ("注意力边界", "各带一份私有上下文；信箱传消息，过境的东西必须被显式说出来",
-         "没有它：支线的几十轮中间过程淹没主线", "tool"),
-        ("规则边界", "任务带依赖集合；认领时检查，不满足就拒绝",
-         "没有它：三个执行者各自跳步，没有任何地方看得出全局顺序被破坏", "gate"),
-        ("并发正确性", "请求带 id 对账；认领的复查与置位必须原子",
-         "没有它：回执对不上账；两个执行者同时抢到同一份活", "attn"),
-        ("地盘边界", "各自一份工作目录；冲突推迟到交回那一刻由 git 诚实暴露",
-         "没有它：并行写入互相覆盖，事后分不清哪行属于哪份活", "store"),
+    W, H = 700, 660
+    s = [
+        f'<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" '
+        f'viewBox="0 0 {W} {H}" font-family="{FONT}">',
+        f'<rect width="{W}" height="{H}" fill="#ffffff"/>',
+        '<defs>',
+        f'<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" '
+        f'markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="{LINE}"/></marker>',
+        '</defs>',
+        txt(32, 40, "「多执行者」其实是四件互相独立的事", 21, INK, weight="600"),
+        txt(32, 64, "注意力怎么隔离、信息怎么传递、顺序怎么保证、", 13, MUTED),
+        txt(32, 82, "文件在哪写——混在一起想，会设计出一团乱麻", 13, MUTED),
     ]
-    for i, (t, how, bad, st) in enumerate(layers):
-        y = 108 + i * 96
-        bg, stc, tc = PALETTE[st]
-        s.append(box(40, y, 980, 80, st, rx=9))
-        s.append(txt(60, y + 30, f"{i+1}. {t}", 15, tc, weight="700"))
-        s.append(txt(60, y + 54, how, 12, MUTED))
-        s.append(txt(1000, y + 30, bad, 11.5, "#b45309", anchor="end"))
 
-    s += labelled_box(40, 500, 470, 44, "前提：多执行者默认是亏的",
-                      [], style="gate", title_size=13.5)
-    s.append(txt(60, 536, "每个执行者独立烧 token，总成本高于单个。", 11.5, MUTED))
-    s += labelled_box(550, 500, 470, 44, "只在任务确实能拆、且每部分都有大量中间过程时才划算", [],
-                      style="ok", title_size=13)
-    s.append(txt(570, 536, "主流产品默认只在用户明确要求并行时才派生——这个保守默认是对的。", 11.5, MUTED))
+    cw, ch, gap = 288, 186, 24
+    x_l, x_r = 32, 32 + cw + gap
+    y_t, y_b = 118, 118 + ch + gap
+    cx, cy = (x_l + x_r + cw) / 2, (y_t + y_b + ch) / 2
+
+    # 中心：共享资源
+    s.append(f'<circle cx="{cx}" cy="{cy}" r="58" fill="#f8fafc" stroke="{LINE}" stroke-width="2"/>')
+    s += icon("box3d", cx, cy - 14, 16, "#475569")
+    s.append(txt(cx, cy + 18, "共享资源", 12.5, "#334155", anchor="middle", weight="700"))
+    s.append(txt(cx, cy + 34, "任务队列/仓库/上下文", 9.5, MUTED, anchor="middle"))
+
+    quads = [
+        (x_l, y_t, "mailbox", "① 注意力边界", "tool",
+         ("各带私有上下文；信箱传消息，", "过境内容必须显式说出"),
+         "没有它：支线几十轮细节淹没主线"),
+        (x_r, y_t, "shield", "② 规则边界", "gate",
+         ("任务带依赖集合；认领时检查，", "不满足就拒绝"),
+         "没有它：全局顺序被悄悄破坏"),
+        (x_l, y_b, "id", "③ 并发正确性", "attn",
+         ("请求带 id 对账；认领的复查", "与置位必须原子"),
+         "没有它：两个执行者抢到同一份活"),
+        (x_r, y_b, "folder", "④ 地盘边界", "store",
+         ("各自一份工作目录；冲突推迟到", "交回那一刻由 git 暴露"),
+         "没有它：并行写入互相覆盖"),
+    ]
+    for x, y, ic, t, st, how, bad in quads:
+        bg, stc, tc = PALETTE[st]
+        s.append(box(x, y, cw, ch, st, rx=10))
+        s += icon(ic, x + 28, y + 30, 15, stc)
+        s.append(txt(x + 50, y + 22, t, 13.5, tc, weight="700"))
+        s.append(txt(x + 16, y + 58, how[0], 11, MUTED))
+        s.append(txt(x + 16, y + 76, how[1], 11, MUTED))
+        s.append(box(x + 16, y + ch - 42, cw - 32, 26, "gate", rx=6, fill="#fff7ed", stroke="none"))
+        s.append(txt(x + 24, y + ch - 24, bad, 10, "#9a3412", weight="600"))
+
+    s.append(txt(32, 542, "前提：多执行者默认是亏的", 13.5, "#7f1d1d", weight="700"))
+    s.append(txt(32, 564, "每个执行者独立烧 token，总成本高于单个；只在任务确实能拆、", 12, MUTED))
+    s.append(txt(32, 584, "且每部分都有大量中间过程时才划算。", 12, MUTED))
+    s.append(txt(32, 616, "主流产品默认只在用户明确要求并行时才派生——这个保守默认是对的。", 12, "#0d9488"))
     write("multi-agent-boundaries.svg", s)
 
 
 # ---------------------------------------------------------------- 13 隔离级别
 def isolation_levels():
-    W, H = 1060, 480
-    s = header(W, H, "隔离的三个级别，不要互相替代",
+    W, H = 1080, 560
+    s = header(W, H, "隔离的三个级别，是包含关系不是并列选项",
                "用目录隔离去解决「不信任这段代码」是错配；用容器去解决「别互相覆盖」是过度设计")
 
-    cards = [
-        (40, "工作目录隔离", "同一仓库开出另一份工作目录",
-         ["隔： 工作区目录", "共享： 同一台机器、同一个内核、同一份对象库",
-          "适用： 本机并行会话", "不适用： 约束不可信代码——它还在你的机器上跑"], "core"),
-        (380, "沙箱", "套在落地执行上的笼子",
-         ["隔： 当前工作目录之外的一切（含网络）", "共享： 同一台机器、同一个文件系统",
-          "适用： 限制单个执行者的破坏半径", "不适用： 提供并行能力——它只管边界"], "gate"),
-        (720, "环境隔离", "容器 / 微型虚拟机",
-         ["隔： 文件系统、进程、网络", "共享： 只共享宿主的硬件",
-          "适用： 云端任务、不可信代码", "不适用： 日常本机——启动与调试成本高一个量级"], "store"),
+    # 左侧：三层同心矩形，直观表达「一层比一层大」的包含关系
+    cx = 280
+    rings = [
+        (110, 90, 340, 300, "store", "环境隔离", "容器 / 微型虚拟机"),
+        (150, 130, 260, 220, "gate", "沙箱", "落地执行上的笼子"),
+        (190, 170, 180, 140, "core", "工作目录隔离", "同一仓库另一份目录"),
     ]
-    for x, t, sub, ls, st in cards:
+    for y, x, w, h, st, t, sub in rings:
         bg, stc, tc = PALETTE[st]
-        s.append(box(x, 110, 300, 216, st, rx=10))
-        s.append(txt(x + 150, 142, t, 15.5, tc, anchor="middle", weight="700"))
-        s.append(txt(x + 150, 164, sub, 11.5, MUTED, anchor="middle"))
-        yy = 198
-        for ln in ls:
-            s.append(txt(x + 16, yy, ln, 11.5, MUTED))
-            yy += 32
-    s.append(txt(40, 372, "目录隔离的关键性质：真正的冲突不会消失，只是被推迟到交回那一刻由 git 诚实地暴露。",
-                 13, INK))
-    s.append(txt(40, 396, "这是特性不是缺陷——并行工作本来就会产生冲突，能做的是让它在一个明确的时刻、"
-                 "以可处理的形式出现，", 13, INK))
-    s.append(txt(40, 418, "而不是以「文件被静默覆盖」的形式消失。", 13, INK))
-    s.append(txt(40, 452, "工作目录由 harness 在会话启动时定，模型没有「创建工作目录」这个工具——"
-                 "目录归属属于编排层的决定。", 12.5, MUTED))
+        s.append(box(x, y, w, h, st, rx=14, fill=bg, sw=2))
+    # 最内层单独写标题在圈内，外两层标题写在各自圆环的顶部空隙里
+    y, x, w, h, st, t, sub = rings[2]
+    bg, stc, tc = PALETTE[st]
+    s.append(txt(x + w / 2, y + h / 2 - 6, t, 13.5, tc, anchor="middle", weight="700"))
+    s.append(txt(x + w / 2, y + h / 2 + 14, sub, 10.5, MUTED, anchor="middle"))
+    for y, x, w, h, st, t, sub in rings[:2]:
+        bg, stc, tc = PALETTE[st]
+        s.append(txt(x + 16, y + 18, t, 13.5, tc, weight="700"))
+        s.append(txt(x + 16, y + 34, sub, 10.5, MUTED))
+
+    # 右侧：与三层一一对应的属性表，用引导线连接，避免图内塞满文字
+    rows = [
+        (rings[2], "工作目录隔离",
+         ["隔： 工作区目录", "共享： 同一台机器、内核、对象库",
+          "适用： 本机并行会话",
+          "不适用： 约束不可信代码——它还在你机器上跑"]),
+        (rings[1], "沙箱",
+         ["隔： 当前目录之外的一切（含网络）", "共享： 同一台机器、同一个文件系统",
+          "适用： 限制单个执行者的破坏半径",
+          "不适用： 提供并行能力——它只管边界"]),
+        (rings[0], "环境隔离",
+         ["隔： 文件系统、进程、网络", "共享： 只共享宿主的硬件",
+          "适用： 云端任务、不可信代码",
+          "不适用： 日常本机——启动调试成本高一档"]),
+    ]
+    rx0, ry0 = 640, 108
+    for i, (ring, t, lines) in enumerate(rows):
+        ry = ry0 + i * 148
+        yy0, xx0, ww, hh, st, _, _ = ring
+        bg, stc, tc = PALETTE[st]
+        s.append(box(rx0, ry, 400, 128, st, rx=10, fill="#ffffff"))
+        s.append(txt(rx0 + 16, ry + 26, t, 14, tc, weight="700"))
+        yy = ry + 48
+        for ln in lines:
+            s.append(txt(rx0 + 16, yy, ln, 11, MUTED)); yy += 20
+        # 引导线：从圆环右边缘连到对应说明卡片左边缘
+        edge_x = xx0 + ww
+        edge_y = yy0 + hh * 0.22 if i < 2 else yy0 + hh / 2
+        s.append(poly([(edge_x, edge_y), (edge_x + 24, edge_y), (edge_x + 24, ry + 64),
+                       (rx0 - 4, ry + 64)], color=stc, sw=1.4, dashed=True))
+
+    s.append(txt(40, 486, "目录隔离的关键性质：真正的冲突不会消失，只是被推迟到交回那一刻由 git 诚实地暴露——", 13, INK))
+    s.append(txt(40, 508, "这是特性不是缺陷，而不是以「文件被静默覆盖」的形式消失。", 13, INK))
+    s.append(txt(40, 538, "工作目录由 harness 在会话启动时定，模型没有「创建工作目录」这个工具——目录归属属于编排层的决定。",
+                 12.5, MUTED))
     write("isolation-levels.svg", s)
 
 
@@ -857,20 +1028,27 @@ def journey():
     s = header(W, H, "一次落地执行的完整旅程",
                "一条「改一个文件」的请求，从进来到结束——包括两次失败与重试")
 
+    # 颜色按「三道接缝」分类，而不是随意轮换——一眼看出每一步挂在循环的哪个位置
+    seam_names = {"core": "模型调用外套", "gate": "分发外套（判定链）", "tool": "注册表内侧"}
     steps = [
         ("① 进入", "消息追加进序列，同时落盘", "core"),
-        ("② 预算闸门", "超了预算 → 切在最后一条用户消息之前，把旧历史压成摘要", "attn"),
+        ("② 预算闸门", "超了预算 → 切在最后一条用户消息之前，把旧历史压成摘要", "core"),
         ("③ 组装指令", "内置 base + 逐层项目约定；配置项走另一条链，不进这段文本", "core"),
-        ("④ 调用模型", "返回 429 → 带抖动退避 → 第二次通了", "gate"),
-        ("⑤ 追加 + 落盘", "整段原样追加，一个字节都不改写", "store"),
+        ("④ 调用模型", "返回 429 → 带抖动退避 → 第二次通了", "core"),
+        ("⑤ 追加 + 落盘", "整段原样追加，一个字节都不改写", "core"),
         ("⑥ 结构判据", "有工具调用 → 不收尾，进入分发", "core"),
-        ("⑦ 分发", "按名字查表，命中补丁工具；工具的身份决定它走哪条路", "tool"),
+        ("⑦ 分发", "按名字查表，命中补丁工具；工具的身份决定它走哪条路", "gate"),
         ("⑧ 判定链", "钩子信任 → 能力 → 旁路 → 沙箱（路径在工作区内，放行）→ 审批（弹出 diff，人批准）", "gate"),
-        ("⑨ 执行", "先在内存里算出每个文件的最终形态；一个文件上下文没匹配上 → 整个补丁被拒绝，磁盘一字节未动", "gate"),
-        ("⑩ 结果回写", "返回一条精确到文件与位置的错误，作为普通工具结果追加进序列并落盘", "store"),
-        ("⑪ 模型修正", "下一轮读到那条错误 → 重新读文件 → 产出修正过的补丁 → 这次落盘成功", "ok"),
-        ("⑫ 收尾", "再下一轮不再调用任何工具 → 抽出最终文本，退出；会话仍躺在磁盘上", "ok"),
+        ("⑨ 执行", "先在内存里算出每个文件的最终形态；一个文件上下文没匹配上 → 整个补丁被拒绝，磁盘一字节未动", "tool"),
+        ("⑩ 结果回写", "返回一条精确到文件与位置的错误，作为普通工具结果追加进序列并落盘", "core"),
+        ("⑪ 模型修正", "下一轮读到那条错误 → 重新读文件 → 产出修正过的补丁 → 这次落盘成功", "core"),
+        ("⑫ 收尾", "再下一轮不再调用任何工具 → 抽出最终文本，退出；会话仍躺在磁盘上", "core"),
     ]
+    legend_x = 700
+    for i, (key, name) in enumerate(seam_names.items()):
+        bg, stc, tc = PALETTE[key]
+        s.append(f'<circle cx="{legend_x + i*170}" cy="80" r="5" fill="{stc}"/>')
+        s.append(txt(legend_x + i * 170 + 12, 84, name, 11, MUTED))
     for i, (t, sub, st) in enumerate(steps):
         y = 104 + i * 44
         bg, stc, tc = PALETTE[st]

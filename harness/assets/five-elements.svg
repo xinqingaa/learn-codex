@@ -1,5 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1150" height="400" viewBox="0 0 1150 400" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
-<rect width="1150" height="400" fill="#ffffff"/>
+<svg xmlns="http://www.w3.org/2000/svg" width="1150" height="360" viewBox="0 0 1150 360" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
+<rect width="1150" height="360" fill="#ffffff"/>
 <defs>
 <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
 <marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
@@ -7,45 +7,64 @@
 </defs>
 <text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">一个动作生命周期里的五个环节</text>
 <text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">agent = model + harness；model 只负责生成决定，剩下的感知、行动、执行、验证、约束全部是 harness 的工作</text>
-<rect x="36.0" y="120" width="190" height="150" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="131.0" y="158" font-size="22" fill="#1e3a8a" text-anchor="middle" font-weight="700">感知</text>
-<text x="131.0" y="184" font-size="13.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">context</text>
-<text x="131.0" y="210" font-size="10" fill="#64748b" text-anchor="middle" font-weight="400">—— 回答 ——</text>
-<text x="131.0" y="232" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">这一轮该</text>
-<text x="131.0" y="250" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">看见什么</text>
-<text x="131.0" y="290" font-size="12" fill="#1e3a8a" text-anchor="middle" font-weight="600">第一部分</text>
-<rect x="258.0" y="120" width="190" height="150" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
-<text x="353.0" y="158" font-size="22" fill="#4c1d95" text-anchor="middle" font-weight="700">行动</text>
-<text x="353.0" y="184" font-size="13.5" fill="#4c1d95" text-anchor="middle" font-weight="600">tools</text>
-<text x="353.0" y="210" font-size="10" fill="#64748b" text-anchor="middle" font-weight="400">—— 回答 ——</text>
-<text x="353.0" y="232" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">意图如何变成</text>
-<text x="353.0" y="250" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">可判定的请求</text>
-<text x="353.0" y="290" font-size="12" fill="#4c1d95" text-anchor="middle" font-weight="600">第二部分</text>
-<path d="M230.0,195 L254.0,195" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
-<rect x="480.0" y="120" width="190" height="150" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
-<text x="575.0" y="158" font-size="22" fill="#134e4a" text-anchor="middle" font-weight="700">执行</text>
-<text x="575.0" y="184" font-size="13.5" fill="#134e4a" text-anchor="middle" font-weight="600">恢复</text>
-<text x="575.0" y="210" font-size="10" fill="#64748b" text-anchor="middle" font-weight="400">—— 回答 ——</text>
-<text x="575.0" y="232" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">请求如何在会失</text>
-<text x="575.0" y="250" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">败的现实里跑完</text>
-<text x="575.0" y="290" font-size="12" fill="#134e4a" text-anchor="middle" font-weight="600">第三部分</text>
-<path d="M452.0,195 L476.0,195" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
-<rect x="702.0" y="120" width="190" height="150" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
-<text x="797.0" y="158" font-size="22" fill="#78350f" text-anchor="middle" font-weight="700">验证</text>
-<text x="797.0" y="184" font-size="13.5" fill="#78350f" text-anchor="middle" font-weight="600">判断力</text>
-<text x="797.0" y="210" font-size="10" fill="#64748b" text-anchor="middle" font-weight="400">—— 回答 ——</text>
-<text x="797.0" y="232" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">这个动作</text>
-<text x="797.0" y="250" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">该不该发生</text>
-<text x="797.0" y="290" font-size="12" fill="#78350f" text-anchor="middle" font-weight="600">第四部分</text>
-<path d="M674.0,195 L698.0,195" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
-<rect x="924.0" y="120" width="190" height="150" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
-<text x="1019.0" y="158" font-size="22" fill="#7f1d1d" text-anchor="middle" font-weight="700">约束</text>
-<text x="1019.0" y="184" font-size="13.5" fill="#7f1d1d" text-anchor="middle" font-weight="600">硬边界</text>
-<text x="1019.0" y="210" font-size="10" fill="#64748b" text-anchor="middle" font-weight="400">—— 回答 ——</text>
-<text x="1019.0" y="232" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">验证出错时损</text>
-<text x="1019.0" y="250" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">失被限制在哪</text>
-<text x="1019.0" y="290" font-size="12" fill="#7f1d1d" text-anchor="middle" font-weight="600">第五部分</text>
-<path d="M896.0,195 L920.0,195" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
-<text x="40" y="350" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">这五件事不是五个独立模块，是同一个动作生命周期里的五个必经关卡——</text>
-<text x="40" y="374" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">少了任何一关，系统就会在那个位置上失守；它们全部长在下一张图那同一个循环上。</text>
+<rect x="40.0" y="106" width="190" height="176" rx="10" fill="#eff6ff" stroke="#2563eb" stroke-width="1.6"/>
+<ellipse cx="135.0" cy="140" rx="18" ry="10.44" fill="none" stroke="#2563eb" stroke-width="1.8"/>
+<circle cx="135.0" cy="140.0" r="5.4" fill="#2563eb"/>
+<text x="135.0" y="180" font-size="21" fill="#1e3a8a" text-anchor="middle" font-weight="700">感知</text>
+<text x="135.0" y="204" font-size="13" fill="#1e3a8a" text-anchor="middle" font-weight="600">context</text>
+<line x1="64.0" y1="218" x2="206.0" y2="218" stroke="#2563eb" stroke-width="1" opacity="0.35"/>
+<text x="135.0" y="240" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">这一轮该</text>
+<text x="135.0" y="258" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">看见什么</text>
+<text x="135.0" y="272" font-size="11.5" fill="#1e3a8a" text-anchor="middle" font-weight="600">第一部分</text>
+<rect x="260.0" y="106" width="190" height="176" rx="10" fill="#f5f3ff" stroke="#7c3aed" stroke-width="1.6"/>
+<line x1="342.4" y1="152.6" x2="361.3" y2="133.7" stroke="#7c3aed" stroke-width="3.24" stroke-linecap="round"/>
+<circle cx="341.5" cy="153.5" r="5.8" fill="none" stroke="#7c3aed" stroke-width="1.8"/>
+<circle cx="364.9" cy="130.1" r="5.4" fill="none" stroke="#7c3aed" stroke-width="1.8"/>
+<text x="355.0" y="180" font-size="21" fill="#4c1d95" text-anchor="middle" font-weight="700">行动</text>
+<text x="355.0" y="204" font-size="13" fill="#4c1d95" text-anchor="middle" font-weight="600">tools</text>
+<line x1="284.0" y1="218" x2="426.0" y2="218" stroke="#7c3aed" stroke-width="1" opacity="0.35"/>
+<text x="355.0" y="240" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">意图如何变成</text>
+<text x="355.0" y="258" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">可判定的请求</text>
+<text x="355.0" y="272" font-size="11.5" fill="#4c1d95" text-anchor="middle" font-weight="600">第二部分</text>
+<path d="M234.0,140 L256.0,140" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+<rect x="480.0" y="106" width="190" height="176" rx="10" fill="#f0fdfa" stroke="#0d9488" stroke-width="1.6"/>
+<circle cx="575.0" cy="140.0" r="9.4" fill="none" stroke="#0d9488" stroke-width="1.8"/>
+<line x1="585.1" y1="140.0" x2="592.1" y2="140.0" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="582.1" y1="147.1" x2="587.1" y2="152.1" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="575.0" y1="150.1" x2="575.0" y2="157.1" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="567.9" y1="147.1" x2="562.9" y2="152.1" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="564.9" y1="140.0" x2="557.9" y2="140.0" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="567.9" y1="132.9" x2="562.9" y2="127.9" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="575.0" y1="129.9" x2="575.0" y2="122.9" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<line x1="582.1" y1="132.9" x2="587.1" y2="127.9" stroke="#0d9488" stroke-width="2.3400000000000003" stroke-linecap="round"/>
+<text x="575.0" y="180" font-size="21" fill="#134e4a" text-anchor="middle" font-weight="700">执行</text>
+<text x="575.0" y="204" font-size="13" fill="#134e4a" text-anchor="middle" font-weight="600">恢复</text>
+<line x1="504.0" y1="218" x2="646.0" y2="218" stroke="#0d9488" stroke-width="1" opacity="0.35"/>
+<text x="575.0" y="240" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">请求如何在会失</text>
+<text x="575.0" y="258" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">败的现实里跑完</text>
+<text x="575.0" y="272" font-size="11.5" fill="#134e4a" text-anchor="middle" font-weight="600">第三部分</text>
+<path d="M454.0,140 L476.0,140" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+<rect x="700.0" y="106" width="190" height="176" rx="10" fill="#fffbeb" stroke="#d97706" stroke-width="1.6"/>
+<path d="M795.0,122 L809.76,131.0 L809.76,142.7 Q809.76,155.3 795.0,158 Q780.24,155.3 780.24,142.7 L780.24,131.0 Z" fill="none" stroke="#d97706" stroke-width="1.8" stroke-linejoin="round"/>
+<path d="M788.88,140 L794.28,145.4 L802.2,134.96" fill="none" stroke="#d97706" stroke-width="2.16" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="795.0" y="180" font-size="21" fill="#78350f" text-anchor="middle" font-weight="700">验证</text>
+<text x="795.0" y="204" font-size="13" fill="#78350f" text-anchor="middle" font-weight="600">判断力</text>
+<line x1="724.0" y1="218" x2="866.0" y2="218" stroke="#d97706" stroke-width="1" opacity="0.35"/>
+<text x="795.0" y="240" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">这个动作</text>
+<text x="795.0" y="258" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">该不该发生</text>
+<text x="795.0" y="272" font-size="11.5" fill="#78350f" text-anchor="middle" font-weight="600">第四部分</text>
+<path d="M674.0,140 L696.0,140" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+<rect x="920.0" y="106" width="190" height="176" rx="10" fill="#fef2f2" stroke="#dc2626" stroke-width="1.6"/>
+<rect x="1003.84" y="139.1" width="22.32" height="15.299999999999999" rx="3" fill="none" stroke="#dc2626" stroke-width="1.8"/>
+<path d="M1008.88,139.1 L1008.88,132.8 Q1008.88,125.6 1015.0,125.6 Q1021.12,125.6 1021.12,132.8 L1021.12,139.1" fill="none" stroke="#dc2626" stroke-width="1.8"/>
+<circle cx="1015.0" cy="145.8" r="1.6" fill="#dc2626"/>
+<text x="1015.0" y="180" font-size="21" fill="#7f1d1d" text-anchor="middle" font-weight="700">约束</text>
+<text x="1015.0" y="204" font-size="13" fill="#7f1d1d" text-anchor="middle" font-weight="600">硬边界</text>
+<line x1="944.0" y1="218" x2="1086.0" y2="218" stroke="#dc2626" stroke-width="1" opacity="0.35"/>
+<text x="1015.0" y="240" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">验证出错时损</text>
+<text x="1015.0" y="258" font-size="11.5" fill="#64748b" text-anchor="middle" font-weight="400">失被限制在哪</text>
+<text x="1015.0" y="272" font-size="11.5" fill="#7f1d1d" text-anchor="middle" font-weight="600">第五部分</text>
+<path d="M894.0,140 L916.0,140" fill="none" stroke="#94a3b8" stroke-width="2" marker-end="url(#a)"/>
+<polyline points="1015.0,282 1015.0,316 135.0,316 135.0,286" fill="none" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#a)" stroke-dasharray="5 4"/>
+<text x="575.0" y="334" font-size="12" fill="#64748b" text-anchor="middle" font-weight="400">约束验证之后，回到下一轮的感知——五环首尾相接，不是一条走到头的流水线</text>
 </svg>
