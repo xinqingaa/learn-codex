@@ -103,6 +103,43 @@ def write(name, parts):
     print("wrote", name)
 
 
+# ---------------------------------------------------------------- 0 五个环节
+def five_elements():
+    W, H = 1150, 400
+    s = header(W, H, "一个动作生命周期里的五个环节",
+               "agent = model + harness；model 只负责生成决定，剩下的感知、行动、执行、验证、约束全部是 harness 的工作")
+
+    stages = [
+        ("感知", "context", "这一轮该看见什么", "core"),
+        ("行动", "tools", "意图如何变成可判定的请求", "tool"),
+        ("执行", "恢复", "请求如何在会失败的现实里跑完", "store"),
+        ("验证", "判断力", "这个动作该不该发生", "attn"),
+        ("约束", "硬边界", "验证出错时损失被限制在哪", "gate"),
+    ]
+    bw, gap = 190, 32
+    x0 = (W - (bw * 5 + gap * 4)) / 2
+    for i, (stage, mech, q, st) in enumerate(stages):
+        x = x0 + i * (bw + gap)
+        bg, stc, tc = PALETTE[st]
+        s.append(box(x, 120, bw, 150, st, rx=10))
+        s.append(txt(x + bw / 2, 158, stage, 22, tc, anchor="middle", weight="700"))
+        s.append(txt(x + bw / 2, 184, mech, 13.5, tc, anchor="middle", weight="600"))
+        s.append(txt(x + bw / 2, 210, "—— 回答 ——", 10, MUTED, anchor="middle"))
+        # wrap question into two lines roughly
+        mid = len(q) // 2
+        cut = q.rfind("", 0, mid + 1) if False else mid
+        l1, l2 = q[:cut], q[cut:]
+        s.append(txt(x + bw / 2, 232, l1, 11.5, MUTED, anchor="middle"))
+        s.append(txt(x + bw / 2, 250, l2, 11.5, MUTED, anchor="middle"))
+        s.append(txt(x + bw / 2, 290, f"第{'一二三四五'[i]}部分", 12, tc, anchor="middle", weight="600"))
+        if i > 0:
+            px = x0 + (i - 1) * (bw + gap) + bw
+            s.append(arrow(px + 4, 195, x - 4, 195, sw=2))
+    s.append(txt(40, 350, "这五件事不是五个独立模块，是同一个动作生命周期里的五个必经关卡——", 13, INK))
+    s.append(txt(40, 374, "少了任何一关，系统就会在那个位置上失守；它们全部长在下一张图那同一个循环上。", 13, INK))
+    write("five-elements.svg", s)
+
+
 # ---------------------------------------------------------------- 1 全景图
 def panorama():
     W, H = 1160, 950
@@ -894,6 +931,7 @@ def seams():
 
 
 if __name__ == "__main__":
+    five_elements()
     panorama()
     tool_registry()
     trust_axes()
