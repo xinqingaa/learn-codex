@@ -1,43 +1,61 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="560" viewBox="0 0 1080 560" font-family="'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif">
-<rect width="1080" height="560" fill="#ffffff"/>
-<defs>
-<marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/></marker>
-<marker id="ar" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#dc2626"/></marker>
-<marker id="ag" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#059669"/></marker>
-</defs>
-<text x="36" y="40" font-size="21" fill="#0f172a" text-anchor="start" font-weight="600">隔离的三个级别，是包含关系不是并列选项</text>
-<text x="36" y="66" font-size="13" fill="#64748b" text-anchor="start" font-weight="400">用目录隔离去解决「不信任这段代码」是错配；用容器去解决「别互相覆盖」是过度设计</text>
-<rect x="90" y="110" width="340" height="300" rx="14" fill="#f0fdfa" stroke="#0d9488" stroke-width="2"/>
-<rect x="130" y="150" width="260" height="220" rx="14" fill="#fef2f2" stroke="#dc2626" stroke-width="2"/>
-<rect x="170" y="190" width="180" height="140" rx="14" fill="#eff6ff" stroke="#2563eb" stroke-width="2"/>
-<text x="260.0" y="254.0" font-size="13.5" fill="#1e3a8a" text-anchor="middle" font-weight="700">工作目录隔离</text>
-<text x="260.0" y="274.0" font-size="10.5" fill="#64748b" text-anchor="middle" font-weight="400">同一仓库另一份目录</text>
-<text x="106" y="128" font-size="13.5" fill="#134e4a" text-anchor="start" font-weight="700">环境隔离</text>
-<text x="106" y="144" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="400">容器 / 微型虚拟机</text>
-<text x="146" y="168" font-size="13.5" fill="#7f1d1d" text-anchor="start" font-weight="700">沙箱</text>
-<text x="146" y="184" font-size="10.5" fill="#64748b" text-anchor="start" font-weight="400">落地执行上的笼子</text>
-<rect x="640" y="108" width="400" height="128" rx="10" fill="#ffffff" stroke="#2563eb" stroke-width="1.6"/>
-<text x="656" y="134" font-size="14" fill="#1e3a8a" text-anchor="start" font-weight="700">工作目录隔离</text>
-<text x="656" y="156" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">隔： 工作区目录</text>
-<text x="656" y="176" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">共享： 同一台机器、内核、对象库</text>
-<text x="656" y="196" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">适用： 本机并行会话</text>
-<text x="656" y="216" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">不适用： 约束不可信代码——它还在你机器上跑</text>
-<polyline points="350,220.8 374,220.8 374,172 636,172" fill="none" stroke="#2563eb" stroke-width="1.4" marker-end="url(#a)" stroke-dasharray="5 4"/>
-<rect x="640" y="256" width="400" height="128" rx="10" fill="#ffffff" stroke="#dc2626" stroke-width="1.6"/>
-<text x="656" y="282" font-size="14" fill="#7f1d1d" text-anchor="start" font-weight="700">沙箱</text>
-<text x="656" y="304" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">隔： 当前目录之外的一切（含网络）</text>
-<text x="656" y="324" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">共享： 同一台机器、同一个文件系统</text>
-<text x="656" y="344" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">适用： 限制单个执行者的破坏半径</text>
-<text x="656" y="364" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">不适用： 提供并行能力——它只管边界</text>
-<polyline points="390,198.4 414,198.4 414,320 636,320" fill="none" stroke="#dc2626" stroke-width="1.4" marker-end="url(#a)" stroke-dasharray="5 4"/>
-<rect x="640" y="404" width="400" height="128" rx="10" fill="#ffffff" stroke="#0d9488" stroke-width="1.6"/>
-<text x="656" y="430" font-size="14" fill="#134e4a" text-anchor="start" font-weight="700">环境隔离</text>
-<text x="656" y="452" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">隔： 文件系统、进程、网络</text>
-<text x="656" y="472" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">共享： 只共享宿主的硬件</text>
-<text x="656" y="492" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">适用： 云端任务、不可信代码</text>
-<text x="656" y="512" font-size="11" fill="#64748b" text-anchor="start" font-weight="400">不适用： 日常本机——启动调试成本高一档</text>
-<polyline points="430,260.0 454,260.0 454,468 636,468" fill="none" stroke="#0d9488" stroke-width="1.4" marker-end="url(#a)" stroke-dasharray="5 4"/>
-<text x="40" y="486" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">目录隔离的关键性质：真正的冲突不会消失，只是被推迟到交回那一刻由 git 诚实地暴露——</text>
-<text x="40" y="508" font-size="13" fill="#0f172a" text-anchor="start" font-weight="400">这是特性不是缺陷，而不是以「文件被静默覆盖」的形式消失。</text>
-<text x="40" y="538" font-size="12.5" fill="#64748b" text-anchor="start" font-weight="400">工作目录由 harness 在会话启动时定，模型没有「创建工作目录」这个工具——目录归属属于编排层的决定。</text>
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900">
+<style>text{font-family:'PingFang SC','Hiragino Sans GB','Heiti SC','Microsoft YaHei',sans-serif;letter-spacing:0}</style>
+<rect width="1600" height="900" fill="#ffffff"/>
+<text x="64" y="68" font-size="32" fill="#1f2a28" text-anchor="start" font-weight="650">隔离的三个级别，是包含关系不是并列选项</text>
+<text x="64" y="100" font-size="17" fill="#5b6b67" text-anchor="start" font-weight="400">用目录隔离去解决「不信任这段代码」是错配；用整台虚拟机去解决「别互相覆盖」是过度设计</text>
+<rect x="80.0" y="150" width="520" height="680" rx="18" fill="#eaf5f1" stroke="#177b65" stroke-width="2.4"/>
+<rect x="155.0" y="279.0" width="370" height="490" rx="18" fill="#fbecec" stroke="#bd5254" stroke-width="2.4"/>
+<rect x="230.0" y="374.0" width="220" height="300" rx="18" fill="#eef3fc" stroke="#3268bf" stroke-width="2.4"/>
+<circle cx="114.0" cy="184" r="20" fill="#ffffff" stroke="#177b65" stroke-width="1.6"/>
+<g transform="translate(99.7,169.7) scale(1.1)" fill="none" stroke="#177b65" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="22" height="6" rx="1.5"/><circle cx="20" cy="5" r="0.9" fill="#177b65"/><rect x="2" y="10" width="22" height="6" rx="1.5"/><circle cx="20" cy="13" r="0.9" fill="#177b65"/><rect x="2" y="18" width="22" height="6" rx="1.5"/><circle cx="20" cy="21" r="0.9" fill="#177b65"/></g>
+<text x="144.0" y="180" font-size="17" fill="#0f4a3f" text-anchor="start" font-weight="650">环境隔离</text>
+<text x="144.0" y="200" font-size="12.5" fill="#5b6b67" text-anchor="start" font-weight="400">容器 / 微型虚拟机</text>
+<circle cx="189.0" cy="313.0" r="20" fill="#ffffff" stroke="#bd5254" stroke-width="1.6"/>
+<g transform="translate(174.7,298.7) scale(1.1)" fill="none" stroke="#bd5254" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="22" height="22" rx="3"/><line x1="7.5" y1="4" x2="7.5" y2="22"/><line x1="12.5" y1="4" x2="12.5" y2="22"/><line x1="17.5" y1="4" x2="17.5" y2="22"/></g>
+<text x="219.0" y="309.0" font-size="17" fill="#7a2f31" text-anchor="start" font-weight="650">沙箱</text>
+<text x="219.0" y="329.0" font-size="12.5" fill="#5b6b67" text-anchor="start" font-weight="400">落地执行上的笼子</text>
+<circle cx="340.0" cy="494.0" r="22" fill="#ffffff" stroke="#3268bf" stroke-width="1.6"/>
+<g transform="translate(324.4,478.4) scale(1.2)" fill="none" stroke="#3268bf" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2,19 V6 Q2,4 4,4 H9 L11.5,7 H20 Q22,7 22,9 V19 Q22,21 20,21 H4 Q2,21 2,19 Z"/></g>
+<text x="340.0" y="536.0" font-size="16" fill="#1d3a66" text-anchor="middle" font-weight="650">工作目录隔离</text>
+<text x="340.0" y="556.0" font-size="12" fill="#5b6b67" text-anchor="middle" font-weight="400">同一仓库另一份目录</text>
+<rect x="700" y="150" width="800" height="210" rx="14" fill="#eaf5f1" stroke="#177b65" stroke-width="2.2"/>
+<circle cx="738" cy="188" r="22" fill="#ffffff" stroke="#177b65" stroke-width="1.6"/>
+<g transform="translate(722.4,172.4) scale(1.2)" fill="none" stroke="#177b65" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="22" height="6" rx="1.5"/><circle cx="20" cy="5" r="0.9" fill="#177b65"/><rect x="2" y="10" width="22" height="6" rx="1.5"/><circle cx="20" cy="13" r="0.9" fill="#177b65"/><rect x="2" y="18" width="22" height="6" rx="1.5"/><circle cx="20" cy="21" r="0.9" fill="#177b65"/></g>
+<text x="772" y="194" font-size="20" fill="#0f4a3f" text-anchor="start" font-weight="650">环境隔离</text>
+<text x="730" y="232" font-size="13" fill="#0f4a3f" text-anchor="start" font-weight="700">隔</text>
+<text x="792" y="232" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">文件系统、进程、网络</text>
+<text x="730" y="264" font-size="13" fill="#0f4a3f" text-anchor="start" font-weight="700">共享</text>
+<text x="792" y="264" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">只共享宿主的硬件</text>
+<text x="730" y="296" font-size="13" fill="#0f4a3f" text-anchor="start" font-weight="700">适用</text>
+<text x="792" y="296" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">云端任务、不可信代码</text>
+<text x="730" y="328" font-size="13" fill="#0f4a3f" text-anchor="start" font-weight="700">不适用</text>
+<text x="792" y="328" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">日常本机——启动调试成本高一档</text>
+<rect x="700" y="385" width="800" height="210" rx="14" fill="#fbecec" stroke="#bd5254" stroke-width="2.2"/>
+<circle cx="738" cy="423" r="22" fill="#ffffff" stroke="#bd5254" stroke-width="1.6"/>
+<g transform="translate(722.4,407.4) scale(1.2)" fill="none" stroke="#bd5254" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="2" width="22" height="22" rx="3"/><line x1="7.5" y1="4" x2="7.5" y2="22"/><line x1="12.5" y1="4" x2="12.5" y2="22"/><line x1="17.5" y1="4" x2="17.5" y2="22"/></g>
+<text x="772" y="429" font-size="20" fill="#7a2f31" text-anchor="start" font-weight="650">沙箱</text>
+<text x="730" y="467" font-size="13" fill="#7a2f31" text-anchor="start" font-weight="700">隔</text>
+<text x="792" y="467" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">当前目录之外的一切（含网络）</text>
+<text x="730" y="499" font-size="13" fill="#7a2f31" text-anchor="start" font-weight="700">共享</text>
+<text x="792" y="499" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">同一台机器、同一个文件系统</text>
+<text x="730" y="531" font-size="13" fill="#7a2f31" text-anchor="start" font-weight="700">适用</text>
+<text x="792" y="531" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">限制单个执行者的破坏半径</text>
+<text x="730" y="563" font-size="13" fill="#7a2f31" text-anchor="start" font-weight="700">不适用</text>
+<text x="792" y="563" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">提供并行能力——它只管边界</text>
+<rect x="700" y="620" width="800" height="210" rx="14" fill="#eef3fc" stroke="#3268bf" stroke-width="2.2"/>
+<circle cx="738" cy="658" r="22" fill="#ffffff" stroke="#3268bf" stroke-width="1.6"/>
+<g transform="translate(722.4,642.4) scale(1.2)" fill="none" stroke="#3268bf" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M2,19 V6 Q2,4 4,4 H9 L11.5,7 H20 Q22,7 22,9 V19 Q22,21 20,21 H4 Q2,21 2,19 Z"/></g>
+<text x="772" y="664" font-size="20" fill="#1d3a66" text-anchor="start" font-weight="650">工作目录隔离</text>
+<text x="730" y="702" font-size="13" fill="#1d3a66" text-anchor="start" font-weight="700">隔</text>
+<text x="792" y="702" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">工作区目录</text>
+<text x="730" y="734" font-size="13" fill="#1d3a66" text-anchor="start" font-weight="700">共享</text>
+<text x="792" y="734" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">同一台机器、内核、对象库</text>
+<text x="730" y="766" font-size="13" fill="#1d3a66" text-anchor="start" font-weight="700">适用</text>
+<text x="792" y="766" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">本机并行会话</text>
+<text x="730" y="798" font-size="13" fill="#1d3a66" text-anchor="start" font-weight="700">不适用</text>
+<text x="792" y="798" font-size="13.5" fill="#5b6b67" text-anchor="start" font-weight="400">约束不可信代码——它还在你机器上跑</text>
+<line x1="64" y1="846" x2="1536" y2="846" stroke="#e2e6e4" stroke-width="1.5"/>
+<text x="64" y="878" font-size="16" fill="#1f2a28" text-anchor="start" font-weight="400">目录隔离的关键性质：真正的冲突不会消失，只是被推迟到交回那一刻，由 git 诚实地暴露出来——</text>
+<text x="64" y="906" font-size="16" fill="#1f2a28" text-anchor="start" font-weight="400">这是特性不是缺陷，而不是以「文件被静默覆盖」的形式悄悄消失。</text>
+<text x="64" y="938" font-size="14.5" fill="#5b6b67" text-anchor="start" font-weight="400">工作目录由 harness 在会话启动时决定，模型没有「创建工作目录」这个工具——目录归属是编排层的决定。</text>
 </svg>
