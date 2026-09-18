@@ -160,6 +160,7 @@ flowchart TD
 
 ## How to Read
 
+- **Want the panorama first** → read [harness/](harness/) (Chinese): maps perceive / act / execute / verify / constrain onto `s01`–`s28`. Don't memorize "Part N".
 - **To understand the principles** → read from s01 in order: each chapter's `## The Problem` and `## The Solution` first, then run the offline demo, then `## Into the Codex source` to compare with the real implementation.
 - **To look up one mechanism** → jump straight to that chapter; each is self-contained.
 - **To use the real Codex** → start with s21 (the CLI) and s22 (config) in Part II.
@@ -214,6 +215,10 @@ npm run build    # static export to web/out
 learn-codex/
 ├── s01_agent_loop/  …  s28_sessions_sandbox_safety/
 │       # 28 chapters: README.md (zh) + README.en.md + code.ts + images/*.svg
+├── harness/                               # essay: five-seam map + index into s01–s28
+│   ├── README.md
+│   ├── harness-engineering.md
+│   └── assets/
 ├── web/                                   # Next.js interactive docs site
 │   └── scripts/extract-content.ts         # build-time chapter → JSON extractor
 ├── scripts/run-all.ts                     # offline smoke test for all chapters

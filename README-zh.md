@@ -160,6 +160,7 @@ flowchart TD
 
 ## 怎么读
 
+- **想先看总图** → 读 [harness/](harness/)：按感知、行动、执行、验证、约束横切 `s01`–`s28`，不要记「第几部分」。
 - **想搞懂原理** → 从 s01 顺着读，每章先读 `## 问题` 和 `## 解决方案`，再跑一遍离线 demo，最后看 `## 深入 Codex 源码` 对照真实实现。
 - **想查某个机制** → 直接跳到对应章节；每章自包含，可独立阅读。
 - **想用真实 Codex** → 从 Part II 的 s21（CLI）和 s22（config）入手。
@@ -214,6 +215,10 @@ npm run build    # 静态导出到 web/out
 learn-codex/
 ├── s01_agent_loop/  …  s28_sessions_sandbox_safety/
 │       # 28 个章节：README.md（中文）+ README.en.md + code.ts + images/*.svg
+├── harness/                               # 长文笔记：五要素总图 + 与 s01–s28 的映射
+│   ├── README.md
+│   ├── harness-engineering.md
+│   └── assets/
 ├── web/                                   # Next.js 交互式文档站
 │   └── scripts/extract-content.ts         # 构建期把章节抽成 JSON
 ├── scripts/run-all.ts                     # 全章节离线冒烟测试
